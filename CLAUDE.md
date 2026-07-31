@@ -38,11 +38,18 @@ One owner per folder. Never cross the line — if a task appears to require edit
 
 | Owner | Owns |
 | --- | --- |
-| **M1** (lead) | `nuxt.config.ts`, `shared/**`, `server/utils/**`, `server/api/auth/**`, `app/app.vue`, `app/layouts/**`, `app/middleware/**`, `app/pages/index.vue`, `app/pages/login.vue`, `scripts/**`, `README.md` |
+| **M1** (lead) | `nuxt.config.ts`, `app/app.config.ts`, `shared/**`, `server/utils/**`, `server/api/auth/**`, `app/app.vue`, `app/assets/**`, `app/layouts/**`, `app/middleware/**`, `app/components/ui/**`, `app/pages/index.vue`, `app/pages/login.vue`, `scripts/**`, `docs/**`, `README.md` |
 | **M2** | `app/pages/datasets/**`, `app/components/datasets/**`, `server/api/datasets/**` |
 | **M3** | `app/pages/dashboard/**`, `app/components/dashboard/**`, `server/api/analytics/**` |
 | **M4** | `app/pages/recommendations/**`, `app/components/recommendations/**`, `server/api/recommendations/**`, `server/api/publish/**`, `app/error.vue` |
 | **M5** | `app/pages/insights/**`, `app/components/insights/**`, `server/api/insights/**` |
+
+## VISUAL DESIGN
+
+`docs/DESIGN-SYSTEM.md` is the design contract. Read it before writing any markup.
+Every visual question has one answer there, so no page needs a visual judgement.
+Theme changes go through `app/app.config.ts`, which M1 owns — never by overriding a
+Nuxt UI component with your own classes.
 
 ## STYLE
 

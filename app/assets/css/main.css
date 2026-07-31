@@ -1,2 +1,14 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+
+@layer base {
+  /*
+    Figures line up in columns on every platform. Several system fonts render
+    proportional digits by default, where a 1 is narrower than a 0, so a column of
+    numbers shifts sideways as a table re-sorts. Set once here rather than left to
+    a utility class nobody remembers to add.
+  */
+  body {
+    font-variant-numeric: tabular-nums;
+  }
+}

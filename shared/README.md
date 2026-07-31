@@ -29,6 +29,9 @@ it, so a rule is written once and enforced on both sides.
 
 - Zod schemas and the types inferred from them.
 - Shared primitives in `common.ts` — record ids, dates, timestamps.
+- Number formatting in `format.ts`, so the public feed and the private workspace
+  render money, counts and percentage changes identically. See
+  `docs/DESIGN-SYSTEM.md`.
 
 ## What does not belong here
 

@@ -11,7 +11,7 @@ useSeoMeta({
 <template>
   <div class="max-w-2xl">
     <h1 class="text-3xl font-semibold tracking-tight">
-      InsightFlow
+      Sales insights for small businesses
     </h1>
 
     <p class="mt-4 text-lg text-muted">
