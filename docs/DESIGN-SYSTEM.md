@@ -193,28 +193,53 @@ Always format money and counts through the cell slots. A raw number in a table i
 
 ```vue
 <script setup lang="ts">
-import { datasetSchema } from '#shared/schemas'
+import { datasetCreateSchema, type DatasetCreate } from '#shared/schemas'
+import type { FormSubmitEvent } from '@nuxt/ui'
 
-const state = reactive({ name: '' })
+const state = reactive<DatasetCreate>({ name: '' })
+const serverError = ref<string | null>(null)
 
-async function onSubmit() {
-  await $fetch('/api/datasets', { method: 'POST', body: state })
+async function onSubmit(event: FormSubmitEvent<DatasetCreate>) {
+  serverError.value = null
+  try {
+    await $fetch('/api/datasets', { method: 'POST', body: event.data })
+    await navigateTo('/datasets')
+  } catch (error) {
+    serverError.value = (error as { statusMessage?: string }).statusMessage
+      ?? 'We could not save this. Please try again.'
+  }
 }
 </script>
 
 <template>
-  <UForm :schema="datasetSchema" :state="state" class="space-y-4" @submit="onSubmit">
+  <UForm :schema="datasetCreateSchema" :state="state" class="space-y-4" @submit="onSubmit">
+    <UAlert v-if="serverError" color="error" variant="subtle" :description="serverError" />
+
     <UFormField label="Name" name="name">
       <UInput v-model="state.name" class="w-full" />
     </UFormField>
 
-    <UButton type="submit">Save</UButton>
+    <UButton type="submit">Save data set</UButton>
   </UForm>
 </template>
 ```
 
+**Bind the form to the `…CreateSchema`, never to the record schema.** `datasetSchema`
+describes a row already stored in the database — it includes `id`, `createdAt` and
+`rowCount`, which the server assigns. A form bound to it can never submit, because
+those fields are empty and have no input to show the error in.
+
+| You are building | Use |
+| --- | --- |
+| A create form | `datasetCreateSchema` |
+| Reading a stored record | `datasetSchema` |
+
+If the create schema you need does not exist, **ask M1 to add it**. Do not build the
+form against the record schema, and do not generate an `id` in the browser.
+
 The schema comes from `#shared/schemas` and nowhere else. Never write a validation
-rule in a page — the error messages are already written for the owner.
+rule in a page — the error messages are already written for the owner. Always show
+`serverError`: a form that fails silently is the worst possible outcome.
 
 ### Empty state
 

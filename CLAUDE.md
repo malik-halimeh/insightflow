@@ -25,7 +25,7 @@ Do not substitute anything in this list. If a task seems to need something not l
 
 1. **Nuxt 4 layout.** Application code lives in `app/`. `server/` and `shared/` stay at the repository root, *not* inside `app/`. Never emit a Nuxt 3 path such as `pages/x.vue` — it is `app/pages/x.vue`.
 2. **Never run or suggest `nuxt generate`.** It strips the server and kills every API route, the upload, the login and the publish flow. The build command is `nuxt build`.
-3. **Validation schemas live in `shared/schemas/`** and are imported by *both* the client form and the server route. Never write a validation rule twice.
+3. **Validation schemas live in `shared/schemas/`** and are imported by *both* the client form and the server route. Never write a validation rule twice. A form binds to the `…CreateSchema`, never to the record schema: ids and timestamps are assigned by the server, and a browser must never generate a database key.
 4. **Data fetching:** `useFetch` only at the top level of a page or component. `$fetch` inside event handlers and server routes. Never plain `fetch` in a component.
 5. **Any component touching a chart library or `window`** must be wrapped in `<ClientOnly>` with a skeleton fallback.
 6. **Never store request-scoped data in a module-level variable.** The host runs multiple server instances; this silently loses data in production. Request state belongs in the H3 event context.

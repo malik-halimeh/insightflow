@@ -25,6 +25,16 @@ Every schema exports two things: the Zod object and the inferred TypeScript type
 The same schema is imported by the page form and by the server route that receives
 it, so a rule is written once and enforced on both sides.
 
+## Record schemas and create schemas are different
+
+A record schema such as `datasetSchema` describes a row that is already stored: it
+includes the `id`, the timestamps and any counts the server maintains. A create
+schema such as `datasetCreateSchema` describes only what the owner types in.
+
+**Forms bind to the create schema.** A form bound to the record schema cannot submit,
+because it has no input for the id and so nowhere to show the error. If the create
+schema you need is missing, ask M1 to add it rather than working around it.
+
 ## What belongs here
 
 - Zod schemas and the types inferred from them.

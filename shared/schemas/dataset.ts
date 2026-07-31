@@ -26,3 +26,23 @@ export const datasetSchema = z.object({
 })
 
 export type Dataset = z.infer<typeof datasetSchema>
+
+/**
+ * What the owner actually fills in when creating a data set. The id, timestamps,
+ * row count and current version are assigned by the server, so a form must never
+ * send them and must never be built against `datasetSchema`.
+ */
+export const datasetCreateSchema = datasetSchema
+  .pick({
+    name: true,
+    businessType: true,
+    periodStart: true,
+    periodEnd: true,
+    notes: true
+  })
+  .refine(value => value.periodEnd >= value.periodStart, {
+    error: 'The end date cannot be before the start date.',
+    path: ['periodEnd']
+  })
+
+export type DatasetCreate = z.infer<typeof datasetCreateSchema>
