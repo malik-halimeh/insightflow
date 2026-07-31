@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InsightFlow — Phase 2: Prediction & Proof</title>
+<meta name="description" content="Phase 1 reports what happened. Phase 2 predicts what happens next, then checks whether its own advice was any good. Entirely additive: new collections">
+<style>
+/* ============================================================================
+   1. TOKENS — the entire colour system lives here. Theme switching is a single
+      attribute flip on <html data-theme>, so every surface animates together.
+   ========================================================================== */
+:root{
+  --bg:#0F141B;
+  --bg-2:#171E28;
+  --panel:#1D2633;
+  --border:#2C3748;
+  --text:#F5F7FA;
+  --text-2:#B7C0CC;
+  --muted:#7E8794;
+
+  --grid-line:rgba(255,255,255,.030);
+  --grid-dot:rgba(255,255,255,.055);
+  --grid-diag:rgba(255,255,255,.014);
+  --panel-hi:rgba(255,255,255,.024);
+  --inset:rgba(0,0,0,.22);
+  --mark:rgba(245,158,11,.30);
+
+  --m1:#3B82F6; --m2:#8B5CF6; --m3:#10B981; --m4:#F59E0B; --m5:#EF4444;
+  --accent:var(--m1);
+
+  --r:10px;
+  --pad:22px;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+html[data-theme="light"]{
+  --bg:#F6F8FB;
+  --bg-2:#EEF2F7;
+  --panel:#FFFFFF;
+  --border:#D5DEE8;
+  --text:#1B2735;
+  --text-2:#516170;
+  --muted:#738191;
+
+  --grid-line:rgba(27,39,53,.038);
+  --grid-dot:rgba(27,39,53,.070);
+  --grid-diag:rgba(27,39,53,.018);
+  --panel-hi:rgba(27,39,53,.020);
+  --inset:rgba(27,39,53,.06);
+  --mark:rgba(245,158,11,.34);
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:150px}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  font-size:15px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+  transition:background .38s var(--ease), color .38s var(--ease);
+}
+html,body{overflow-x:clip}
+
+/* ============================================================================
+   2. BLUEPRINT FIELD — pure CSS. A 1px grid, intersection dots at every fourth
+      node, and two extremely faint construction diagonals. Fixed so the page
+      reads as drawn *on* a surface rather than scrolling over a texture.
+   ========================================================================== */
+body::before{
+  content:"";
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:
+    linear-gradient(var(--grid-line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-line) 1px,transparent 1px),
+    radial-gradient(circle at 1px 1px,var(--grid-dot) 1px,transparent 0),
+    linear-gradient(115deg,transparent 49.94%,var(--grid-diag) 49.94%,var(--grid-diag) 50.06%,transparent 50.06%),
+    linear-gradient(-115deg,transparent 39.94%,var(--grid-diag) 39.94%,var(--grid-diag) 40.06%,transparent 40.06%);
+  background-size:28px 28px,28px 28px,112px 112px,100% 100%,100% 100%;
+  transition:background-image .38s var(--ease);
+}
+.shell{position:relative;z-index:1}
+
+/* ============================================================================
+   3. TYPE SCALE
+   ========================================================================== */
+h1,h2,h3,h4{margin:0;font-weight:640;letter-spacing:-.012em;line-height:1.2}
+p{margin:0 0 .85em}
+.eyebrow{
+  font-family:var(--mono);
+  font-size:10.5px;
+  letter-spacing:.20em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:600;
+}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+code{
+  font-family:var(--mono);
+  font-size:.855em;
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:.09em .38em;
+  color:var(--text);
+  word-break:break-word;
+}
+a{color:inherit}
+
+/* ============================================================================
+   4. OPERATIONS HEADER
+   ========================================================================== */
+.ops{
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,var(--bg-2),transparent);
+}
+.wrap{max-width:1400px;margin:0 auto;padding:0 26px}
+.ops-in{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:34px;
+  align-items:end;
+  padding:34px 0 26px;
+}
+.ident-line{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.ident-mark{width:15px;height:15px;flex:none;color:var(--m1)}
+.ops h1{
+  font-size:clamp(28px,4.4vw,46px);
+  letter-spacing:-.028em;
+  font-weight:700;
+}
+.ops h1 .thin{font-weight:340;color:var(--text-2)}
+.ops .lede{
+  color:var(--text-2);
+  max-width:62ch;
+  margin-top:12px;
+  font-size:15px;
+}
+.status-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{
+  display:inline-flex;align-items:center;gap:7px;
+  border:1px solid var(--border);
+  background:var(--panel);
+  border-radius:6px;
+  padding:5px 10px;
+  font-family:var(--mono);
+  font-size:10.5px;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:var(--text-2);
+}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--m3);flex:none;position:relative}
+.pulse::after{
+  content:"";position:absolute;inset:-4px;border-radius:50%;
+  border:1px solid var(--m3);opacity:.42;
+  animation:ping 2.6s var(--ease) infinite;
+}
+@keyframes ping{0%{transform:scale(.6);opacity:.5}70%{transform:scale(1.5);opacity:0}100%{opacity:0}}
+
+/* Engineering widgets — deliberately not cards: hairline-separated columns. */
+.widgets{
+  display:flex;
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  background:var(--panel);
+  overflow:hidden;
+}
+.w{
+  padding:14px 20px;
+  border-right:1px solid var(--border);
+  min-width:112px;
+}
+.w:last-child{border-right:0}
+.w .k{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.17em;
+  text-transform:uppercase;color:var(--muted);display:block;margin-bottom:7px;
+}
+.w .v{font-size:25px;font-weight:660;letter-spacing:-.03em;line-height:1}
+.w .v small{font-size:12px;font-weight:500;color:var(--muted);letter-spacing:0}
+.w.ring-w{display:flex;align-items:center;gap:13px}
+.ring{width:50px;height:50px;flex:none;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:5;stroke-linecap:butt}
+.ring .trk{stroke:var(--border)}
+.ring .val{stroke:var(--m3);transition:stroke-dashoffset .9s var(--ease)}
+.active-dots{display:flex;gap:4px;margin-top:8px}
+.active-dots i{width:15px;height:3px;border-radius:1px;background:var(--border);transition:background .25s}
+
+/* ============================================================================
+   5. CONTROL BAR — filters read as machine switches: square, bordered, with a
+      sliding indicator rail underneath rather than a pill highlight.
+   ========================================================================== */
+.control{
+  position:sticky;top:0;z-index:60;
+  background:color-mix(in srgb,var(--bg) 88%,transparent);
+  -webkit-backdrop-filter:saturate(1.5) blur(9px);
+  backdrop-filter:saturate(1.5) blur(9px);
+  border-bottom:1px solid var(--border);
+}
+.control-in{
+  display:flex;align-items:center;gap:16px;
+  padding:11px 0;
+}
+.switches{
+  position:relative;
+  display:flex;gap:6px;
+  overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:none;
+  padding-bottom:5px;
+  flex:1;min-width:0;
+}
+.switches::-webkit-scrollbar{display:none}
+.sw{
+  position:relative;
+  flex:none;
+  appearance:none;
+  border:1px solid var(--border);
+  background:var(--bg-2);
+  color:var(--text-2);
+  border-radius:7px;
+  padding:8px 13px;
+  font-family:var(--mono);
+  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;
+  cursor:pointer;
+  display:flex;align-items:center;gap:8px;
+  transition:background .2s,color .2s,border-color .2s,transform .09s;
+}
+.sw:hover{background:var(--panel);color:var(--text)}
+.sw:active{transform:translateY(1px)}
+.sw .tick{width:6px;height:6px;border-radius:1px;background:currentColor;opacity:.42}
+.sw[aria-pressed="true"]{background:var(--panel);color:var(--text);border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}
+.sw[aria-pressed="true"] .tick{opacity:1;color:var(--accent)}
+.sw-rail{
+  position:absolute;bottom:0;height:2px;border-radius:1px;
+  background:var(--accent);
+  transition:left .34s var(--ease),width .34s var(--ease),background .28s;
+  pointer-events:none;
+}
+.search{
+  position:relative;flex:none;width:min(280px,38vw);
+}
+.search svg{
+  position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  width:14px;height:14px;color:var(--muted);pointer-events:none;
+}
+.search input{
+  width:100%;
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:7px;
+  color:var(--text);
+  padding:9px 30px 9px 32px;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;
+  transition:border-color .2s,background .2s;
+}
+.search input::placeholder{color:var(--muted);letter-spacing:.11em;text-transform:uppercase;font-size:10px}
+.search input:focus{outline:none;border-color:var(--accent);background:var(--panel)}
+.search .clear{
+  position:absolute;right:7px;top:50%;transform:translateY(-50%);
+  background:none;border:0;color:var(--muted);cursor:pointer;padding:4px;line-height:0;
+  opacity:0;pointer-events:none;transition:opacity .18s;
+}
+.search.has .clear{opacity:1;pointer-events:auto}
+.toc-btn{display:none}
+
+/* ============================================================================
+   6. LAYOUT — navigation rail left, content right.
+   ========================================================================== */
+.main{
+  display:grid;
+  grid-template-columns:264px minmax(0,1fr);
+  gap:44px;
+  padding:34px 0 120px;
+  align-items:start;
+}
+
+/* --- Navigation rail ------------------------------------------------------ */
+.rail{position:sticky;top:78px;max-height:calc(100vh - 100px);display:flex;flex-direction:column}
+.rail-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:12px;
+}
+.rail-list{overflow-y:auto;padding-right:6px;scrollbar-width:thin;flex:1}
+.rail-list::-webkit-scrollbar{width:4px}
+.rail-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.rail-grp{margin-bottom:16px}
+.rail-grp > .g-title{
+  display:flex;align-items:center;gap:9px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text-2);font-weight:600;padding:5px 0 7px;
+}
+.rail-grp > .g-title .swatch{width:3px;height:13px;border-radius:1px;background:var(--accent);flex:none}
+.rail-sub{position:relative;padding-left:11px}
+/* thin connector line for nested headings */
+.rail-sub::before{
+  content:"";position:absolute;left:1px;top:2px;bottom:8px;width:1px;background:var(--border);
+}
+.rail-link{
+  position:relative;display:block;
+  padding:5px 9px 5px 14px;
+  color:var(--muted);
+  font-size:12.5px;line-height:1.4;
+  text-decoration:none;border-radius:5px;
+  transition:color .2s,background .2s;
+}
+.rail-link::before{
+  content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:7px;height:1px;background:var(--border);transition:background .2s,width .2s;
+}
+.rail-link:hover{color:var(--text-2);background:var(--panel-hi)}
+.rail-link.on{color:var(--text);font-weight:620;background:var(--panel-hi)}
+.rail-link.on::before{background:var(--accent);width:9px}
+.rail-track{
+  position:absolute;left:-11px;width:2px;border-radius:1px;background:var(--accent);
+  transition:top .3s var(--ease),height .3s var(--ease),opacity .2s;opacity:0;
+}
+.rail-empty{color:var(--muted);font-size:12.5px;padding:8px 0}
+
+/* --- Architectural panels ------------------------------------------------- */
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  transition:border-color .28s,box-shadow .28s,transform .28s var(--ease),background .38s var(--ease);
+}
+.member{
+  position:relative;
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr);
+  margin-bottom:26px;
+  overflow:hidden;
+}
+.member:hover{box-shadow:0 1px 0 var(--panel-hi),0 12px 30px -22px var(--inset)}
+
+/* Identifier rail — the signature device. Colour lives here and nowhere else. */
+.idrail{
+  border-right:1px solid var(--border);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 11%,transparent),transparent 62%);
+  display:flex;flex-direction:column;align-items:center;
+  padding:16px 0 18px;gap:14px;
+}
+.idrail .bar{width:3px;flex:1;min-height:40px;border-radius:2px;background:var(--accent);opacity:.9}
+.idrail .glyph{width:20px;height:20px;color:var(--accent);flex:none}
+.idrail .vlabel{
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--accent);font-weight:700;white-space:nowrap;flex:none;
+}
+.member-body{padding:var(--pad) var(--pad) 8px;min-width:0}
+
+.mhead{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.mhead h2{font-size:21px;letter-spacing:-.02em}
+.mhead .role{color:var(--text-2);font-size:13.5px;margin-top:4px;max-width:64ch}
+.mstats{display:flex;gap:16px;align-items:center;flex:none}
+.mstat{text-align:right}
+.mstat .k{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:block}
+.mstat .v{font-size:16px;font-weight:650;letter-spacing:-.02em}
+
+/* Segmented progress strip */
+.strip{display:flex;gap:2px;margin-top:9px}
+.strip i{
+  height:5px;flex:1;border-radius:1px;
+  background:var(--border);
+  transition:background .3s var(--ease);
+}
+.strip i.fill{background:var(--accent)}
+
+/* --- Section headers: monospace index + rule ------------------------------ */
+.sub{border-top:1px solid var(--border);margin-top:14px}
+.sub:first-of-type{margin-top:16px}
+.sub-headrow{display:flex;align-items:center;gap:10px}
+.sub-head{
+  flex:1;min-width:0;
+  display:flex;align-items:center;gap:13px;
+  background:none;border:0;color:inherit;
+  padding:14px 2px;cursor:pointer;text-align:left;font:inherit;
+}
+.sub-head .idx{
+  font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.05em;
+  color:var(--accent);flex:none;width:20px;
+}
+.sub-head h3{font-size:13px;letter-spacing:.055em;text-transform:uppercase;font-weight:660;flex:none}
+.sub-head .rule{flex:1;height:1px;background:var(--border);min-width:14px}
+.sub-head .caret{width:13px;height:13px;color:var(--muted);flex:none;transition:transform .3s var(--ease)}
+.sub-head:hover .caret{color:var(--text-2)}
+.sub.closed .caret{transform:rotate(-90deg)}
+.sub-head:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:5px}
+
+/* height animation without measuring: 1fr -> 0fr */
+.sub-wrap{display:grid;grid-template-rows:1fr;transition:grid-template-rows .34s var(--ease)}
+.sub.closed .sub-wrap{grid-template-rows:0fr}
+.sub-body{overflow:hidden;min-height:0}
+.sub-body > .inner{padding:0 2px 20px;color:var(--text-2)}
+.sub-body .inner > *:first-child{margin-top:0}
+
+.copy{
+  flex:none;
+  border:1px solid var(--border);background:var(--bg-2);color:var(--muted);
+  border-radius:5px;padding:5px 9px;cursor:pointer;
+  font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  opacity:0;
+  transition:color .2s,border-color .2s,background .2s,opacity .2s;
+}
+.sub-headrow:hover .copy,.copy:focus-visible{opacity:1}
+.copy:hover{color:var(--text);border-color:var(--accent)}
+@media (hover:none){.copy{opacity:1}}
+.copy.ok{color:var(--m3);border-color:var(--m3)}
+
+/* --- Content primitives --------------------------------------------------- */
+.sub-body h4{
+  font-size:12px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--text);margin:18px 0 8px;font-weight:660;
+}
+.sub-body ul,.sub-body ol{margin:0 0 12px;padding-left:19px}
+.sub-body li{margin-bottom:5px}
+.sub-body li::marker{color:var(--muted)}
+.sub-body strong{color:var(--text);font-weight:640}
+
+.step{
+  display:grid;grid-template-columns:26px minmax(0,1fr);gap:12px;
+  padding:11px 0;border-bottom:1px dashed var(--border);
+}
+.step:last-child{border-bottom:0}
+.step .d{
+  font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;
+  color:var(--accent);padding-top:3px;
+}
+.step .t{margin:0}
+.step .t b{color:var(--text);font-weight:650}
+
+table{width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:13.5px}
+th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--border);vertical-align:top}
+th{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;border-bottom-color:var(--border);
+}
+tbody tr:last-child td{border-bottom:0}
+td:first-child{color:var(--text);font-weight:560}
+
+.note{
+  border:1px solid var(--border);
+  border-left:2px solid var(--accent);
+  background:var(--bg-2);
+  border-radius:0 7px 7px 0;
+  padding:12px 15px;margin:12px 0;
+  font-size:13.5px;
+}
+.note .lab{
+  display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.17em;
+  text-transform:uppercase;color:var(--accent);margin-bottom:5px;font-weight:700;
+}
+.note.warn{border-left-color:var(--m4)}
+.note.warn .lab{color:var(--m4)}
+.note.stop{border-left-color:var(--m5)}
+.note.stop .lab{color:var(--m5)}
+
+pre{
+  background:var(--bg-2);border:1px solid var(--border);border-radius:7px;
+  padding:13px 15px;overflow-x:auto;margin:10px 0 14px;
+  font-family:var(--mono);font-size:12px;line-height:1.65;color:var(--text-2);
+}
+pre b{color:var(--accent);font-weight:600}
+
+.say{
+  border:1px solid var(--border);background:var(--bg-2);
+  border-radius:7px;padding:11px 14px;margin:9px 0 14px;
+  font-size:13.5px;color:var(--text);
+}
+.say::before{
+  content:"Say this";display:block;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:5px;font-weight:700;
+}
+
+/* --- Technical checklist indicators --------------------------------------- */
+.checks{list-style:none;margin:4px 0 8px;padding:0}
+.chk{
+  display:flex;align-items:flex-start;gap:11px;
+  padding:9px 10px;border-radius:7px;cursor:pointer;
+  border:1px solid transparent;
+  transition:background .18s,border-color .18s;
+  position:relative;
+}
+.chk:hover{background:var(--panel-hi);border-color:var(--border)}
+.chk input{position:absolute;opacity:0;width:1px;height:1px}
+.chk .box{
+  position:relative;flex:none;width:17px;height:17px;margin-top:2px;
+  border:1px solid var(--border);border-radius:4px;background:var(--bg-2);
+  transition:border-color .22s,background .22s;
+}
+.chk .box svg{
+  position:absolute;inset:2px;width:11px;height:11px;color:var(--accent);
+  stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .32s var(--ease);
+}
+.chk .box::after{
+  content:"";position:absolute;left:0;bottom:0;height:2px;width:0;
+  background:var(--accent);border-radius:0 0 3px 3px;transition:width .34s var(--ease);
+}
+.chk input:checked ~ .box{border-color:var(--accent)}
+.chk input:checked ~ .box svg{stroke-dashoffset:0}
+.chk input:checked ~ .box::after{width:100%}
+.chk input:focus-visible ~ .box{outline:2px solid var(--accent);outline-offset:2px}
+.chk .lbl{font-size:13.5px;color:var(--text-2);transition:color .2s}
+.chk input:checked ~ .lbl{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--border)}
+
+.chk-meter{display:flex;align-items:center;gap:11px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.chk-meter .strip{flex:1;margin:0}
+.chk-meter .pc{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.04em;min-width:38px;text-align:right}
+
+/* --- Shared briefing block ------------------------------------------------ */
+.brief{margin-bottom:26px;padding:var(--pad)}
+.brief .sub:first-of-type{margin-top:14px}
+.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;margin:14px 0 6px}
+.tl{
+  border:1px solid var(--border);border-radius:6px;padding:11px 11px 13px;background:var(--bg-2);
+  transition:border-color .25s,background .25s;
+}
+.tl:hover{border-color:var(--muted)}
+.tl .dd{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+.tl .tt{font-size:12.5px;color:var(--text);margin-top:5px;line-height:1.4}
+.tl.crit{border-color:color-mix(in srgb,var(--m5) 46%,var(--border))}
+.tl.crit .dd{color:var(--m5)}
+
+/* ============================================================================
+   7. FLOATING CONTROLS
+   ========================================================================== */
+.dock{
+  position:fixed;right:20px;bottom:20px;z-index:70;
+  display:flex;flex-direction:column;gap:6px;
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--r);
+  padding:6px;box-shadow:0 14px 34px -24px var(--inset);
+}
+.dock button{
+  width:36px;height:36px;display:grid;place-items:center;
+  background:none;border:0;border-radius:7px;color:var(--muted);cursor:pointer;
+  transition:background .18s,color .18s,transform .09s;
+}
+.dock button:hover{background:var(--bg-2);color:var(--text)}
+.dock button:active{transform:translateY(1px)}
+.dock button svg{width:16px;height:16px}
+.dock .sep{height:1px;background:var(--border);margin:2px 4px}
+.dock button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+
+.theme-toggle{
+  position:fixed;right:20px;top:74px;z-index:70;
+  display:flex;align-items:center;gap:8px;
+  background:var(--panel);border:1px solid var(--border);border-radius:8px;
+  padding:8px 11px;color:var(--text-2);cursor:pointer;
+  font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;font-weight:600;
+  transition:color .2s,border-color .2s,background .38s var(--ease);
+}
+.theme-toggle:hover{color:var(--text);border-color:var(--muted)}
+.theme-toggle svg{width:14px;height:14px}
+
+mark{background:var(--mark);color:var(--text);border-radius:2px;padding:0 1px}
+.hidden{display:none !important}
+
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);
+  background:var(--panel);border:1px solid var(--border);border-radius:8px;
+  padding:9px 15px;color:var(--text);z-index:90;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  opacity:0;pointer-events:none;transition:opacity .25s,transform .25s var(--ease);
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.no-result{padding:40px 26px;text-align:center;color:var(--muted)}
+.no-result b{display:block;color:var(--text);font-size:16px;margin-bottom:6px}
+
+/* scroll reveal */
+.rev{opacity:0;transform:translateY(10px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+.rev.in{opacity:1;transform:none}
+
+/* ============================================================================
+   8. RESPONSIVE
+   ========================================================================== */
+@media (max-width:1080px){
+  .main{grid-template-columns:1fr;gap:0}
+  .rail{
+    position:fixed;inset:0 auto 0 0;width:min(310px,86vw);z-index:80;
+    background:var(--panel);border-right:1px solid var(--border);
+    max-height:none;padding:18px;
+    transform:translateX(-102%);transition:transform .32s var(--ease);
+    box-shadow:0 0 60px -20px var(--inset);
+  }
+  .rail.open{transform:none}
+  .toc-btn{
+    display:flex;align-items:center;gap:7px;flex:none;
+    border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);
+    border-radius:7px;padding:8px 11px;cursor:pointer;
+    font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;
+  }
+  .toc-btn svg{width:13px;height:13px}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:79;opacity:0;pointer-events:none;transition:opacity .3s}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .theme-toggle{top:auto;bottom:20px;right:68px}
+}
+@media (max-width:860px){
+  .ops-in{grid-template-columns:1fr;align-items:start;gap:22px}
+  .widgets{flex-wrap:wrap}
+  .w{flex:1 1 40%;border-bottom:1px solid var(--border)}
+  .timeline{grid-template-columns:repeat(2,1fr)}
+  .search{width:auto;flex:1;min-width:120px}
+}
+@media (max-width:620px){
+  .wrap{padding:0 16px}
+  .member{grid-template-columns:34px minmax(0,1fr)}
+  .member-body{padding:16px 15px 6px}
+  .brief{padding:16px 15px}
+  .idrail .vlabel{font-size:9px;letter-spacing:.22em}
+  .mstats{width:100%;justify-content:flex-start}
+  .mstat{text-align:left}
+  th,td{padding:7px 8px;font-size:12.5px}
+  .theme-toggle span{display:none}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important;scroll-behavior:auto !important}
+  .rev{opacity:1;transform:none}
+}
+
+/* ============================================================================
+   9. PRINT — strip every control, flatten every accordion, drop the blueprint.
+   ========================================================================== */
+@media print{
+  @page{margin:15mm}
+  html,body{background:#fff !important;color:#000 !important}
+  body::before,.control,.dock,.theme-toggle,.rail,.scrim,.copy,.toast,.toc-btn,.search{display:none !important}
+  .main{display:block;padding:0}
+  .shell,.wrap{max-width:none;padding:0}
+  .ops{border-bottom:1px solid #999;background:none}
+  .ops-in{padding:0 0 14px}
+  .widgets,.panel,.member,.brief{border-color:#bbb !important;background:#fff !important;box-shadow:none !important;break-inside:auto}
+  .member{page-break-before:always;margin-bottom:14px}
+  .brief{page-break-after:always}
+  .sub-wrap{grid-template-rows:1fr !important}
+  .sub.closed .sub-wrap{grid-template-rows:1fr !important}
+  .sub-body{overflow:visible !important}
+  .sub,.step,table,.note,pre,.chk{break-inside:avoid}
+  .idrail{background:none !important;border-right:1px solid #bbb !important}
+  .rev{opacity:1 !important;transform:none !important}
+  a{text-decoration:none}
+  .note,pre,.say,code,.tl{background:#f4f4f4 !important;color:#000 !important}
+  .sub-body > .inner{color:#111}
+}
+
+/* ============================================================================
+   10. PHASE ADDITIONS — continuity between the three roadmap files
+   ========================================================================== */
+.phasebar{display:flex;gap:2px;margin-bottom:16px;flex-wrap:wrap}
+.pb{
+  display:flex;align-items:center;gap:9px;
+  border:1px solid var(--border);background:var(--bg-2);
+  border-radius:7px;padding:7px 12px;text-decoration:none;color:var(--muted);
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;
+  transition:color .2s,border-color .2s,background .2s;
+}
+.pb:hover{color:var(--text);border-color:var(--muted)}
+.pb .pbn{
+  font-size:9px;color:var(--muted);border:1px solid var(--border);border-radius:3px;
+  padding:1px 5px;letter-spacing:.06em;
+}
+.pb[aria-current="page"]{
+  background:var(--panel);color:var(--text);
+  border-color:color-mix(in srgb,var(--accent) 60%,var(--border));
+}
+.pb[aria-current="page"] .pbn{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}
+.pb .lock{width:11px;height:11px;opacity:.7}
+
+.gate{
+  border:1px solid color-mix(in srgb,var(--m4) 42%,var(--border));
+  border-radius:var(--r);
+  background:var(--bg-2);
+  padding:15px 18px;margin:0 0 22px;
+}
+.gate .lab{
+  display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--m4);margin-bottom:7px;font-weight:700;
+}
+.gate ul{margin:8px 0 0;padding-left:19px}
+.gate li{margin-bottom:4px;color:var(--text-2)}
+.gate p{margin:0 0 4px;color:var(--text)}
+
+.teaches{
+  display:inline-flex;align-items:center;gap:7px;
+  border:1px solid var(--border);border-left:2px solid var(--accent);
+  background:var(--bg-2);border-radius:0 6px 6px 0;
+  padding:5px 11px;margin-top:9px;
+  font-size:12.5px;color:var(--text-2);
+}
+.teaches b{
+  font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);font-weight:700;
+}
+@media print{
+  .phasebar{display:none !important}
+  .gate{border-color:#bbb !important;background:#f4f4f4 !important}
+  .teaches{background:#f4f4f4 !important}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<header class="ops">
+  <div class="wrap"><div class="ops-in" id="opsIn"></div></div>
+</header>
+
+<nav class="control" aria-label="View controls">
+  <div class="wrap control-in">
+    <button class="toc-btn" id="tocBtn" aria-expanded="false" aria-controls="rail">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      Contents
+    </button>
+    <div class="switches" id="switches" role="group" aria-label="Filter by member">
+      <span class="sw-rail" id="swRail" aria-hidden="true"></span>
+    </div>
+    <div class="search" id="searchWrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+      <input id="search" type="search" placeholder="Search roadmap" aria-label="Search the roadmap" autocomplete="off">
+      <button class="clear" id="clearSearch" aria-label="Clear search">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="main">
+    <aside class="rail" id="rail" aria-label="Table of contents">
+      <div class="rail-head">
+        <span class="eyebrow">Contents</span>
+        <span class="eyebrow" id="railCount">&mdash;</span>
+      </div>
+      <div class="rail-list" id="railList">
+        <span class="rail-track" id="railTrack" aria-hidden="true"></span>
+      </div>
+    </aside>
+    <main id="content"></main>
+  </div>
+</div>
+
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Switch colour theme">
+  <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+  <span id="themeLabel">Dark</span>
+</button>
+
+<div class="dock" role="group" aria-label="Quick actions">
+  <button id="btnTop" aria-label="Back to top" title="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+  </button>
+  <div class="sep"></div>
+  <button id="btnExpand" aria-label="Expand all sections" title="Expand all">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 10l4 4 4-4"/><path d="M4 5h16M4 19h16"/></svg>
+  </button>
+  <button id="btnCollapse" aria-label="Collapse all sections" title="Collapse all">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 14l4-4 4 4"/><path d="M4 5h16M4 19h16"/></svg>
+  </button>
+  <div class="sep"></div>
+  <button id="btnPrint" aria-label="Print or save as PDF" title="Print / save as PDF">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4v-6h16v6h-2"/><path d="M8 14h8v7H8z"/></svg>
+  </button>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ---------------------------------------------------------------- CONTENT --
+   Every word of this phase lives in PHASE. The engine below never changes
+   between the three files, so a fix in one is a fix in all three.
+   -------------------------------------------------------------------------- */
+const PHASE = {
+ "code": "P2",
+ "docTitle": "InsightFlow — Phase 2: Prediction & Proof",
+ "eyebrow": "Phase 2 / Optional / Opens only after Phase 1 is presented",
+ "title": "InsightFlow",
+ "subtitle": "— Phase 2: Prediction & Proof",
+ "status": "Status: locked until Phase 1 ships",
+ "lede": "Phase 1 reports what happened. Phase 2 predicts what happens next, then checks whether its own advice was any good. Entirely additive: new collections, new endpoints, new pages, and not one Phase 1 file rewritten.",
+ "chips": [
+  "Additive only",
+  "No machine learning",
+  "Feature-flagged",
+  "Same five owners"
+ ],
+ "widgets": [
+  {
+   "k": "Members",
+   "v": 5
+  },
+  {
+   "k": "New modules",
+   "v": 5
+  },
+  {
+   "k": "Files rewritten",
+   "v": 0
+  }
+ ],
+ "phases": [
+  {
+   "code": "P1",
+   "short": "Build & Present",
+   "file": "insightflow-phase-1.html",
+   "locked": false
+  },
+  {
+   "code": "P2",
+   "short": "Prediction & Proof",
+   "file": "insightflow-phase-2.html",
+   "locked": true
+  },
+  {
+   "code": "P3",
+   "short": "Decision Intelligence",
+   "file": "insightflow-phase-3.html",
+   "locked": true
+  }
+ ],
+ "subs": [
+  [
+   "overview",
+   "Overview"
+  ],
+  [
+   "learn",
+   "What To Learn"
+  ],
+  [
+   "plan",
+   "Build Steps"
+  ],
+  [
+   "deliver",
+   "Deliverables"
+  ],
+  [
+   "present",
+   "Risks & Cut Lines"
+  ],
+  [
+   "check",
+   "Checklist"
+  ]
+ ],
+ "brief": {
+  "title": "Phase Briefing",
+  "kicker": "Section 00 — entry conditions",
+  "role": "What Phase 2 adds, why, and the rule that keeps it from breaking Phase 1.",
+  "color": "var(--m4)",
+  "gate": {
+   "label": "Entry gate — all five must be true",
+   "html": "\n<p>Do not open this file until every line below is true.</p>\n<ul>\n  <li>Phase 1 has been presented and graded.</li>\n  <li>The live URL works and has worked for a week without anyone patching it.</li>\n  <li>All four CRUD operations still work on the deployed site, not just locally.</li>\n  <li>The public feed has at least three real published insights.</li>\n  <li><code>CHALLENGES.md</code> and the README are up to date.</li>\n</ul>\n<p>If any line is false, fix that instead. Phase 2 adds nothing to a project that is not already finished.</p>\n"
+  },
+  "subs": [
+   [
+    "brief-why",
+    "What Phase 2 Adds",
+    "\n<p>Phase 1 reports what happened. Phase 2 says what is likely to happen next, and then checks whether the advice was any good.</p>\n<h4>The three additions, in order of value</h4>\n<table>\n  <thead><tr><th>Addition</th><th>Why it matters</th><th>Owner</th></tr></thead>\n  <tbody>\n    <tr><td>Recommendation outcome loop</td><td>Almost no analytics product closes this loop. It is the feature people remember.</td><td>M4</td></tr>\n    <tr><td>Forecasting</td><td>Turns reporting into planning. The obvious next step, and the one users ask for.</td><td>M1 + M3</td></tr>\n    <tr><td>Anonymous benchmarking</td><td>Makes the public feed worth more than the sum of its posts.</td><td>M5</td></tr>\n  </tbody>\n</table>\n<h4>The outcome loop, in plain words</h4>\n<p>InsightFlow says \"raise Friday inventory\". The owner marks it as followed. Two weeks later the app compares the period before and after, and reports whether it actually helped.</p>\n<div class=\"note\"><span class=\"lab\">Why this is the centrepiece</span>Every recommendation engine gives advice. Almost none tell you whether their own advice worked. It is cheap to build — a status field, a follow-up form and a comparison query — and it is the thing that makes the product feel honest.</div>\n"
+   ],
+   [
+    "brief-arch",
+    "Architecture & Ownership",
+    "\n<p>Nothing here changes the architecture. Phase 2 is entirely additive: new collections, new endpoints, new pages. Nothing in Phase 1 is rewritten.</p>\n<pre>shared/schemas/\n├── forecast.ts            <b>M1</b>  new\n├── outcome.ts             <b>M4</b>  new\n└── benchmark.ts           <b>M5</b>  new\n\nserver/utils/forecast.ts   <b>M1</b>  new\nserver/api/\n├── forecast/              <b>M1</b> engine · <b>M3</b> read\n├── datasets/versions/     <b>M2</b>\n├── outcomes/              <b>M4</b>\n└── benchmarks/            <b>M5</b>\n\napp/pages/\n├── forecast/              <b>M3</b>\n├── datasets/[id]/history  <b>M2</b>\n├── recommendations/[id]/outcome  <b>M4</b>\n└── insights/benchmarks    <b>M5</b>  public</pre>\n<div class=\"note warn\"><span class=\"lab\">One rule</span>If a Phase 2 change requires editing a Phase 1 file that someone else owns, stop and talk to them. Additive work stays additive on purpose.</div>\n"
+   ]
+  ]
+ },
+ "members": [
+  {
+   "id": "m1",
+   "n": 1,
+   "color": "#3B82F6",
+   "icon": "<path d=\"M12 3 3 7.5 12 12l9-4.5Z\"/><path d=\"M3 12l9 4.5L21 12\"/><path d=\"M3 16.5 12 21l9-4.5\"/>",
+   "name": "Forecast Foundation & Release Safety",
+   "role": "Builds the prediction engine everyone else reads from, and makes sure a half-finished feature can never break the live demo.",
+   "owns": "server/utils/forecast · shared/schemas/forecast · feature flags · scheduled tasks",
+   "teaches": "Nitro tasks, cached handlers, feature flags",
+   "overview": "\n<p>You own the maths and the safety net. The forecast is a pure function; the flags mean anything unfinished stays invisible in production.</p>\n<div class=\"note\"><span class=\"lab\">Start with flags, not forecasting</span>Half a day on feature flags buys you the freedom to merge unfinished work for the rest of the phase. Do it first.</div>\n",
+   "learn": "\n<ol>\n  <li>Moving average and weighted moving average — enough forecasting, no machine learning</li>\n  <li>Nitro scheduled tasks for recomputing forecasts overnight</li>\n  <li><code>runtimeConfig</code> and simple boolean feature flags</li>\n  <li><code>defineCachedEventHandler</code> with a longer max age</li>\n</ol>\n<div class=\"note\"><span class=\"lab\">Resist the model</span>A weighted moving average over the last four same-weekdays is honest, explainable and takes an hour. Anything heavier costs days and predicts no better on twenty rows of restaurant data.</div>\n",
+   "plan": "\n<div class=\"step\"><span class=\"d\">01</span><p class=\"t\"><b>Add feature flags.</b> One boolean per Phase 2 feature, read from <code>runtimeConfig</code>. Off in production until the owner says otherwise.</p></div>\n<div class=\"step\"><span class=\"d\">02</span><p class=\"t\"><b>Write the forecast schema</b> and announce it, exactly as you did in Phase 1.</p></div>\n<div class=\"step\"><span class=\"d\">03</span><p class=\"t\"><b>Write the engine</b> in <code>server/utils/forecast.ts</code> as pure functions: given rows and a horizon, return predicted values with a confidence band.</p></div>\n<div class=\"step\"><span class=\"d\">04</span><p class=\"t\"><b>Test against seed data</b> by holding back the last week and checking the prediction against what actually happened. Keep that number — it becomes the honesty metric on screen.</p></div>\n<div class=\"step\"><span class=\"d\">05</span><p class=\"t\"><b>Add the scheduled task</b> to recompute and cache forecasts, so the dashboard never waits on the maths.</p></div>\n<div class=\"step\"><span class=\"d\">06</span><p class=\"t\"><b>Expose the read endpoint</b> for Member 3 and hand over the response shape in writing.</p></div>\n",
+   "deliver": "\n<ul>\n  <li>Feature flag system covering every Phase 2 feature</li>\n  <li>Forecast schema and pure-function engine</li>\n  <li>Measured accuracy on held-back data</li>\n  <li>Scheduled recompute and cached read endpoint</li>\n</ul>\n",
+   "present": "\n<h4>Risks</h4>\n<ul>\n  <li><b>Scope creep into machine learning.</b> The most likely way this phase dies. Weighted moving average, nothing more.</li>\n  <li><b>Too little data.</b> Forecasting on two weeks of rows is noise. Require at least four weeks before showing a prediction, and say so in the interface.</li>\n  <li><b>Scheduled tasks on serverless hosts.</b> Support varies. Check your host before relying on it; a cached handler recomputed on first request is a fine fallback.</li>\n</ul>\n<h4>Cut line</h4>\n<p>If the phase runs long, drop the scheduled task and compute on request behind the cache. Nobody notices.</p>\n",
+   "check": [
+    "Feature flags in place before any feature work",
+    "Forecast schema written and announced",
+    "Engine written as pure functions",
+    "Accuracy measured on held-back data",
+    "Minimum-data guard in the interface",
+    "Read endpoint shape handed to Member 3 in writing"
+   ]
+  },
+  {
+   "id": "m2",
+   "n": 2,
+   "color": "#8B5CF6",
+   "icon": "<path d=\"M12 3v11\"/><path d=\"m8 10 4 4 4-4\"/><path d=\"M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2\"/>",
+   "name": "Dataset History & Data Quality",
+   "role": "Makes uploads repeatable and honest: versions, comparisons, and warnings when the data is not good enough to trust.",
+   "owns": "app/pages/datasets/[id]/history · server/api/datasets/versions",
+   "teaches": "Immutable records, versioned reads",
+   "overview": "\n<p>Forecasting is only as good as the data underneath it. You make re-uploading safe and make bad data visible before it reaches a chart.</p>\n<div class=\"note\"><span class=\"lab\">Design decision</span>Never overwrite an upload. Each one becomes a new version, and the dataset points at the current one. Old versions stay readable. This is the same append-only thinking that keeps financial records trustworthy.</div>\n",
+   "learn": "\n<ol>\n  <li>Append-only records versus in-place updates</li>\n  <li>Simple data quality checks: gaps in dates, duplicate rows, impossible values</li>\n  <li>Comparing two versions of the same dataset</li>\n</ol>\n",
+   "plan": "\n<div class=\"step\"><span class=\"d\">01</span><p class=\"t\"><b>Add a version record</b> on every upload rather than replacing rows. The dataset keeps a pointer to the current version.</p></div>\n<div class=\"step\"><span class=\"d\">02</span><p class=\"t\"><b>Build the history page:</b> every version, when, how many rows, how many rejected.</p></div>\n<div class=\"step\"><span class=\"d\">03</span><p class=\"t\"><b>Add restore.</b> Point the dataset back at an older version in one click.</p></div>\n<div class=\"step\"><span class=\"d\">04</span><p class=\"t\"><b>Add quality checks</b> at upload: missing days, duplicated rows, negative or absurd values. Warn, do not block.</p></div>\n<div class=\"step\"><span class=\"d\">05</span><p class=\"t\"><b>Show a quality badge</b> on the dataset so the dashboard can say when a forecast is built on thin data.</p></div>\n",
+   "deliver": "\n<ul>\n  <li>Versioned uploads, nothing overwritten</li>\n  <li>History page with row and rejection counts</li>\n  <li>One-click restore to a previous version</li>\n  <li>Quality checks and a visible quality badge</li>\n</ul>\n",
+   "present": "\n<h4>Risks</h4>\n<ul>\n  <li><b>Storage growth.</b> Every version keeps its rows. Cap it at the last ten versions per dataset.</li>\n  <li><b>Confusing restore.</b> Restoring changes what every other module reads. Ask for confirmation and say plainly what will change.</li>\n</ul>\n<h4>Cut line</h4>\n<p>Keep versioning, drop restore. History alone is most of the value.</p>\n",
+   "check": [
+    "Uploads create versions, never overwrite",
+    "History page shows every version",
+    "Restore works and is confirmed by the user",
+    "Quality checks warn without blocking",
+    "Quality badge visible to other modules",
+    "Version count capped"
+   ]
+  },
+  {
+   "id": "m3",
+   "n": 3,
+   "color": "#10B981",
+   "icon": "<path d=\"M3 20h18\"/><rect x=\"5\" y=\"11\" width=\"3.2\" height=\"7\" rx=\"1\"/><rect x=\"10.4\" y=\"6\" width=\"3.2\" height=\"12\" rx=\"1\"/><rect x=\"15.8\" y=\"14\" width=\"3.2\" height=\"4\" rx=\"1\"/>",
+   "name": "Forecast Dashboard",
+   "role": "Shows the prediction next to reality, including the times the prediction was wrong.",
+   "owns": "app/pages/forecast · components/forecast",
+   "teaches": "Charting uncertainty, forecast versus actual",
+   "overview": "\n<p>The easy version of this screen shows a confident line going up. The honest version shows a band, and marks where last week's forecast missed. Build the honest one — it is more useful and far more convincing.</p>\n",
+   "learn": "\n<ol>\n  <li>Drawing a confidence band, not just a line</li>\n  <li>Overlaying forecast against actual once the date passes</li>\n  <li>Keeping charts inside <code>&lt;ClientOnly&gt;</code>, as in Phase 1</li>\n</ol>\n",
+   "plan": "\n<div class=\"step\"><span class=\"d\">01</span><p class=\"t\"><b>Build the forecast page</b> reading Member 1's endpoint.</p></div>\n<div class=\"step\"><span class=\"d\">02</span><p class=\"t\"><b>Draw the band,</b> not a single line. A prediction without a range invites a question you cannot answer.</p></div>\n<div class=\"step\"><span class=\"d\">03</span><p class=\"t\"><b>Overlay actuals</b> as the days pass, so the chart grades itself.</p></div>\n<div class=\"step\"><span class=\"d\">04</span><p class=\"t\"><b>Add the accuracy card:</b> how close the last four forecasts were.</p></div>\n<div class=\"step\"><span class=\"d\">05</span><p class=\"t\"><b>Add the thin-data state.</b> When there are fewer than four weeks, say so instead of drawing a confident chart.</p></div>\n",
+   "deliver": "\n<ul>\n  <li>Forecast page with confidence bands</li>\n  <li>Forecast versus actual overlay</li>\n  <li>Rolling accuracy card</li>\n  <li>An explicit not-enough-data state</li>\n</ul>\n",
+   "present": "\n<h4>Risks</h4>\n<ul>\n  <li><b>Overconfident visuals.</b> A clean line implies certainty you do not have. Always show the band.</li>\n  <li><b>Chart library on the server.</b> Same trap as Phase 1. Keep the ClientOnly wrapper.</li>\n</ul>\n<h4>Cut line</h4>\n<p>Drop the overlay, keep the band and the accuracy card.</p>\n",
+   "check": [
+    "Forecast page reads the shared endpoint",
+    "Confidence band drawn, not a bare line",
+    "Actuals overlaid as days pass",
+    "Accuracy card showing recent performance",
+    "Thin-data state implemented",
+    "Charts still inside ClientOnly"
+   ]
+  },
+  {
+   "id": "m4",
+   "n": 4,
+   "color": "#F59E0B",
+   "icon": "<path d=\"M12 3.2 13.9 8l5.1.3-3.9 3.3 1.2 5-4.3-2.7L7.7 16.6l1.2-5L5 8.3 10.1 8Z\"/><path d=\"M12 19.5V21\"/>",
+   "name": "Recommendation Outcome Loop",
+   "role": "The feature almost nobody builds: checking whether the advice actually worked. This is the centrepiece of Phase 2.",
+   "owns": "app/pages/recommendations/[id]/outcome · server/api/outcomes",
+   "teaches": "Closing the feedback loop, before-and-after comparison",
+   "overview": "\n<p>Every recommendation engine gives advice. Almost none report back on their own accuracy. You are building the part that does.</p>\n<h4>The loop</h4>\n<pre>advice given  →  user marks it followed  →  wait  →  compare before and after  →  verdict</pre>\n<div class=\"note\"><span class=\"lab\">Be honest in the interface</span>Show \"worked\", \"no clear effect\" and \"made it worse\" with equal weight. A tool that admits when its advice failed is trusted far more than one that only reports wins.</div>\n",
+   "learn": "\n<ol>\n  <li>Storing a decision and its context at the time it was made</li>\n  <li>Comparing a metric across two equal time windows</li>\n  <li>Saying \"no clear effect\" rather than inventing significance</li>\n</ol>\n<div class=\"note warn\"><span class=\"lab\">Statistics honesty</span>Two weeks of restaurant data will not prove causation. Label the result a comparison, never proof. Overclaiming here would undo the credibility the feature earns.</div>\n",
+   "plan": "\n<div class=\"step\"><span class=\"d\">01</span><p class=\"t\"><b>Add the outcome schema:</b> the recommendation, the date followed, the metric being watched, the window length.</p></div>\n<div class=\"step\"><span class=\"d\">02</span><p class=\"t\"><b>Add \"I followed this\"</b> to each recommendation card. One click, with an optional note.</p></div>\n<div class=\"step\"><span class=\"d\">03</span><p class=\"t\"><b>Snapshot the before window</b> at that moment, so a later data change cannot rewrite history.</p></div>\n<div class=\"step\"><span class=\"d\">04</span><p class=\"t\"><b>Build the comparison endpoint:</b> same metric, equal windows either side, percentage difference.</p></div>\n<div class=\"step\"><span class=\"d\">05</span><p class=\"t\"><b>Build the outcome page</b> with the three-way verdict and the numbers behind it.</p></div>\n<div class=\"step\"><span class=\"d\">06</span><p class=\"t\"><b>Add the scoreboard:</b> across all followed recommendations, how often did the advice help.</p></div>\n",
+   "deliver": "\n<ul>\n  <li>Outcome schema with an immutable before-snapshot</li>\n  <li>One-click follow marking</li>\n  <li>Before-and-after comparison endpoint</li>\n  <li>Outcome page with an honest three-way verdict</li>\n  <li>Overall advice scoreboard</li>\n</ul>\n",
+   "present": "\n<h4>Risks</h4>\n<ul>\n  <li><b>Overclaiming.</b> The single biggest risk. Never write \"this caused a 12% rise\". Write \"revenue was 12% higher in the two weeks after\".</li>\n  <li><b>Empty state.</b> Nobody has followed anything yet. Seed two examples so the page is never blank.</li>\n  <li><b>Data changing underneath.</b> Solved by snapshotting the before window at follow time. Do not skip it.</li>\n</ul>\n<h4>Cut line</h4>\n<p>Nothing. If Phase 2 shrinks to one feature, it should be this one.</p>\n",
+   "check": [
+    "Outcome schema written",
+    "Follow marking on every recommendation",
+    "Before window snapshotted at follow time",
+    "Comparison endpoint over equal windows",
+    "Three-way verdict, including no clear effect",
+    "Wording avoids any causal claim",
+    "Scoreboard across all followed advice",
+    "Seeded examples so the page is never empty"
+   ]
+  },
+  {
+   "id": "m5",
+   "n": 5,
+   "color": "#EF4444",
+   "icon": "<circle cx=\"12\" cy=\"12\" r=\"2.6\"/><path d=\"M12 3.4a8.6 8.6 0 0 1 0 17.2\"/><path d=\"M12 6.9a5.1 5.1 0 0 1 0 10.2\"/><path d=\"M12 3.4A8.6 8.6 0 0 0 12 20.6\"/>",
+   "name": "Anonymous Benchmarking",
+   "role": "Turns the public feed from a noticeboard into a data set: how does one restaurant compare with everyone else who published?",
+   "owns": "app/pages/insights/benchmarks · server/api/benchmarks",
+   "teaches": "Aggregation without exposure, public cached pages",
+   "overview": "\n<p>Nobody exposes their numbers, yet everybody learns where they stand. One aggregate query over the published collection does the work.</p>\n<div class=\"say\">Your Friday uplift is 34%. The average across published restaurants is 18%. You are ahead of the field.</div>\n",
+   "learn": "\n<ol>\n  <li>Aggregating across records without revealing any single one</li>\n  <li>Minimum-count thresholds — never publish an average built from two entries</li>\n  <li>Extending the cached public routes from Phase 1</li>\n</ol>\n<div class=\"note warn\"><span class=\"lab\">Privacy rule</span>Suppress any benchmark with fewer than five contributors. With three, a reader can often work out who is who. This is a real rule that real analytics products follow.</div>\n",
+   "plan": "\n<div class=\"step\"><span class=\"d\">01</span><p class=\"t\"><b>Add the benchmark schema:</b> metric, dimension, aggregate value, contributor count.</p></div>\n<div class=\"step\"><span class=\"d\">02</span><p class=\"t\"><b>Build the aggregate endpoint</b> over published insights only. Never touch private datasets.</p></div>\n<div class=\"step\"><span class=\"d\">03</span><p class=\"t\"><b>Enforce the minimum count</b> before anything is shown.</p></div>\n<div class=\"step\"><span class=\"d\">04</span><p class=\"t\"><b>Build the public benchmarks page,</b> cached like the rest of the public routes.</p></div>\n<div class=\"step\"><span class=\"d\">05</span><p class=\"t\"><b>Add the private comparison widget</b> that puts the owner's own figure against the field.</p></div>\n<div class=\"step\"><span class=\"d\">06</span><p class=\"t\"><b>Add SEO</b> to the benchmarks page. It is the most linkable page in the whole product.</p></div>\n",
+   "deliver": "\n<ul>\n  <li>Benchmark schema and aggregate endpoint</li>\n  <li>Minimum-contributor suppression</li>\n  <li>Public benchmarks page, cached and indexed</li>\n  <li>Private you-versus-the-field widget</li>\n</ul>\n",
+   "present": "\n<h4>Risks</h4>\n<ul>\n  <li><b>Re-identification.</b> The one risk worth losing sleep over. Enforce the minimum count in the endpoint, not the interface, so it cannot be bypassed.</li>\n  <li><b>Empty benchmarks.</b> With few publishers there is nothing to average. Show an honest waiting state rather than a fake number.</li>\n  <li><b>Scope creep into leaderboards.</b> Ranking named businesses would undo the privacy promise. Aggregates only.</li>\n</ul>\n<h4>Cut line</h4>\n<p>Drop the public page, keep the private comparison widget.</p>\n",
+   "check": [
+    "Benchmark schema written",
+    "Aggregates read published insights only",
+    "Minimum contributor count enforced server-side",
+    "Public benchmarks page cached",
+    "Private comparison widget built",
+    "No named ranking anywhere",
+    "Honest empty state"
+   ]
+  }
+ ]
+};
+
+/* ============================================================================
+   INSIGHTFLOW ROADMAP — single-file application
+   ----------------------------------------------------------------------------
+   The PHASE constant above holds every word of content for this file. The code
+   below turns it into a page. All three phase files share this exact script, so
+   fixing a bug here fixes it in all of them.
+
+   Systems:
+     A. RENDER      header, briefing panel and member modules, built once
+     B. FILTER      member switches + search, composed together
+     C. RAIL        contents list, regenerated whenever the view changes
+     D. SCROLLSPY   IntersectionObserver-driven active section tracking
+     E. STATE       checklists, accordions, progress rings (in memory only)
+     F. CHROME      theme, dock actions, counters, reveal, keyboard
+   Checklist ticks are per-session by design: this file is meant to be copied,
+   printed and handed around, not to act as a database.
+   ========================================================================== */
+
+const state = {
+  filter:'all',
+  query:'',
+  done:new Set(),
+  closed:new Set(),
+  originals:new Map()
+};
+
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const pad = n => String(n).padStart(2,'0');
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ------------------------------------------------------------- A. RENDER -- */
+
+function headerHTML(){
+  const p = PHASE;
+  const phases = p.phases.map(x=>{
+    const cur = x.code===p.code;
+    const lock = x.locked && !cur
+      ? '<svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>'
+      : '';
+    return `<a class="pb" href="${x.file}" ${cur?'aria-current="page"':''}><span class="pbn">${esc(x.code)}</span>${esc(x.short)}${lock}</a>`;
+  }).join('');
+
+  const chips = p.chips.map(c=>`<span class="chip">${c}</span>`).join('');
+
+  const widgets = p.widgets.map(w=>
+    `<div class="w"><span class="k">${esc(w.k)}</span><span class="v num" data-count="${w.v}">0</span></div>`).join('');
+
+  return `
+    <div>
+      <nav class="phasebar" aria-label="Project phases">${phases}</nav>
+      <div class="ident-line">
+        <svg class="ident-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <path d="M3 20h18"/><path d="M6 20V11M11 20V5M16 20v-6M21 20v-9"/>
+        </svg>
+        <span class="eyebrow">${esc(p.eyebrow)}</span>
+      </div>
+      <h1>${esc(p.title)} <span class="thin">${esc(p.subtitle)}</span></h1>
+      <p class="lede">${p.lede}</p>
+      <div class="status-row">
+        <span class="chip"><span class="pulse"></span> ${esc(p.status)}</span>
+        ${chips}
+      </div>
+    </div>
+    <div class="widgets" role="group" aria-label="Phase statistics">
+      ${widgets}
+      <div class="w ring-w">
+        <svg class="ring" viewBox="0 0 44 44" aria-hidden="true">
+          <circle class="trk" cx="22" cy="22" r="18"></circle>
+          <circle class="val" id="ringVal" cx="22" cy="22" r="18" stroke-dasharray="113" stroke-dashoffset="113"></circle>
+        </svg>
+        <div>
+          <span class="k">Checklist</span>
+          <span class="v num" id="ringPc">0<small>%</small></span>
+          <div class="active-dots" id="activeDots" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function subShell(id,index,title,inner){
+  return `
+  <section class="sub" id="${id}" data-title="${esc(title)}">
+    <div class="sub-headrow">
+      <button class="sub-head" aria-expanded="true" aria-controls="${id}-body">
+        <span class="idx">${pad(index)}</span>
+        <h3>${esc(title)}</h3>
+        <span class="rule"></span>
+        <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <button class="copy" type="button" data-copy="${id}" aria-label="Copy the ${esc(title)} section as text">Copy</button>
+    </div>
+    <div class="sub-wrap"><div class="sub-body" id="${id}-body"><div class="inner">${inner}</div></div></div>
+  </section>`;
+}
+
+function checklistHTML(m){
+  const items = m.check.map((t,i)=>{
+    const id = m.id+'-c'+i;
+    return `<li><label class="chk" for="${id}">
+      <input type="checkbox" id="${id}" data-chk="${id}">
+      <span class="box" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12 5.5 5.5L20 6"/></svg>
+      </span>
+      <span class="lbl">${t}</span>
+    </label></li>`;
+  }).join('');
+  return `<ul class="checks">${items}</ul>
+    <div class="chk-meter">
+      <div class="strip" data-strip="${m.id}">${m.check.map(()=>'<i></i>').join('')}</div>
+      <span class="pc" data-pc="${m.id}">0%</span>
+    </div>`;
+}
+
+function memberHTML(m){
+  const subs = PHASE.subs.map(([key,title],i)=>{
+    const body = key==='check' ? checklistHTML(m) : (m[key]||'');
+    return subShell(`${m.id}-${key}`, i+1, title, body);
+  }).join('');
+
+  const teaches = m.teaches
+    ? `<div class="teaches"><b>Owns the concept</b> ${esc(m.teaches)}</div>` : '';
+  const stat2 = m.talk
+    ? `<div class="mstat"><span class="k">Speaking</span><span class="v">${esc(m.talk)}</span></div>` : '';
+
+  return `
+  <article class="panel member rev" id="${m.id}" data-member="${m.id}" style="--accent:${m.color}">
+    <div class="idrail" aria-hidden="true">
+      <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${m.icon}</svg>
+      <span class="bar"></span>
+      <span class="vlabel">Member ${m.n}</span>
+      <span class="bar"></span>
+    </div>
+    <div class="member-body">
+      <div class="mhead">
+        <div>
+          <span class="eyebrow">Module 0${m.n} &mdash; ${esc(m.owns)}</span>
+          <h2 style="margin-top:6px">${esc(m.name)}</h2>
+          <p class="role">${esc(m.role)}</p>
+          ${teaches}
+        </div>
+        <div class="mstats">
+          ${stat2}
+          <div class="mstat"><span class="k">Tasks</span><span class="v num">${m.check.length}</span></div>
+        </div>
+      </div>
+      ${subs}
+    </div>
+  </article>`;
+}
+
+function briefHTML(){
+  const b = PHASE.brief;
+  const subs = b.subs.map(([id,title,inner],i)=>subShell(id,i+1,title,inner)).join('');
+  const gate = b.gate ? `<div class="gate"><span class="lab">${esc(b.gate.label)}</span>${b.gate.html}</div>` : '';
+  return `
+  <article class="panel brief rev" id="brief" data-member="shared" style="--accent:${b.color||'var(--m1)'}">
+    <div class="mhead">
+      <div>
+        <span class="eyebrow">${esc(b.kicker)}</span>
+        <h2 style="margin-top:6px">${esc(b.title)}</h2>
+        <p class="role">${esc(b.role)}</p>
+      </div>
+      <div class="mstats">
+        <div class="mstat"><span class="k">Repo</span><span class="v">1</span></div>
+        <div class="mstat"><span class="k">App</span><span class="v">1</span></div>
+      </div>
+    </div>
+    ${gate}
+    ${subs}
+  </article>`;
+}
+
+function render(){
+  $('#opsIn').innerHTML = headerHTML();
+  $('#content').innerHTML = briefHTML() + PHASE.members.map(memberHTML).join('') +
+    `<div class="no-result hidden" id="noResult"><b>Nothing matches that search</b>Try a shorter word, or clear the search to see everything again.</div>`;
+  $$('.sub-body .inner').forEach(el=>state.originals.set(el.closest('.sub').id, el.innerHTML));
+  buildSwitches();
+}
+
+/* ------------------------------------------------------------- B. FILTER -- */
+
+function buildSwitches(){
+  const box = $('#switches');
+  const mk = (val,label,color)=>{
+    const b = document.createElement('button');
+    b.className='sw'; b.type='button';
+    b.dataset.filter=val;
+    b.setAttribute('aria-pressed', String(val===state.filter));
+    b.innerHTML = `<span class="tick"></span>${label}`;
+    if(color) b.style.setProperty('--accent',color);
+    box.appendChild(b);
+  };
+  mk('all','All');
+  PHASE.members.forEach(m=>mk(m.id,'Member '+m.n,m.color));
+  applyFilter('all',true);
+}
+
+function applyFilter(val,instant){
+  state.filter = val;
+  const accent = val==='all' ? PHASE.members[0].color : (PHASE.members.find(m=>m.id===val)||{}).color;
+  document.documentElement.style.setProperty('--accent',accent);
+
+  $$('.sw').forEach(b=>{
+    const on = b.dataset.filter===val;
+    b.setAttribute('aria-pressed',String(on));
+    if(on) moveRail(b,instant);
+  });
+
+  $$('#content > .panel').forEach(p=>{
+    const show = val==='all' ? true : p.dataset.member===val;
+    p.classList.toggle('hidden', !show);
+  });
+
+  $$('#activeDots i').forEach((d,i)=>{
+    const m = PHASE.members[i];
+    d.style.background = (val==='all' || val===m.id) ? m.color : 'var(--border)';
+  });
+
+  applySearch();
+  buildRail();
+}
+
+function moveRail(btn,instant){
+  const rail = $('#swRail');
+  if(instant) rail.style.transition='none';
+  rail.style.left  = btn.offsetLeft+'px';
+  rail.style.width = btn.offsetWidth+'px';
+  if(instant) requestAnimationFrame(()=>rail.style.transition='');
+}
+
+/* --------------------------------------------------------------- SEARCH --- */
+
+function highlight(node,rx){
+  const walker = document.createTreeWalker(node,NodeFilter.SHOW_TEXT,null);
+  const hits=[]; let n;
+  while((n=walker.nextNode())){ rx.lastIndex=0; if(rx.test(n.nodeValue)) hits.push(n); }
+  hits.forEach(t=>{
+    const frag = document.createDocumentFragment();
+    let last=0, s=t.nodeValue, m; rx.lastIndex=0;
+    while((m=rx.exec(s))){
+      frag.append(s.slice(last,m.index));
+      const mk=document.createElement('mark'); mk.textContent=m[0]; frag.append(mk);
+      last=m.index+m[0].length;
+    }
+    frag.append(s.slice(last));
+    t.replaceWith(frag);
+  });
+}
+
+function applySearch(){
+  const q = state.query.trim();
+  $('#searchWrap').classList.toggle('has', q.length>0);
+
+  /* reset to whatever the member filter allows, then let the query narrow it.
+     without this, clearing a search leaves panels the search hid still hidden. */
+  $$('#content > .panel').forEach(p=>{
+    p.classList.toggle('hidden', !(state.filter==='all' || p.dataset.member===state.filter));
+  });
+
+  $$('.sub').forEach(sub=>{
+    const inner = sub.querySelector('.inner');
+    const orig = state.originals.get(sub.id);
+    if(orig !== undefined && inner.innerHTML !== orig) inner.innerHTML = orig;
+    sub.classList.remove('hidden');
+  });
+
+  if(q){
+    const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+    $$('#content > .panel:not(.hidden)').forEach(panel=>{
+      let panelHit = false;
+      $$('.sub',panel).forEach(sub=>{
+        const hay = sub.dataset.title+' '+sub.querySelector('.inner').textContent;
+        rx.lastIndex=0;
+        const hit = rx.test(hay);
+        sub.classList.toggle('hidden',!hit);
+        if(hit){ panelHit=true; rx.lastIndex=0; highlight(sub.querySelector('.inner'),rx); }
+      });
+      panel.classList.toggle('hidden',!panelHit);
+    });
+  }
+
+  $('#noResult').classList.toggle('hidden', $$('#content > .panel:not(.hidden)').length>0);
+  restoreState();
+  buildRail();
+}
+
+/* ----------------------------------------------------------------- C. RAIL */
+
+function buildRail(){
+  const list = $('#railList');
+  list.querySelectorAll('.rail-grp,.rail-empty').forEach(n=>n.remove());
+  let count=0;
+
+  $$('#content > .panel:not(.hidden)').forEach(p=>{
+    const subs = $$('.sub:not(.hidden)',p);
+    if(!subs.length) return;
+    const shared = p.dataset.member==='shared';
+    const m = PHASE.members.find(x=>x.id===p.dataset.member);
+    const g = document.createElement('div');
+    g.className='rail-grp';
+    if(m) g.style.setProperty('--accent',m.color);
+    g.innerHTML = `<div class="g-title"><span class="swatch"></span>${shared?esc(PHASE.brief.title):'Member '+m.n}</div>`;
+    const box = document.createElement('div');
+    box.className='rail-sub';
+    subs.forEach(s=>{
+      const a=document.createElement('a');
+      a.className='rail-link'; a.href='#'+s.id; a.dataset.target=s.id;
+      a.textContent = s.dataset.title;
+      box.appendChild(a); count++;
+    });
+    g.appendChild(box);
+    list.appendChild(g);
+  });
+
+  if(!count){
+    const e=document.createElement('div'); e.className='rail-empty';
+    e.textContent='No sections in this view.'; list.appendChild(e);
+    $('#railTrack').style.opacity=0;
+  }
+  $('#railCount').textContent = count ? count+' sections' : '\u2014';
+  observeSections();
+}
+
+/* ------------------------------------------------------------ D. SCROLLSPY */
+let spy = null;
+function observeSections(){
+  if(spy) spy.disconnect();
+  const visible = $$('#content .sub:not(.hidden)').filter(s=>!s.closest('.panel').classList.contains('hidden'));
+  if(!visible.length) return;
+  spy = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{ if(e.isIntersecting) setActive(e.target.id); });
+  },{rootMargin:'-150px 0px -66% 0px',threshold:0});
+  visible.forEach(s=>spy.observe(s));
+}
+
+function setActive(id){
+  let hit=null;
+  $$('.rail-link').forEach(a=>{
+    const on = a.dataset.target===id;
+    a.classList.toggle('on',on);
+    if(on) hit=a;
+  });
+  const track=$('#railTrack');
+  if(hit){
+    const list=$('#railList');
+    track.style.opacity=1;
+    track.style.top   = (hit.offsetTop+4)+'px';
+    track.style.height= (hit.offsetHeight-8)+'px';
+    const t=hit.offsetTop, b=t+hit.offsetHeight;
+    if(t<list.scrollTop || b>list.scrollTop+list.clientHeight){
+      list.scrollTo({top:t-list.clientHeight/2,behavior:'smooth'});
+    }
+  }
+}
+
+/* --------------------------------------------------- E. CHECKS & PROGRESS - */
+
+function restoreState(){
+  $$('[data-chk]').forEach(cb=>{ cb.checked = state.done.has(cb.dataset.chk); });
+  $$('.sub').forEach(sub=>{
+    const closed = state.closed.has(sub.id);
+    sub.classList.toggle('closed',closed);
+    const btn=sub.querySelector('.sub-head');
+    if(btn) btn.setAttribute('aria-expanded',String(!closed));
+  });
+  updateProgress();
+}
+
+function updateProgress(){
+  let total=0, done=0;
+  PHASE.members.forEach(m=>{
+    const n=m.check.length; let d=0;
+    for(let i=0;i<n;i++) if(state.done.has(m.id+'-c'+i)) d++;
+    total+=n; done+=d;
+    const strip=$('[data-strip="'+m.id+'"]');
+    if(strip) [...strip.children].forEach((seg,i)=>seg.classList.toggle('fill',i<d));
+    const pc=$('[data-pc="'+m.id+'"]');
+    if(pc) pc.textContent = Math.round(d/n*100)+'%';
+  });
+  const ratio = total? done/total : 0;
+  $('#ringVal').style.strokeDashoffset = String(2*Math.PI*18*(1-ratio));
+  $('#ringPc').innerHTML = Math.round(ratio*100)+'<small>%</small>';
+}
+
+/* ------------------------------------------------------------- F. CHROME -- */
+
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),1700);
+}
+
+function setTheme(next){
+  document.documentElement.dataset.theme = next;
+  $('#themeLabel').textContent = next==='dark' ? 'Dark' : 'Light';
+  $('#themeIcon').innerHTML = next==='dark'
+    ? '<path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/>'
+    : '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/>';
+}
+
+function countUp(el){
+  const target = +el.dataset.count, dur = 900, t0 = performance.now();
+  const step = t => {
+    const p = Math.min(1,(t-t0)/dur);
+    el.textContent = Math.round(target*(1-Math.pow(1-p,3)));
+    if(p<1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function copySection(id){
+  const sub = document.getElementById(id);
+  if(!sub) return;
+  const title = sub.dataset.title;
+  const text  = title+'\n'+'-'.repeat(title.length)+'\n\n'+sub.querySelector('.inner').innerText.trim();
+  const done = ()=>{
+    toast('Section copied');
+    const btn=sub.querySelector('.copy');
+    btn.classList.add('ok'); btn.textContent='Copied';
+    setTimeout(()=>{btn.classList.remove('ok');btn.textContent='Copy';},1500);
+  };
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+  } else fallbackCopy(text,done);
+}
+function fallbackCopy(text,cb){
+  const ta=document.createElement('textarea');
+  ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); cb(); }catch(e){ toast('Copy not available'); }
+  ta.remove();
+}
+
+function setAll(closed){
+  state.closed.clear();
+  if(closed) $$('.sub').forEach(s=>state.closed.add(s.id));
+  restoreState();
+  toast(closed?'All sections collapsed':'All sections expanded');
+}
+
+function closeRail(){
+  $('#rail').classList.remove('open');
+  $('#scrim').classList.remove('on');
+  $('#tocBtn').setAttribute('aria-expanded','false');
+}
+
+/* --------------------------------------------------------------- WIRING --- */
+
+function init(){
+  document.title = PHASE.docTitle;
+  render();
+  setTheme('dark');
+
+  $$('[data-count]').forEach(countUp);
+  PHASE.members.forEach(m=>{
+    const d=document.createElement('i');
+    d.style.background=m.color;
+    $('#activeDots').appendChild(d);
+  });
+  updateProgress();
+
+  /* delegated so search-driven innerHTML swaps never orphan a handler */
+  document.addEventListener('click',e=>{
+    const sw = e.target.closest('.sw');
+    if(sw){ applyFilter(sw.dataset.filter); window.scrollTo({top:0,behavior:'smooth'}); return; }
+
+    const cp = e.target.closest('.copy');
+    if(cp){ e.preventDefault(); copySection(cp.dataset.copy); return; }
+
+    const head = e.target.closest('.sub-head');
+    if(head){
+      const sub = head.closest('.sub');
+      if(state.closed.has(sub.id)) state.closed.delete(sub.id); else state.closed.add(sub.id);
+      sub.classList.toggle('closed');
+      head.setAttribute('aria-expanded',String(!sub.classList.contains('closed')));
+      return;
+    }
+
+    const link = e.target.closest('.rail-link');
+    if(link){
+      e.preventDefault();
+      const t=document.getElementById(link.dataset.target);
+      if(t){
+        state.closed.delete(t.id); t.classList.remove('closed');
+        t.querySelector('.sub-head').setAttribute('aria-expanded','true');
+        t.scrollIntoView({behavior:'smooth',block:'start'});
+        setActive(t.id);
+      }
+      closeRail();
+    }
+  });
+
+  document.addEventListener('change',e=>{
+    const cb=e.target.closest('[data-chk]');
+    if(!cb) return;
+    if(cb.checked) state.done.add(cb.dataset.chk); else state.done.delete(cb.dataset.chk);
+    updateProgress();
+  });
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='/' && !/input|textarea/i.test(e.target.tagName)){ e.preventDefault(); $('#search').focus(); }
+    if(e.key==='Escape'){
+      if($('#search').value){ $('#search').value=''; state.query=''; applySearch(); }
+      closeRail();
+    }
+  });
+
+  let deb;
+  $('#search').addEventListener('input',e=>{
+    clearTimeout(deb);
+    deb=setTimeout(()=>{ state.query=e.target.value; applySearch(); },140);
+  });
+  $('#clearSearch').addEventListener('click',()=>{
+    $('#search').value=''; state.query=''; applySearch(); $('#search').focus();
+  });
+
+  $('#btnTop').onclick      = ()=>window.scrollTo({top:0,behavior:'smooth'});
+  $('#btnExpand').onclick   = ()=>setAll(false);
+  $('#btnCollapse').onclick = ()=>setAll(true);
+  $('#btnPrint').onclick    = ()=>window.print();
+  $('#themeToggle').onclick = ()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+
+  $('#tocBtn').onclick = ()=>{
+    const open = $('#rail').classList.toggle('open');
+    $('#scrim').classList.toggle('on',open);
+    $('#tocBtn').setAttribute('aria-expanded',String(open));
+  };
+  $('#scrim').onclick = closeRail;
+
+  const ro = new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); ro.unobserve(e.target); } });
+  },{rootMargin:'0px 0px -8% 0px'});
+  $$('.rev').forEach(el=>ro.observe(el));
+
+  window.addEventListener('resize',()=>{
+    const on=$('.sw[aria-pressed="true"]');
+    if(on) moveRail(on,true);
+  });
+}
+
+document.addEventListener('DOMContentLoaded',init);
+
+</script>
+</body>
+</html>

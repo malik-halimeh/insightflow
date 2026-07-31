@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InsightFlow — Phase 1 Build Roadmap</title>
+<meta name="description" content="Sales data in, business advice out, and the interesting findings published to a public feed. One repository, five owners, five days. Every member owns">
+<style>
+/* ============================================================================
+   1. TOKENS — the entire colour system lives here. Theme switching is a single
+      attribute flip on <html data-theme>, so every surface animates together.
+   ========================================================================== */
+:root{
+  --bg:#0F141B;
+  --bg-2:#171E28;
+  --panel:#1D2633;
+  --border:#2C3748;
+  --text:#F5F7FA;
+  --text-2:#B7C0CC;
+  --muted:#7E8794;
+
+  --grid-line:rgba(255,255,255,.030);
+  --grid-dot:rgba(255,255,255,.055);
+  --grid-diag:rgba(255,255,255,.014);
+  --panel-hi:rgba(255,255,255,.024);
+  --inset:rgba(0,0,0,.22);
+  --mark:rgba(245,158,11,.30);
+
+  --m1:#3B82F6; --m2:#8B5CF6; --m3:#10B981; --m4:#F59E0B; --m5:#EF4444;
+  --accent:var(--m1);
+
+  --r:10px;
+  --pad:22px;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+html[data-theme="light"]{
+  --bg:#F6F8FB;
+  --bg-2:#EEF2F7;
+  --panel:#FFFFFF;
+  --border:#D5DEE8;
+  --text:#1B2735;
+  --text-2:#516170;
+  --muted:#738191;
+
+  --grid-line:rgba(27,39,53,.038);
+  --grid-dot:rgba(27,39,53,.070);
+  --grid-diag:rgba(27,39,53,.018);
+  --panel-hi:rgba(27,39,53,.020);
+  --inset:rgba(27,39,53,.06);
+  --mark:rgba(245,158,11,.34);
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:150px}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  font-size:15px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+  transition:background .38s var(--ease), color .38s var(--ease);
+}
+html,body{overflow-x:clip}
+
+/* ============================================================================
+   2. BLUEPRINT FIELD — pure CSS. A 1px grid, intersection dots at every fourth
+      node, and two extremely faint construction diagonals. Fixed so the page
+      reads as drawn *on* a surface rather than scrolling over a texture.
+   ========================================================================== */
+body::before{
+  content:"";
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:
+    linear-gradient(var(--grid-line) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-line) 1px,transparent 1px),
+    radial-gradient(circle at 1px 1px,var(--grid-dot) 1px,transparent 0),
+    linear-gradient(115deg,transparent 49.94%,var(--grid-diag) 49.94%,var(--grid-diag) 50.06%,transparent 50.06%),
+    linear-gradient(-115deg,transparent 39.94%,var(--grid-diag) 39.94%,var(--grid-diag) 40.06%,transparent 40.06%);
+  background-size:28px 28px,28px 28px,112px 112px,100% 100%,100% 100%;
+  transition:background-image .38s var(--ease);
+}
+.shell{position:relative;z-index:1}
+
+/* ============================================================================
+   3. TYPE SCALE
+   ========================================================================== */
+h1,h2,h3,h4{margin:0;font-weight:640;letter-spacing:-.012em;line-height:1.2}
+p{margin:0 0 .85em}
+.eyebrow{
+  font-family:var(--mono);
+  font-size:10.5px;
+  letter-spacing:.20em;
+  text-transform:uppercase;
+  color:var(--muted);
+  font-weight:600;
+}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+code{
+  font-family:var(--mono);
+  font-size:.855em;
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:.09em .38em;
+  color:var(--text);
+  word-break:break-word;
+}
+a{color:inherit}
+
+/* ============================================================================
+   4. OPERATIONS HEADER
+   ========================================================================== */
+.ops{
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,var(--bg-2),transparent);
+}
+.wrap{max-width:1400px;margin:0 auto;padding:0 26px}
+.ops-in{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:34px;
+  align-items:end;
+  padding:34px 0 26px;
+}
+.ident-line{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.ident-mark{width:15px;height:15px;flex:none;color:var(--m1)}
+.ops h1{
+  font-size:clamp(28px,4.4vw,46px);
+  letter-spacing:-.028em;
+  font-weight:700;
+}
+.ops h1 .thin{font-weight:340;color:var(--text-2)}
+.ops .lede{
+  color:var(--text-2);
+  max-width:62ch;
+  margin-top:12px;
+  font-size:15px;
+}
+.status-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{
+  display:inline-flex;align-items:center;gap:7px;
+  border:1px solid var(--border);
+  background:var(--panel);
+  border-radius:6px;
+  padding:5px 10px;
+  font-family:var(--mono);
+  font-size:10.5px;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:var(--text-2);
+}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--m3);flex:none;position:relative}
+.pulse::after{
+  content:"";position:absolute;inset:-4px;border-radius:50%;
+  border:1px solid var(--m3);opacity:.42;
+  animation:ping 2.6s var(--ease) infinite;
+}
+@keyframes ping{0%{transform:scale(.6);opacity:.5}70%{transform:scale(1.5);opacity:0}100%{opacity:0}}
+
+/* Engineering widgets — deliberately not cards: hairline-separated columns. */
+.widgets{
+  display:flex;
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  background:var(--panel);
+  overflow:hidden;
+}
+.w{
+  padding:14px 20px;
+  border-right:1px solid var(--border);
+  min-width:112px;
+}
+.w:last-child{border-right:0}
+.w .k{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.17em;
+  text-transform:uppercase;color:var(--muted);display:block;margin-bottom:7px;
+}
+.w .v{font-size:25px;font-weight:660;letter-spacing:-.03em;line-height:1}
+.w .v small{font-size:12px;font-weight:500;color:var(--muted);letter-spacing:0}
+.w.ring-w{display:flex;align-items:center;gap:13px}
+.ring{width:50px;height:50px;flex:none;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:5;stroke-linecap:butt}
+.ring .trk{stroke:var(--border)}
+.ring .val{stroke:var(--m3);transition:stroke-dashoffset .9s var(--ease)}
+.active-dots{display:flex;gap:4px;margin-top:8px}
+.active-dots i{width:15px;height:3px;border-radius:1px;background:var(--border);transition:background .25s}
+
+/* ============================================================================
+   5. CONTROL BAR — filters read as machine switches: square, bordered, with a
+      sliding indicator rail underneath rather than a pill highlight.
+   ========================================================================== */
+.control{
+  position:sticky;top:0;z-index:60;
+  background:color-mix(in srgb,var(--bg) 88%,transparent);
+  -webkit-backdrop-filter:saturate(1.5) blur(9px);
+  backdrop-filter:saturate(1.5) blur(9px);
+  border-bottom:1px solid var(--border);
+}
+.control-in{
+  display:flex;align-items:center;gap:16px;
+  padding:11px 0;
+}
+.switches{
+  position:relative;
+  display:flex;gap:6px;
+  overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:none;
+  padding-bottom:5px;
+  flex:1;min-width:0;
+}
+.switches::-webkit-scrollbar{display:none}
+.sw{
+  position:relative;
+  flex:none;
+  appearance:none;
+  border:1px solid var(--border);
+  background:var(--bg-2);
+  color:var(--text-2);
+  border-radius:7px;
+  padding:8px 13px;
+  font-family:var(--mono);
+  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;
+  cursor:pointer;
+  display:flex;align-items:center;gap:8px;
+  transition:background .2s,color .2s,border-color .2s,transform .09s;
+}
+.sw:hover{background:var(--panel);color:var(--text)}
+.sw:active{transform:translateY(1px)}
+.sw .tick{width:6px;height:6px;border-radius:1px;background:currentColor;opacity:.42}
+.sw[aria-pressed="true"]{background:var(--panel);color:var(--text);border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}
+.sw[aria-pressed="true"] .tick{opacity:1;color:var(--accent)}
+.sw-rail{
+  position:absolute;bottom:0;height:2px;border-radius:1px;
+  background:var(--accent);
+  transition:left .34s var(--ease),width .34s var(--ease),background .28s;
+  pointer-events:none;
+}
+.search{
+  position:relative;flex:none;width:min(280px,38vw);
+}
+.search svg{
+  position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  width:14px;height:14px;color:var(--muted);pointer-events:none;
+}
+.search input{
+  width:100%;
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:7px;
+  color:var(--text);
+  padding:9px 30px 9px 32px;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;
+  transition:border-color .2s,background .2s;
+}
+.search input::placeholder{color:var(--muted);letter-spacing:.11em;text-transform:uppercase;font-size:10px}
+.search input:focus{outline:none;border-color:var(--accent);background:var(--panel)}
+.search .clear{
+  position:absolute;right:7px;top:50%;transform:translateY(-50%);
+  background:none;border:0;color:var(--muted);cursor:pointer;padding:4px;line-height:0;
+  opacity:0;pointer-events:none;transition:opacity .18s;
+}
+.search.has .clear{opacity:1;pointer-events:auto}
+.toc-btn{display:none}
+
+/* ============================================================================
+   6. LAYOUT — navigation rail left, content right.
+   ========================================================================== */
+.main{
+  display:grid;
+  grid-template-columns:264px minmax(0,1fr);
+  gap:44px;
+  padding:34px 0 120px;
+  align-items:start;
+}
+
+/* --- Navigation rail ------------------------------------------------------ */
+.rail{position:sticky;top:78px;max-height:calc(100vh - 100px);display:flex;flex-direction:column}
+.rail-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:12px;
+}
+.rail-list{overflow-y:auto;padding-right:6px;scrollbar-width:thin;flex:1}
+.rail-list::-webkit-scrollbar{width:4px}
+.rail-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.rail-grp{margin-bottom:16px}
+.rail-grp > .g-title{
+  display:flex;align-items:center;gap:9px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text-2);font-weight:600;padding:5px 0 7px;
+}
+.rail-grp > .g-title .swatch{width:3px;height:13px;border-radius:1px;background:var(--accent);flex:none}
+.rail-sub{position:relative;padding-left:11px}
+/* thin connector line for nested headings */
+.rail-sub::before{
+  content:"";position:absolute;left:1px;top:2px;bottom:8px;width:1px;background:var(--border);
+}
+.rail-link{
+  position:relative;display:block;
+  padding:5px 9px 5px 14px;
+  color:var(--muted);
+  font-size:12.5px;line-height:1.4;
+  text-decoration:none;border-radius:5px;
+  transition:color .2s,background .2s;
+}
+.rail-link::before{
+  content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:7px;height:1px;background:var(--border);transition:background .2s,width .2s;
+}
+.rail-link:hover{color:var(--text-2);background:var(--panel-hi)}
+.rail-link.on{color:var(--text);font-weight:620;background:var(--panel-hi)}
+.rail-link.on::before{background:var(--accent);width:9px}
+.rail-track{
+  position:absolute;left:-11px;width:2px;border-radius:1px;background:var(--accent);
+  transition:top .3s var(--ease),height .3s var(--ease),opacity .2s;opacity:0;
+}
+.rail-empty{color:var(--muted);font-size:12.5px;padding:8px 0}
+
+/* --- Architectural panels ------------------------------------------------- */
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  transition:border-color .28s,box-shadow .28s,transform .28s var(--ease),background .38s var(--ease);
+}
+.member{
+  position:relative;
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr);
+  margin-bottom:26px;
+  overflow:hidden;
+}
+.member:hover{box-shadow:0 1px 0 var(--panel-hi),0 12px 30px -22px var(--inset)}
+
+/* Identifier rail — the signature device. Colour lives here and nowhere else. */
+.idrail{
+  border-right:1px solid var(--border);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 11%,transparent),transparent 62%);
+  display:flex;flex-direction:column;align-items:center;
+  padding:16px 0 18px;gap:14px;
+}
+.idrail .bar{width:3px;flex:1;min-height:40px;border-radius:2px;background:var(--accent);opacity:.9}
+.idrail .glyph{width:20px;height:20px;color:var(--accent);flex:none}
+.idrail .vlabel{
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--accent);font-weight:700;white-space:nowrap;flex:none;
+}
+.member-body{padding:var(--pad) var(--pad) 8px;min-width:0}
+
+.mhead{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.mhead h2{font-size:21px;letter-spacing:-.02em}
+.mhead .role{color:var(--text-2);font-size:13.5px;margin-top:4px;max-width:64ch}
+.mstats{display:flex;gap:16px;align-items:center;flex:none}
+.mstat{text-align:right}
+.mstat .k{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:block}
+.mstat .v{font-size:16px;font-weight:650;letter-spacing:-.02em}
+
+/* Segmented progress strip */
+.strip{display:flex;gap:2px;margin-top:9px}
+.strip i{
+  height:5px;flex:1;border-radius:1px;
+  background:var(--border);
+  transition:background .3s var(--ease);
+}
+.strip i.fill{background:var(--accent)}
+
+/* --- Section headers: monospace index + rule ------------------------------ */
+.sub{border-top:1px solid var(--border);margin-top:14px}
+.sub:first-of-type{margin-top:16px}
+.sub-headrow{display:flex;align-items:center;gap:10px}
+.sub-head{
+  flex:1;min-width:0;
+  display:flex;align-items:center;gap:13px;
+  background:none;border:0;color:inherit;
+  padding:14px 2px;cursor:pointer;text-align:left;font:inherit;
+}
+.sub-head .idx{
+  font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.05em;
+  color:var(--accent);flex:none;width:20px;
+}
+.sub-head h3{font-size:13px;letter-spacing:.055em;text-transform:uppercase;font-weight:660;flex:none}
+.sub-head .rule{flex:1;height:1px;background:var(--border);min-width:14px}
+.sub-head .caret{width:13px;height:13px;color:var(--muted);flex:none;transition:transform .3s var(--ease)}
+.sub-head:hover .caret{color:var(--text-2)}
+.sub.closed .caret{transform:rotate(-90deg)}
+.sub-head:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:5px}
+
+/* height animation without measuring: 1fr -> 0fr */
+.sub-wrap{display:grid;grid-template-rows:1fr;transition:grid-template-rows .34s var(--ease)}
+.sub.closed .sub-wrap{grid-template-rows:0fr}
+.sub-body{overflow:hidden;min-height:0}
+.sub-body > .inner{padding:0 2px 20px;color:var(--text-2)}
+.sub-body .inner > *:first-child{margin-top:0}
+
+.copy{
+  flex:none;
+  border:1px solid var(--border);background:var(--bg-2);color:var(--muted);
+  border-radius:5px;padding:5px 9px;cursor:pointer;
+  font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  opacity:0;
+  transition:color .2s,border-color .2s,background .2s,opacity .2s;
+}
+.sub-headrow:hover .copy,.copy:focus-visible{opacity:1}
+.copy:hover{color:var(--text);border-color:var(--accent)}
+@media (hover:none){.copy{opacity:1}}
+.copy.ok{color:var(--m3);border-color:var(--m3)}
+
+/* --- Content primitives --------------------------------------------------- */
+.sub-body h4{
+  font-size:12px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--text);margin:18px 0 8px;font-weight:660;
+}
+.sub-body ul,.sub-body ol{margin:0 0 12px;padding-left:19px}
+.sub-body li{margin-bottom:5px}
+.sub-body li::marker{color:var(--muted)}
+.sub-body strong{color:var(--text);font-weight:640}
+
+.step{
+  display:grid;grid-template-columns:26px minmax(0,1fr);gap:12px;
+  padding:11px 0;border-bottom:1px dashed var(--border);
+}
+.step:last-child{border-bottom:0}
+.step .d{
+  font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;
+  color:var(--accent);padding-top:3px;
+}
+.step .t{margin:0}
+.step .t b{color:var(--text);font-weight:650}
+
+table{width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:13.5px}
+th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--border);vertical-align:top}
+th{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;border-bottom-color:var(--border);
+}
+tbody tr:last-child td{border-bottom:0}
+td:first-child{color:var(--text);font-weight:560}
+
+.note{
+  border:1px solid var(--border);
+  border-left:2px solid var(--accent);
+  background:var(--bg-2);
+  border-radius:0 7px 7px 0;
+  padding:12px 15px;margin:12px 0;
+  font-size:13.5px;
+}
+.note .lab{
+  display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.17em;
+  text-transform:uppercase;color:var(--accent);margin-bottom:5px;font-weight:700;
+}
+.note.warn{border-left-color:var(--m4)}
+.note.warn .lab{color:var(--m4)}
+.note.stop{border-left-color:var(--m5)}
+.note.stop .lab{color:var(--m5)}
+
+pre{
+  background:var(--bg-2);border:1px solid var(--border);border-radius:7px;
+  padding:13px 15px;overflow-x:auto;margin:10px 0 14px;
+  font-family:var(--mono);font-size:12px;line-height:1.65;color:var(--text-2);
+}
+pre b{color:var(--accent);font-weight:600}
+
+.say{
+  border:1px solid var(--border);background:var(--bg-2);
+  border-radius:7px;padding:11px 14px;margin:9px 0 14px;
+  font-size:13.5px;color:var(--text);
+}
+.say::before{
+  content:"Say this";display:block;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:5px;font-weight:700;
+}
+
+/* --- Technical checklist indicators --------------------------------------- */
+.checks{list-style:none;margin:4px 0 8px;padding:0}
+.chk{
+  display:flex;align-items:flex-start;gap:11px;
+  padding:9px 10px;border-radius:7px;cursor:pointer;
+  border:1px solid transparent;
+  transition:background .18s,border-color .18s;
+  position:relative;
+}
+.chk:hover{background:var(--panel-hi);border-color:var(--border)}
+.chk input{position:absolute;opacity:0;width:1px;height:1px}
+.chk .box{
+  position:relative;flex:none;width:17px;height:17px;margin-top:2px;
+  border:1px solid var(--border);border-radius:4px;background:var(--bg-2);
+  transition:border-color .22s,background .22s;
+}
+.chk .box svg{
+  position:absolute;inset:2px;width:11px;height:11px;color:var(--accent);
+  stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .32s var(--ease);
+}
+.chk .box::after{
+  content:"";position:absolute;left:0;bottom:0;height:2px;width:0;
+  background:var(--accent);border-radius:0 0 3px 3px;transition:width .34s var(--ease);
+}
+.chk input:checked ~ .box{border-color:var(--accent)}
+.chk input:checked ~ .box svg{stroke-dashoffset:0}
+.chk input:checked ~ .box::after{width:100%}
+.chk input:focus-visible ~ .box{outline:2px solid var(--accent);outline-offset:2px}
+.chk .lbl{font-size:13.5px;color:var(--text-2);transition:color .2s}
+.chk input:checked ~ .lbl{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--border)}
+
+.chk-meter{display:flex;align-items:center;gap:11px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.chk-meter .strip{flex:1;margin:0}
+.chk-meter .pc{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.04em;min-width:38px;text-align:right}
+
+/* --- Shared briefing block ------------------------------------------------ */
+.brief{margin-bottom:26px;padding:var(--pad)}
+.brief .sub:first-of-type{margin-top:14px}
+.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;margin:14px 0 6px}
+.tl{
+  border:1px solid var(--border);border-radius:6px;padding:11px 11px 13px;background:var(--bg-2);
+  transition:border-color .25s,background .25s;
+}
+.tl:hover{border-color:var(--muted)}
+.tl .dd{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+.tl .tt{font-size:12.5px;color:var(--text);margin-top:5px;line-height:1.4}
+.tl.crit{border-color:color-mix(in srgb,var(--m5) 46%,var(--border))}
+.tl.crit .dd{color:var(--m5)}
+
+/* ============================================================================
+   7. FLOATING CONTROLS
+   ========================================================================== */
+.dock{
+  position:fixed;right:20px;bottom:20px;z-index:70;
+  display:flex;flex-direction:column;gap:6px;
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--r);
+  padding:6px;box-shadow:0 14px 34px -24px var(--inset);
+}
+.dock button{
+  width:36px;height:36px;display:grid;place-items:center;
+  background:none;border:0;border-radius:7px;color:var(--muted);cursor:pointer;
+  transition:background .18s,color .18s,transform .09s;
+}
+.dock button:hover{background:var(--bg-2);color:var(--text)}
+.dock button:active{transform:translateY(1px)}
+.dock button svg{width:16px;height:16px}
+.dock .sep{height:1px;background:var(--border);margin:2px 4px}
+.dock button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+
+.theme-toggle{
+  position:fixed;right:20px;top:74px;z-index:70;
+  display:flex;align-items:center;gap:8px;
+  background:var(--panel);border:1px solid var(--border);border-radius:8px;
+  padding:8px 11px;color:var(--text-2);cursor:pointer;
+  font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;font-weight:600;
+  transition:color .2s,border-color .2s,background .38s var(--ease);
+}
+.theme-toggle:hover{color:var(--text);border-color:var(--muted)}
+.theme-toggle svg{width:14px;height:14px}
+
+mark{background:var(--mark);color:var(--text);border-radius:2px;padding:0 1px}
+.hidden{display:none !important}
+
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);
+  background:var(--panel);border:1px solid var(--border);border-radius:8px;
+  padding:9px 15px;color:var(--text);z-index:90;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  opacity:0;pointer-events:none;transition:opacity .25s,transform .25s var(--ease);
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.no-result{padding:40px 26px;text-align:center;color:var(--muted)}
+.no-result b{display:block;color:var(--text);font-size:16px;margin-bottom:6px}
+
+/* scroll reveal */
+.rev{opacity:0;transform:translateY(10px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+.rev.in{opacity:1;transform:none}
+
+/* ============================================================================
+   8. RESPONSIVE
+   ========================================================================== */
+@media (max-width:1080px){
+  .main{grid-template-columns:1fr;gap:0}
+  .rail{
+    position:fixed;inset:0 auto 0 0;width:min(310px,86vw);z-index:80;
+    background:var(--panel);border-right:1px solid var(--border);
+    max-height:none;padding:18px;
+    transform:translateX(-102%);transition:transform .32s var(--ease);
+    box-shadow:0 0 60px -20px var(--inset);
+  }
+  .rail.open{transform:none}
+  .toc-btn{
+    display:flex;align-items:center;gap:7px;flex:none;
+    border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);
+    border-radius:7px;padding:8px 11px;cursor:pointer;
+    font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;
+  }
+  .toc-btn svg{width:13px;height:13px}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:79;opacity:0;pointer-events:none;transition:opacity .3s}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .theme-toggle{top:auto;bottom:20px;right:68px}
+}
+@media (max-width:860px){
+  .ops-in{grid-template-columns:1fr;align-items:start;gap:22px}
+  .widgets{flex-wrap:wrap}
+  .w{flex:1 1 40%;border-bottom:1px solid var(--border)}
+  .timeline{grid-template-columns:repeat(2,1fr)}
+  .search{width:auto;flex:1;min-width:120px}
+}
+@media (max-width:620px){
+  .wrap{padding:0 16px}
+  .member{grid-template-columns:34px minmax(0,1fr)}
+  .member-body{padding:16px 15px 6px}
+  .brief{padding:16px 15px}
+  .idrail .vlabel{font-size:9px;letter-spacing:.22em}
+  .mstats{width:100%;justify-content:flex-start}
+  .mstat{text-align:left}
+  th,td{padding:7px 8px;font-size:12.5px}
+  .theme-toggle span{display:none}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important;scroll-behavior:auto !important}
+  .rev{opacity:1;transform:none}
+}
+
+/* ============================================================================
+   9. PRINT — strip every control, flatten every accordion, drop the blueprint.
+   ========================================================================== */
+@media print{
+  @page{margin:15mm}
+  html,body{background:#fff !important;color:#000 !important}
+  body::before,.control,.dock,.theme-toggle,.rail,.scrim,.copy,.toast,.toc-btn,.search{display:none !important}
+  .main{display:block;padding:0}
+  .shell,.wrap{max-width:none;padding:0}
+  .ops{border-bottom:1px solid #999;background:none}
+  .ops-in{padding:0 0 14px}
+  .widgets,.panel,.member,.brief{border-color:#bbb !important;background:#fff !important;box-shadow:none !important;break-inside:auto}
+  .member{page-break-before:always;margin-bottom:14px}
+  .brief{page-break-after:always}
+  .sub-wrap{grid-template-rows:1fr !important}
+  .sub.closed .sub-wrap{grid-template-rows:1fr !important}
+  .sub-body{overflow:visible !important}
+  .sub,.step,table,.note,pre,.chk{break-inside:avoid}
+  .idrail{background:none !important;border-right:1px solid #bbb !important}
+  .rev{opacity:1 !important;transform:none !important}
+  a{text-decoration:none}
+  .note,pre,.say,code,.tl{background:#f4f4f4 !important;color:#000 !important}
+  .sub-body > .inner{color:#111}
+}
+
+/* ============================================================================
+   10. PHASE ADDITIONS — continuity between the three roadmap files
+   ========================================================================== */
+.phasebar{display:flex;gap:2px;margin-bottom:16px;flex-wrap:wrap}
+.pb{
+  display:flex;align-items:center;gap:9px;
+  border:1px solid var(--border);background:var(--bg-2);
+  border-radius:7px;padding:7px 12px;text-decoration:none;color:var(--muted);
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;
+  transition:color .2s,border-color .2s,background .2s;
+}
+.pb:hover{color:var(--text);border-color:var(--muted)}
+.pb .pbn{
+  font-size:9px;color:var(--muted);border:1px solid var(--border);border-radius:3px;
+  padding:1px 5px;letter-spacing:.06em;
+}
+.pb[aria-current="page"]{
+  background:var(--panel);color:var(--text);
+  border-color:color-mix(in srgb,var(--accent) 60%,var(--border));
+}
+.pb[aria-current="page"] .pbn{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}
+.pb .lock{width:11px;height:11px;opacity:.7}
+
+.gate{
+  border:1px solid color-mix(in srgb,var(--m4) 42%,var(--border));
+  border-radius:var(--r);
+  background:var(--bg-2);
+  padding:15px 18px;margin:0 0 22px;
+}
+.gate .lab{
+  display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--m4);margin-bottom:7px;font-weight:700;
+}
+.gate ul{margin:8px 0 0;padding-left:19px}
+.gate li{margin-bottom:4px;color:var(--text-2)}
+.gate p{margin:0 0 4px;color:var(--text)}
+
+.teaches{
+  display:inline-flex;align-items:center;gap:7px;
+  border:1px solid var(--border);border-left:2px solid var(--accent);
+  background:var(--bg-2);border-radius:0 6px 6px 0;
+  padding:5px 11px;margin-top:9px;
+  font-size:12.5px;color:var(--text-2);
+}
+.teaches b{
+  font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);font-weight:700;
+}
+@media print{
+  .phasebar{display:none !important}
+  .gate{border-color:#bbb !important;background:#f4f4f4 !important}
+  .teaches{background:#f4f4f4 !important}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<header class="ops">
+  <div class="wrap"><div class="ops-in" id="opsIn"></div></div>
+</header>
+
+<nav class="control" aria-label="View controls">
+  <div class="wrap control-in">
+    <button class="toc-btn" id="tocBtn" aria-expanded="false" aria-controls="rail">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      Contents
+    </button>
+    <div class="switches" id="switches" role="group" aria-label="Filter by member">
+      <span class="sw-rail" id="swRail" aria-hidden="true"></span>
+    </div>
+    <div class="search" id="searchWrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+      <input id="search" type="search" placeholder="Search roadmap" aria-label="Search the roadmap" autocomplete="off">
+      <button class="clear" id="clearSearch" aria-label="Clear search">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="main">
+    <aside class="rail" id="rail" aria-label="Table of contents">
+      <div class="rail-head">
+        <span class="eyebrow">Contents</span>
+        <span class="eyebrow" id="railCount">&mdash;</span>
+      </div>
+      <div class="rail-list" id="railList">
+        <span class="rail-track" id="railTrack" aria-hidden="true"></span>
+      </div>
+    </aside>
+    <main id="content"></main>
+  </div>
+</div>
+
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Switch colour theme">
+  <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+  <span id="themeLabel">Dark</span>
+</button>
+
+<div class="dock" role="group" aria-label="Quick actions">
+  <button id="btnTop" aria-label="Back to top" title="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+  </button>
+  <div class="sep"></div>
+  <button id="btnExpand" aria-label="Expand all sections" title="Expand all">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 10l4 4 4-4"/><path d="M4 5h16M4 19h16"/></svg>
+  </button>
+  <button id="btnCollapse" aria-label="Collapse all sections" title="Collapse all">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 14l4-4 4 4"/><path d="M4 5h16M4 19h16"/></svg>
+  </button>
+  <div class="sep"></div>
+  <button id="btnPrint" aria-label="Print or save as PDF" title="Print / save as PDF">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4v-6h16v6h-2"/><path d="M8 14h8v7H8z"/></svg>
+  </button>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ---------------------------------------------------------------- CONTENT --
+   Every word of this phase lives in PHASE. The engine below never changes
+   between the three files, so a fix in one is a fix in all three.
+   -------------------------------------------------------------------------- */
+const PHASE = {
+ "code": "P1",
+ "docTitle": "InsightFlow — Phase 1 Build Roadmap",
+ "eyebrow": "Phase 1 / Graded assignment / Nuxt 4 / 5 days / 5 members",
+ "title": "InsightFlow",
+ "subtitle": "— Phase 1 Build Roadmap",
+ "status": "Status: build this now",
+ "lede": "Sales data in, business advice out, and the interesting findings published to a public feed. One repository, five owners, five days. Every member owns whole folders, one Nuxt concept, and a speaking slot. Pick your member from the switches below to see only your work.",
+ "chips": [
+  "5 days",
+  "Talk: 20–25 min",
+  "Nuxt 4 · Nuxt UI · Zod · MongoDB",
+  "Phase 1 alone is a complete grade"
+ ],
+ "widgets": [
+  {
+   "k": "Members",
+   "v": 5
+  },
+  {
+   "k": "Build days",
+   "v": 5
+  },
+  {
+   "k": "Modules",
+   "v": 6
+  },
+  {
+   "k": "Rubric items",
+   "v": 23
+  }
+ ],
+ "phases": [
+  {
+   "code": "P1",
+   "short": "Build & Present",
+   "file": "insightflow-phase-1.html",
+   "locked": false
+  },
+  {
+   "code": "P2",
+   "short": "Prediction & Proof",
+   "file": "insightflow-phase-2.html",
+   "locked": true
+  },
+  {
+   "code": "P3",
+   "short": "Decision Intelligence",
+   "file": "insightflow-phase-3.html",
+   "locked": true
+  }
+ ],
+ "subs": [
+  [
+   "overview",
+   "Overview"
+  ],
+  [
+   "learn",
+   "What To Learn"
+  ],
+  [
+   "plan",
+   "Day-by-Day Plan"
+  ],
+  [
+   "deliver",
+   "Deliverables"
+  ],
+  [
+   "present",
+   "Presentation"
+  ],
+  [
+   "check",
+   "Checklist"
+  ]
+ ],
+ "brief": {
+  "title": "Team Briefing",
+  "kicker": "Section 00 — read before you start",
+  "role": "Product definition, ground rules, timeline, folder ownership and the rendering plan. Visible when the view is set to All.",
+  "color": "var(--m1)",
+  "subs": [
+   [
+    "brief-product",
+    "Product",
+    "\n<p><b>InsightFlow</b> turns a restaurant's raw sales data into plain-language business advice, and lets the owner publish the interesting findings to a public feed.</p>\n<p>Two halves, and the second half is the point:</p>\n<table>\n  <thead><tr><th>Half</th><th>Who sees it</th><th>What it does</th></tr></thead>\n  <tbody>\n    <tr><td>Private workspace</td><td>Signed-in owner</td><td>Upload sales data, read the dashboard, get recommendations</td></tr>\n    <tr><td>Public insight feed</td><td>Anyone, no account</td><td>Published findings — \"Fridays are 34% busier than Tuesdays for us\"</td></tr>\n  </tbody>\n</table>\n<h4>Why the public feed exists</h4>\n<p>Everything behind a login is client-rendered, which means Nuxt's best features never get to run. The public feed gives the project real server-rendered pages with real content in the HTML. That single decision restores the view-source demo, the SEO slide and three of the four rendering modes.</p>\n<div class=\"note\"><span class=\"lab\">Design rule worth saying out loud</span>Publish the finding, never the raw numbers. A restaurant will happily share that Fridays are 34% busier. It will never share what it earned. The publish form defaults to hiding absolute figures.</div>\n<h4>Display names</h4>\n<p>When publishing, the user picks a display name — not their legal business name. Safer, same effort, and it removes any question about putting real businesses on a public page.</p>\n"
+   ],
+   [
+    "brief-rules",
+    "Ground Rules",
+    "\n<div class=\"step\"><span class=\"d\">01</span><p class=\"t\"><b>One repository, folder ownership.</b> Each member owns whole folders. Nobody edits a folder they do not own. If you need a change in someone else's file, ask them for it.</p></div>\n<div class=\"step\"><span class=\"d\">02</span><p class=\"t\"><b>Nuxt 4, not Nuxt 3.</b> Source code lives in <code>app/</code>. Almost every tutorial online still shows the Nuxt 3 layout with those folders at the root. Copying a Nuxt 3 path is the most likely way to lose a morning.</p></div>\n<div class=\"step\"><span class=\"d\">03</span><p class=\"t\"><b>Deploy with <code>nuxt build</code>. Never <code>nuxt generate</code>.</b> Generate produces static files with no server, which silently removes every API route, the upload, the login and the publish button — in production only, while everything still works locally.</p></div>\n<div class=\"step\"><span class=\"d\">04</span><p class=\"t\"><b>Seed data ships on day one.</b> Twenty fake sales rows, committed as a script. Without it, three members sit idle waiting for the upload to work and you lose two of your five days to waiting.</p></div>\n<div class=\"step\"><span class=\"d\">05</span><p class=\"t\"><b>Only Member 1 edits <code>shared/schemas</code>.</b> Everyone imports those types. Nobody redefines them. This is where multi-person projects usually descend into chaos.</p></div>\n<div class=\"step\"><span class=\"d\">06</span><p class=\"t\"><b>Write two lines in <code>CHALLENGES.md</code> every day.</b> What blocked you, how you fixed it. Lessons Learned and Challenges Faced are graded, and notes written on the day beat anything invented on day five.</p></div>\n<div class=\"step\"><span class=\"d\">07</span><p class=\"t\"><b>Freeze at the end of day four.</b> No new features after that. A broken live demo costs more marks than a missing feature.</p></div>\n"
+   ],
+   [
+    "brief-timeline",
+    "Five-Day Timeline",
+    "\n<div class=\"timeline\">\n  <div class=\"tl\"><span class=\"dd\">Day 1</span><div class=\"tt\">Repo, Nuxt 4, Mongo, auth, routeRules, <b>seed data published</b></div></div>\n  <div class=\"tl\"><span class=\"dd\">Day 2</span><div class=\"tt\">Every member builds their pages and endpoints against seed data</div></div>\n  <div class=\"tl crit\"><span class=\"dd\">Day 3</span><div class=\"tt\">Real data wired end to end. <b>First deploy.</b></div></div>\n  <div class=\"tl crit\"><span class=\"dd\">Day 4</span><div class=\"tt\">Publish flow, caching, error page, polish. Second deploy. <b>Freeze.</b></div></div>\n  <div class=\"tl\"><span class=\"dd\">Day 5</span><div class=\"tt\">Slides, backup demo video, two timed rehearsals</div></div>\n  <div class=\"tl\"><span class=\"dd\">&mdash;</span><div class=\"tt\">Present. Phase 2 opens only after this.</div></div>\n</div>\n<div class=\"note stop\"><span class=\"lab\">Two dates decide the grade</span><b>Day 3 — first deploy.</b> A deployment failure found on day three is an inconvenience; the same failure on day five is unrecoverable. <b>End of day 4 — freeze.</b></div>\n<h4>If you fall behind, cut in this order</h4>\n<ol>\n  <li>Charts become clean tables. Ugly, but it works.</li>\n  <li>CSV upload becomes a paste-into-a-textarea field. Same validation, same CRUD, none of the multipart risk.</li>\n  <li>The rule builder drops to three fixed rules written in code.</li>\n</ol>\n<div class=\"note warn\"><span class=\"lab\">Never cut this</span>The public insight feed. It is the smallest feature on the list and the largest piece of evidence that your team understood Nuxt.</div>\n"
+   ],
+   [
+    "brief-map",
+    "Ownership Map",
+    "\n<pre>insightflow/\n├── nuxt.config.ts                 <b>M1</b>  routeRules live here\n├── README.md                      <b>M1</b>\n├── CHALLENGES.md                  everyone\n├── .env.example                   <b>M1</b>\n├── scripts/seed.ts                <b>M1</b>  fake sales data\n├── shared/\n│   ├── schemas/                   <b>M1</b>  nobody else edits this\n│   └── types/                     <b>M1</b>\n├── server/\n│   ├── utils/db.ts                <b>M1</b>\n│   └── api/\n│       ├── auth/                  <b>M1</b>\n│       ├── datasets/              <b>M2</b>\n│       ├── analytics/             <b>M3</b>\n│       ├── recommendations/       <b>M4</b>\n│       ├── publish/               <b>M4</b>\n│       └── insights/              <b>M5</b>  public read only\n└── app/\n    ├── app.vue · error.vue        <b>M1</b> · <b>M4</b>\n    ├── middleware/auth.ts         <b>M1</b>\n    ├── layouts/                   <b>M1</b>\n    ├── pages/\n    │   ├── index.vue login.vue    <b>M1</b>\n    │   ├── datasets/              <b>M2</b>\n    │   ├── dashboard/             <b>M3</b>\n    │   ├── recommendations/       <b>M4</b>\n    │   └── insights/              <b>M5</b>  public\n    └── components/\n        ├── datasets/ <b>M2</b>  dashboard/ <b>M3</b>\n        └── recommendations/ <b>M4</b>  insights/ <b>M5</b></pre>\n<p>Four members never open the same file. The only shared surface is <code>shared/schemas</code>, and one person owns it.</p>\n"
+   ],
+   [
+    "brief-render",
+    "Rendering Plan",
+    "\n<p>This is the single most Nuxt-specific thing in the project, and almost no student group does it. The requirements ask about rendering methods; most teams answer with definitions, and you answer with your own configuration file.</p>\n<pre>// nuxt.config.ts\nrouteRules: {\n  '/':              { prerender: true },   <b>// SSG  — built once at build time</b>\n  '/insights':      { swr: 60 },           <b>// cached SSR, refreshes every minute</b>\n  '/insights/**':   { swr: 3600 },         <b>// cached SSR, public insight pages</b>\n  '/dashboard/**':  { ssr: false },        <b>// CSR  — private, browser only</b>\n  '/api/**':        { cors: true }\n}</pre>\n<table>\n  <thead><tr><th>Route</th><th>Mode</th><th>Why</th></tr></thead>\n  <tbody>\n    <tr><td>Landing page</td><td>Prerendered</td><td>Never changes, so build it once and serve a file</td></tr>\n    <tr><td>Insight feed</td><td>Cached SSR</td><td>Public, needs to be in the HTML for search engines, changes slowly</td></tr>\n    <tr><td>Dashboard</td><td>Client only</td><td>Private and personal, so server rendering buys nothing</td></tr>\n  </tbody>\n</table>\n<div class=\"note\"><span class=\"lab\">On stage</span>Open all three pages with the network tab visible and show three different behaviours. Eight lines of config, one of the strongest minutes in the talk.</div>\n"
+   ],
+   [
+    "brief-close",
+    "Presentation & Q&A",
+    "\n<h4>Running order &mdash; 24 minutes</h4>\n<table>\n  <thead><tr><th>#</th><th>Segment</th><th>Who</th><th>Min</th></tr></thead>\n  <tbody>\n    <tr><td>0</td><td>Hook: view-source on a published insight</td><td>M5</td><td>1.5</td></tr>\n    <tr><td>1</td><td>What InsightFlow is, architecture, rendering modes</td><td>M1</td><td>4.5</td></tr>\n    <tr><td>2</td><td>Dataset intake: forms, shared schema, validation</td><td>M2</td><td>4.5</td></tr>\n    <tr><td>3</td><td>Dashboard: components, ClientOnly, Nitro caching</td><td>M3</td><td>4.5</td></tr>\n    <tr><td>4</td><td>Recommendations, rule builder, publishing</td><td>M4</td><td>4</td></tr>\n    <tr><td>5</td><td>Public feed, SEO, middleware, deployment</td><td>M5</td><td>3.5</td></tr>\n    <tr><td>6</td><td>Lessons learned and challenges</td><td>all</td><td>1.5</td></tr>\n    <tr><td>&mdash;</td><td>Questions</td><td>all</td><td>3</td></tr>\n  </tbody>\n</table>\n<h4>Lessons learned &mdash; say real things</h4>\n<p>Each member reads one line from <code>CHALLENGES.md</code>. Specific problems with specific fixes.</p>\n<ul>\n  <li>Nuxt 4 moved the source folders into <code>app/</code>, and most tutorials are still Nuxt 3, so our paths were wrong for hours.</li>\n  <li>Our chart library crashed on the server until we wrapped it in <code>&lt;ClientOnly&gt;</code>.</li>\n  <li>We called <code>useFetch</code> inside a click handler and every request fired twice.</li>\n  <li>We seeded fake data on day one so nobody was blocked waiting for the upload.</li>\n</ul>\n<div class=\"note warn\"><span class=\"lab\">Bad answer</span>\"We learned teamwork.\" Say nothing rather than that.</div>\n<h4>Questions</h4>\n<p>Everyone must be able to answer about the whole project, not only their own module. Spend twenty minutes on day five quizzing each other across sections.</p>\n"
+   ]
+  ]
+ },
+ "members": [
+  {
+   "id": "m1",
+   "n": 1,
+   "color": "#3B82F6",
+   "icon": "<path d=\"M12 3 3 7.5 12 12l9-4.5Z\"/><path d=\"M3 12l9 4.5L21 12\"/><path d=\"M3 16.5 12 21l9-4.5\"/>",
+   "name": "Core Platform, Rendering & Deployment",
+   "role": "Owns everything the other four depend on. Your day-one work unblocks the whole team, so it happens first and it happens fast.",
+   "owns": "nuxt.config · auth · database · shared schemas · seed data · deploy",
+   "teaches": "Rendering modes, project structure, auto-imports",
+   "talk": "4.5 min",
+   "overview": "\n<p>You are the integration lead. Two jobs: make the platform exist by the end of day one, and prove in the presentation that your team chose rendering modes deliberately rather than accepting the default.</p>\n<h4>Files you own</h4>\n<pre>nuxt.config.ts · README.md · .env.example\nscripts/seed.ts\nshared/schemas/ · shared/types/\nserver/utils/db.ts · server/api/auth/\napp/app.vue · app/layouts/ · app/middleware/auth.ts\napp/pages/index.vue · app/pages/login.vue</pre>\n<div class=\"note stop\"><span class=\"lab\">Blocking work</span>Four people cannot start until the repo, the schemas and the seed data exist. Everything else you do is secondary to shipping those on day one.</div>\n<div class=\"note warn\"><span class=\"lab\">Non-negotiable</span>Pin <b>Nuxt 4</b> and write the folder map into the README on day one. Every tutorial your team finds will show the Nuxt 3 layout.</div>\n",
+   "learn": "\n<h4>Study list</h4>\n<ol>\n  <li>Nuxt 4 project structure and what <code>nuxt.config.ts</code> controls</li>\n  <li><code>routeRules</code> — per-route rendering: prerender, ssr, swr</li>\n  <li>SSR, CSR, SSG and cached SSR in plain words</li>\n  <li><code>useCookie()</code> — Nuxt's SSR-safe cookie composable</li>\n  <li>Route middleware and <code>definePageMeta</code></li>\n  <li>Auto-imports: components, composables and <code>server/utils</code></li>\n</ol>\n<h4>Rendering, in one table</h4>\n<table>\n  <thead><tr><th>Mode</th><th>Who builds the page</th><th>Trade-off</th></tr></thead>\n  <tbody>\n    <tr><td>CSR</td><td>The browser, after downloading JavaScript</td><td>Slow first paint, invisible to search engines</td></tr>\n    <tr><td>SSR</td><td>The server, on every request</td><td>Fast first paint, good SEO, needs a running server</td></tr>\n    <tr><td>SSG</td><td>The build machine, once</td><td>Fastest and cheapest, only for content that rarely changes</td></tr>\n    <tr><td>SWR</td><td>The server, then cached</td><td>SSR quality at near-static speed. What the public feed uses.</td></tr>\n  </tbody>\n</table>\n<div class=\"note\"><span class=\"lab\">Skip what you already know</span>You have built MERN projects. Do not re-study MongoDB, REST verbs or session theory, and do not present them. Study only what Nuxt changes.</div>\n<h4>Why useCookie instead of manual cookies</h4>\n<p>Reading a cookie during server rendering and again in the browser normally means two code paths. <code>useCookie()</code> is one call that works in both places and stays in sync. It is a small thing and a very Nuxt-specific answer in questions.</p>\n",
+   "plan": "\n<div class=\"step\"><span class=\"d\">D1</span><p class=\"t\"><b>Create the project.</b> <code>npx nuxi@latest init insightflow</code>, push, share the link. First thing in the morning — four people are waiting.</p></div>\n<div class=\"step\"><span class=\"d\">D1</span><p class=\"t\"><b>Install the toolkit.</b> Nuxt UI for components, Zod for validation. Register both in <code>nuxt.config.ts</code>.</p></div>\n<div class=\"step\"><span class=\"d\">D1</span><p class=\"t\"><b>Write the schemas.</b> <code>Dataset</code>, <code>SalesRow</code>, <code>Recommendation</code>, <code>PublishedInsight</code>, <code>User</code>. Define each one once. Announce that nobody else edits this folder.</p></div>\n<div class=\"step\"><span class=\"d\">D1</span><p class=\"t\"><b>Connect MongoDB Atlas</b> in <code>server/utils/db.ts</code>. Prove it with one throwaway endpoint before lunch.</p></div>\n<div class=\"step\"><span class=\"d\">D1</span><p class=\"t\"><b>Ship the seed script.</b> Twenty fake sales rows across two weeks with realistic day-of-week variation. Commit it and tell the team it is live. <b>This is the most valuable hour of your five days.</b></p></div>\n<div class=\"step\"><span class=\"d\">D1</span><p class=\"t\"><b>Build login, session and middleware.</b> One account read from <code>.env</code>, a session cookie via <code>useCookie</code>, and <code>auth.ts</code> protecting the private routes. Keep the login page itself unprotected or you create a redirect loop.</p></div>\n<div class=\"step\"><span class=\"d\">D1</span><p class=\"t\"><b>Add the routeRules block.</b> All five rules, in place from the start, so nobody builds against the wrong assumption.</p></div>\n<div class=\"step\"><span class=\"d\">D2</span><p class=\"t\"><b>Build the landing page and layouts.</b> Two layouts: one public, one for the signed-in workspace.</p></div>\n<div class=\"step\"><span class=\"d\">D3</span><p class=\"t\"><b>First deploy.</b> Vercel or Netlify, database URI in the dashboard, <code>nuxt build</code>. Confirm login works on the live URL.</p></div>\n<div class=\"step\"><span class=\"d\">D4</span><p class=\"t\"><b>Integrate.</b> Review the four modules, resolve anything crossing a boundary, redeploy, then freeze the branch.</p></div>\n<div class=\"step\"><span class=\"d\">D5</span><p class=\"t\"><b>Write the README</b> and rehearse. Hand the README to someone outside the group: if they can clone and run it without asking a question, it passes.</p></div>\n",
+   "deliver": "\n<ul>\n  <li>Repository running for all five members by end of day one</li>\n  <li>Shared schemas and types, single source of truth</li>\n  <li>Seed script with realistic fake sales data</li>\n  <li>MongoDB connection, login, session, protected routes</li>\n  <li><code>routeRules</code> covering all four rendering modes</li>\n  <li>Landing page, layouts, both deploys</li>\n  <li><code>README.md</code> and <code>.env.example</code></li>\n  <li>Architecture diagram and rendering-modes slides</li>\n</ul>\n<div class=\"note\"><span class=\"lab\">Graded deliverable</span>The README is submitted and marked. Treat it as a deliverable, not an afterthought.</div>\n",
+   "present": "\n<h4>01 &middot; What InsightFlow is &mdash; 1.5 min</h4>\n<p>One sentence on the product, then the architecture diagram: browser, Nuxt page, server API, MongoDB — plus the second path where a published insight goes out to the public feed.</p>\n<div class=\"say\">Most analytics tools stop at showing you a chart. Ours tells you what to do about it, and lets you publish what you learned.</div>\n<h4>02 &middot; Rendering modes &mdash; 2.5 min</h4>\n<p>Put the <code>routeRules</code> block on screen. Walk the three routes and say why each one is different. Then open all three live with the network tab visible.</p>\n<div class=\"say\">The requirements asked about rendering methods. Rather than list definitions, we chose a different mode for each part of our own app, and this is the config that does it.</div>\n<h4>03 &middot; Structure and important files &mdash; 0.5 min</h4>\n<p>A real screenshot of the repo. Point out that application code sits in <code>app/</code> while <code>server/</code> and <code>shared/</code> stay outside it, then name four files and why each matters.</p>\n<div class=\"note\"><span class=\"lab\">Free marks</span>Open Nuxt DevTools during the demo. Show the route list, the payload and the auto-imported components. Developer experience is a graded item, and everyone else will only describe it.</div>\n",
+   "check": [
+    "Repo created and pushed on day one",
+    "All five members running the dev server",
+    "Shared schemas written, ownership announced",
+    "MongoDB connected, .env ignored by git",
+    "Seed script committed and working",
+    "Login, session cookie and middleware working",
+    "routeRules block covering all four modes",
+    "First deploy on day three, login verified live",
+    "README complete and tested by an outsider"
+   ]
+  },
+  {
+   "id": "m2",
+   "n": 2,
+   "color": "#8B5CF6",
+   "icon": "<path d=\"M12 3v11\"/><path d=\"m8 10 4 4 4-4\"/><path d=\"M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2\"/>",
+   "name": "Dataset Center",
+   "role": "Owns everything about getting sales data into the system: the upload, the forms, the validation and the full CRUD.",
+   "owns": "app/pages/datasets · components/datasets · server/api/datasets",
+   "teaches": "Forms, shared Zod schema, useFetch vs $fetch",
+   "talk": "4.5 min",
+   "overview": "\n<p>You own the only write-heavy module in the app, which means you own the forms, the validation and the clearest CRUD story. Everything the other three members display starts with data you accepted.</p>\n<h4>Files you own</h4>\n<pre>app/pages/datasets/\n├── index.vue          list of datasets\n├── new.vue            upload / create\n└── [id].vue           view and edit one\n\napp/components/datasets/\n├── DatasetTable.vue\n├── DatasetForm.vue\n└── CsvUploader.vue\n\nserver/api/datasets/   all five endpoints</pre>\n<div class=\"note stop\"><span class=\"lab\">Do not skip delete</span>Groups routinely ship create, read and update, then find on stage that delete was never built. Build all four.</div>\n",
+   "learn": "\n<h4>Study list</h4>\n<ol>\n  <li>Zod schemas and how validation errors surface in a form</li>\n  <li>Nuxt UI's form component and field errors</li>\n  <li><code>useFetch</code> versus <code>$fetch</code> — where each belongs</li>\n  <li>Nitro server routes: <code>.get.ts</code>, <code>.post.ts</code>, <code>.put.ts</code>, <code>.delete.ts</code></li>\n  <li>Reading a file or pasted text and parsing CSV</li>\n</ol>\n<h4>The shared schema is the point</h4>\n<p>Member 1 writes <code>shared/schemas/dataset.ts</code>. Your form imports it. Your API imports the same file. Rules written once, enforced on both sides, and the TypeScript type comes free.</p>\n<div class=\"note\"><span class=\"lab\">Four requirements, one file</span>In a MERN project you would write this validation twice — once in React, once in Express — and watch the two copies drift apart. Say that sentence in your talk.</div>\n<h4>Which fetch, and where</h4>\n<table>\n  <thead><tr><th>Use</th><th>Where</th><th>Why</th></tr></thead>\n  <tbody>\n    <tr><td><code>useFetch()</code></td><td>Top level of a page or component</td><td>Runs on the server, ships the result with the HTML, does not refetch in the browser</td></tr>\n    <tr><td><code>$fetch()</code></td><td>Inside a click handler or function</td><td>For actions: submitting a form, deleting a row</td></tr>\n  </tbody>\n</table>\n<div class=\"note warn\"><span class=\"lab\">The classic mistake</span>Calling <code>useFetch</code> in a button handler, or plain <code>fetch</code> at the top of a page. Both fire the same request twice. Someone may open the network tab during questions.</div>\n",
+   "plan": "\n<div class=\"step\"><span class=\"d\">D1</span><p class=\"t\"><b>Prove the form stack today.</b> One throwaway form with Nuxt UI plus Zod, error messages appearing under the inputs. If the combination misbehaves, switch to VeeValidate now — not on day four.</p></div>\n<div class=\"step\"><span class=\"d\">D2</span><p class=\"t\"><b>Build the list page</b> against Member 1's seed data. <code>useFetch</code> at the top, table of datasets, loading and error states visible.</p></div>\n<div class=\"step\"><span class=\"d\">D2</span><p class=\"t\"><b>Build the create form.</b> Name, business type, date range, notes. Validate against the shared schema, submit with <code>$fetch</code> POST.</p></div>\n<div class=\"step\"><span class=\"d\">D2</span><p class=\"t\"><b>Build the five endpoints.</b> List, read one, create, update, delete. Validate inside create and update using the same schema the form uses.</p></div>\n<div class=\"step\"><span class=\"d\">D3</span><p class=\"t\"><b>Build the data intake.</b> Accept a CSV file, parse it in memory, validate every row, write the good rows and report the bad ones by line number.</p></div>\n<div class=\"step\"><span class=\"d\">D3</span><p class=\"t\"><b>Build the edit and delete flow.</b> Prefill the form for edit; ask for confirmation before delete.</p></div>\n<div class=\"step\"><span class=\"d\">D4</span><p class=\"t\"><b>Re-test against the deployed URL.</b> Upload, refresh, still there. Edit, refresh, still changed. Delete, refresh, still gone.</p></div>\n<div class=\"step\"><span class=\"d\">D5</span><p class=\"t\"><b>Rehearse.</b> Your validation moment is a live demo, so practise typing a bad value and letting the error appear.</p></div>\n<div class=\"note warn\"><span class=\"lab\">If you run short of time</span>Drop the file picker and accept pasted CSV text in a textarea instead. Identical validation, identical CRUD, none of the multipart-upload risk. Nobody in the room will mind.</div>\n",
+   "deliver": "\n<ul>\n  <li>Three pages: list, create, view and edit</li>\n  <li>Three components: table, form, uploader</li>\n  <li>Five endpoints covering all four CRUD operations</li>\n  <li>Row-level validation with useful error messages</li>\n  <li>Loading and error states visible in the interface</li>\n  <li>Forms and validation slides</li>\n</ul>\n<div class=\"note stop\"><span class=\"lab\">Deployment trap</span>Never hold uploaded rows in a plain array in memory. It works locally and breaks after deploying, because the host runs several copies of the server: you write to copy A, read from copy B, and the data vanishes in front of the class.</div>\n",
+   "present": "\n<h4>01 &middot; One schema, both sides &mdash; 2 min</h4>\n<p>Put the Zod schema on screen first, then the two import lines — one in your form, one in your endpoint.</p>\n<div class=\"say\">We wrote our validation rules once, in one file. The browser form uses it. The server uses it. Same file on both sides.</div>\n<h4>02 &middot; Live validation &mdash; 1.5 min</h4>\n<p>Upload a CSV with one broken row. Show the error naming the exact line. Fix it, upload again, watch the dataset appear.</p>\n<h4>03 &middot; useFetch versus $fetch &mdash; 1 min</h4>\n<p>Show the table. This single slide is the clearest proof in the whole talk that your team understood the framework instead of copying a tutorial.</p>\n",
+   "check": [
+    "Nuxt UI plus Zod verified working on day one",
+    "List, create and edit pages built",
+    "All five endpoints working",
+    "Create, read, update and delete all implemented",
+    "CSV or pasted data parsed and validated row by row",
+    "Bad rows reported by line number",
+    "Loading and error states visible",
+    "CRUD verified on the deployed URL"
+   ]
+  },
+  {
+   "id": "m3",
+   "n": 3,
+   "color": "#10B981",
+   "icon": "<path d=\"M3 20h18\"/><rect x=\"5\" y=\"11\" width=\"3.2\" height=\"7\" rx=\"1\"/><rect x=\"10.4\" y=\"6\" width=\"3.2\" height=\"12\" rx=\"1\"/><rect x=\"15.8\" y=\"14\" width=\"3.2\" height=\"4\" rx=\"1\"/>",
+   "name": "Analytics Dashboard",
+   "role": "Turns stored sales rows into the numbers a restaurant owner actually looks at, and owns the component and caching story.",
+   "owns": "app/pages/dashboard · components/dashboard · server/api/analytics",
+   "teaches": "Components, ClientOnly, useState, Nitro caching",
+   "talk": "4.5 min",
+   "overview": "\n<p>You own the screen the mentor will look at longest, and two Nuxt concepts nobody else touches: the server/client boundary, and caching inside Nitro.</p>\n<h4>Files you own</h4>\n<pre>app/pages/dashboard/index.vue\n\napp/components/dashboard/\n├── KpiCard.vue\n├── RevenueChart.vue\n├── TopItemsTable.vue\n└── DateRangePicker.vue\n\nserver/api/analytics/summary.get.ts\nserver/api/analytics/trend.get.ts</pre>\n<div class=\"note warn\"><span class=\"lab\">Known trap, do not discover it live</span>Chart libraries touch <code>window</code> and crash during server rendering. Wrap every chart in <code>&lt;ClientOnly&gt;</code> from the first line you write. This costs you five minutes if you plan for it and half a day if you do not.</div>\n",
+   "learn": "\n<h4>Study list</h4>\n<ol>\n  <li>Single File Components: <code>&lt;template&gt;</code>, <code>&lt;script setup&gt;</code>, <code>&lt;style&gt;</code></li>\n  <li>Props and emits</li>\n  <li>Auto-imports</li>\n  <li><code>ref()</code> for local state, <code>useState()</code> for shared state</li>\n  <li><code>&lt;ClientOnly&gt;</code> and the server/client boundary</li>\n  <li><code>defineCachedEventHandler</code> — caching in Nitro</li>\n</ol>\n<h4>Reactivity, the real difference from React</h4>\n<p>In React you replace state and the component function runs again: <code>setCount(count + 1)</code>. In Vue you change the value directly and only the part of the page using it updates: <code>count.value++</code>. The function does not re-run.</p>\n<h4>State &mdash; get this right</h4>\n<table>\n  <thead><tr><th>React</th><th>Vue / Nuxt</th></tr></thead>\n  <tbody>\n    <tr><td><code>useState()</code> — local to one component</td><td><code>ref()</code> — local to one component</td></tr>\n    <tr><td>Context or Redux — shared across the app</td><td><code>useState('key')</code> — shared, and safe with server rendering</td></tr>\n  </tbody>\n</table>\n<div class=\"note warn\"><span class=\"lab\">Why it matters</span>The names collide but the behaviour does not. Nuxt's <code>useState</code> is a small shared store with a hydration guarantee, not a local hook. Claiming otherwise is the easiest question in the room to fail.</div>\n<h4>Caching, in one line</h4>\n<pre>export default defineCachedEventHandler(handler, { maxAge: 60 })</pre>\n<p>Your revenue aggregation is the slowest thing in the app. That one wrapper turns a 400ms response into a 5ms response on every reload, and it makes your performance slide real instead of quoted.</p>\n",
+   "plan": "\n<div class=\"step\"><span class=\"d\">D1</span><p class=\"t\"><b>Learn the component shape and reactivity model.</b> Write one throwaway component to feel the difference from React.</p></div>\n<div class=\"step\"><span class=\"d\">D2</span><p class=\"t\"><b>Build the KPI cards</b> against seed data: total revenue, total orders, average order value, best seller, worst seller. One reusable <code>KpiCard</code>, five instances.</p></div>\n<div class=\"step\"><span class=\"d\">D2</span><p class=\"t\"><b>Build the summary endpoint.</b> Aggregate the sales rows into those five numbers in one query, not five.</p></div>\n<div class=\"step\"><span class=\"d\">D3</span><p class=\"t\"><b>Build the trend chart</b> inside <code>&lt;ClientOnly&gt;</code>, with a plain skeleton as the fallback. Revenue by day, and sales by day of week.</p></div>\n<div class=\"step\"><span class=\"d\">D3</span><p class=\"t\"><b>Build the date range picker.</b> Hold the selected range in <code>useState</code> so it survives navigation to another page and back.</p></div>\n<div class=\"step\"><span class=\"d\">D3</span><p class=\"t\"><b>Add the top and bottom items table.</b> This is what Member 4's recommendations read from, so agree the shape with them early.</p></div>\n<div class=\"step\"><span class=\"d\">D4</span><p class=\"t\"><b>Wrap the summary endpoint in <code>defineCachedEventHandler</code></b> and measure before and after. Screenshot both numbers for your slide.</p></div>\n<div class=\"step\"><span class=\"d\">D4</span><p class=\"t\"><b>Check every breakpoint</b> in the browser's device mode. Responsive UI is an explicit requirement and dashboards are where it usually breaks.</p></div>\n<div class=\"step\"><span class=\"d\">D5</span><p class=\"t\"><b>Rehearse.</b> Your caching demo needs the network tab open before you start talking.</p></div>\n",
+   "deliver": "\n<ul>\n  <li>Dashboard page with five KPI cards</li>\n  <li>Revenue trend and day-of-week charts, both server-safe</li>\n  <li>Top and bottom performing items table</li>\n  <li>Date range in shared state</li>\n  <li>Two analytics endpoints, one of them cached</li>\n  <li>Before and after timing screenshots</li>\n  <li>Components, state and performance slides</li>\n</ul>\n",
+   "present": "\n<h4>01 &middot; Components and auto-imports &mdash; 1.5 min</h4>\n<p>Show <code>KpiCard.vue</code>, then show the dashboard page using it five times — and point at the top of the file where there is no import line.</p>\n<div class=\"say\">Nuxt imports components, composables and Vue's own functions for us. Less typing, and much less noise at the top of every file.</div>\n<h4>02 &middot; The server/client boundary &mdash; 1 min</h4>\n<p>Show the <code>&lt;ClientOnly&gt;</code> wrapper and explain what broke without it.</p>\n<div class=\"say\">Our chart library reaches for the browser window object. On the server there is no window, so the render crashed. ClientOnly tells Nuxt to skip this block on the server and mount it only in the browser.</div>\n<h4>03 &middot; Caching &mdash; 1.5 min</h4>\n<p>Load the dashboard, show 400ms. Reload, show 5ms. Then show the one-line change that did it.</p>\n<div class=\"say\">This is Nitro, the server engine inside Nuxt. One wrapper around the handler, and repeat requests are served from cache.</div>\n<div class=\"note\"><span class=\"lab\">On performance</span>Describe mechanisms and show your own measurements. Never quote a benchmark you did not run.</div>\n",
+   "check": [
+    "Five KPI cards from one reusable component",
+    "Summary endpoint aggregates in a single query",
+    "Charts wrapped in ClientOnly with a fallback",
+    "Date range held in useState across navigation",
+    "Top and bottom items table agreed with Member 4",
+    "Cached handler measured before and after",
+    "Layout verified at phone width",
+    "Can correctly explain ref() versus useState()"
+   ]
+  },
+  {
+   "id": "m4",
+   "n": 4,
+   "color": "#F59E0B",
+   "icon": "<path d=\"M12 3.2 13.9 8l5.1.3-3.9 3.3 1.2 5-4.3-2.7L7.7 16.6l1.2-5L5 8.3 10.1 8Z\"/><path d=\"M12 19.5V21\"/>",
+   "name": "Recommendations & Publishing",
+   "role": "Turns numbers into advice a person can act on, and owns the button that sends a finding to the public feed.",
+   "owns": "app/pages/recommendations · components/recommendations · server/api/recommendations · server/api/publish",
+   "teaches": "Server routes, server/utils auto-imports, custom error page",
+   "talk": "4 min",
+   "overview": "\n<p>This is the module that makes InsightFlow more than a chart tool. A dashboard tells you Fridays are busy. You tell the owner to order more chicken on Thursday.</p>\n<h4>Files you own</h4>\n<pre>app/pages/recommendations/\n├── index.vue          the advice list\n└── rules.vue          the rule builder\n\napp/components/recommendations/\n├── RecommendationCard.vue\n├── RuleForm.vue\n└── ShareButton.vue\n\napp/error.vue          custom error page\nserver/utils/rules.ts  rule engine\nserver/api/recommendations/\nserver/api/publish/</pre>\n<div class=\"note\"><span class=\"lab\">No AI, no machine learning</span>Rule-based analytics only. If a day is more than 20% above average, recommend increasing stock for it. That is enough, it is explainable, and it will not fail live.</div>\n",
+   "learn": "\n<h4>Study list</h4>\n<ol>\n  <li>Nitro server routes and route parameters</li>\n  <li><code>server/utils</code> — auto-imported helpers on the server side</li>\n  <li><code>createError</code> and <code>app/error.vue</code></li>\n  <li>Writing a small rule engine as pure functions</li>\n  <li><code>$fetch</code> from a button handler</li>\n</ol>\n<h4>Server-side auto-imports</h4>\n<p>Anything you export from <code>server/utils/</code> is available in every server route without an import line — the same convenience Nuxt gives you on the client. Put the rule engine there and every endpoint can call it.</p>\n<h4>What a rule looks like</h4>\n<pre>{\n  metric:    'revenue',\n  dimension: 'dayOfWeek',\n  operator:  'above_average_by',\n  threshold: 20,\n  advice:    'Increase inventory for this day'\n}</pre>\n<p>Users create these in the rule builder. That is what gives your module full CRUD and validation rather than being another read-only view.</p>\n<h4>Error handling that counts</h4>\n<p>Throwing <code>createError({ statusCode: 404 })</code> from a server route and catching it with a custom <code>error.vue</code> covers the error-handling requirement properly, and takes about twenty minutes.</p>\n",
+   "plan": "\n<div class=\"step\"><span class=\"d\">D2</span><p class=\"t\"><b>Write the rule engine</b> in <code>server/utils/rules.ts</code> as pure functions taking sales rows and returning findings. Test it against seed data before any UI exists.</p></div>\n<div class=\"step\"><span class=\"d\">D2</span><p class=\"t\"><b>Build the recommendations page</b> with three rules hardcoded, so you have something on screen from day two.</p></div>\n<div class=\"step\"><span class=\"d\">D3</span><p class=\"t\"><b>Build the rule builder.</b> Create, edit and delete rules, validated against the shared schema. This is your CRUD and your form.</p></div>\n<div class=\"step\"><span class=\"d\">D3</span><p class=\"t\"><b>Build <code>app/error.vue</code></b> and throw a real <code>createError</code> from one endpoint to prove it works.</p></div>\n<div class=\"step\"><span class=\"d\">D3</span><p class=\"t\"><b>Add the Share button</b> to every recommendation card. Opens a small form: display name, caption, and a checkbox for hiding absolute numbers, default on.</p></div>\n<div class=\"step\"><span class=\"d\">D3</span><p class=\"t\"><b>Build the publish endpoint.</b> Generate a slug, write a <code>PublishedInsight</code>, set <code>published: true</code>. Your job ends there — Member 5 reads the collection.</p></div>\n<div class=\"step\"><span class=\"d\">D4</span><p class=\"t\"><b>Add unpublish</b> from the recommendations list, and confirm the public feed updates.</p></div>\n<div class=\"step\"><span class=\"d\">D4</span><p class=\"t\"><b>Agree the handoff with Member 5</b> in writing: the exact field names in <code>PublishedInsight</code>. This is the only seam between two modules, so make it explicit.</p></div>\n<div class=\"step\"><span class=\"d\">D5</span><p class=\"t\"><b>Rehearse the publish moment.</b> It leads straight into Member 5's section, so practise the handover together.</p></div>\n",
+   "deliver": "\n<ul>\n  <li>Rule engine in <code>server/utils</code>, tested against seed data</li>\n  <li>Recommendations page with generated advice cards</li>\n  <li>Rule builder with full CRUD and validation</li>\n  <li>Custom <code>error.vue</code> with a real thrown error</li>\n  <li>Share button, publish form and publish endpoint</li>\n  <li>Unpublish from the private side</li>\n  <li>Server routes and error handling slides</li>\n</ul>\n",
+   "present": "\n<h4>01 &middot; From numbers to advice &mdash; 1.5 min</h4>\n<p>Show a recommendation card, then show the rule that produced it.</p>\n<div class=\"say\">A dashboard tells you Friday revenue is up 34%. This tells you to order more chicken on Thursday. That gap is the whole product.</div>\n<h4>02 &middot; Server utilities and errors &mdash; 1 min</h4>\n<p>Show the rule engine being used in an endpoint with no import line, then trigger a real 404 and let your custom error page appear.</p>\n<h4>03 &middot; Publishing &mdash; 1.5 min</h4>\n<p>Click Share on a recommendation, fill in a display name and caption, publish. Then hand straight over to Member 5, who opens the public feed and finds it there.</p>\n<div class=\"say\">We publish the finding, never the raw sales data. A restaurant will happily share that Fridays are 34% busier. It will never share what it earned.</div>\n",
+   "check": [
+    "Rule engine written as pure functions in server/utils",
+    "Recommendations generated from real stored data",
+    "Rule builder with create, edit and delete",
+    "Rules validated against the shared schema",
+    "Custom error.vue triggered by a real createError",
+    "Share button and publish form working",
+    "Hide-absolute-numbers option defaults to on",
+    "Unpublish works and clears the public feed",
+    "Field names agreed in writing with Member 5"
+   ]
+  },
+  {
+   "id": "m5",
+   "n": 5,
+   "color": "#EF4444",
+   "icon": "<circle cx=\"12\" cy=\"12\" r=\"2.6\"/><path d=\"M12 3.4a8.6 8.6 0 0 1 0 17.2\"/><path d=\"M12 6.9a5.1 5.1 0 0 1 0 10.2\"/><path d=\"M12 3.4A8.6 8.6 0 0 0 12 20.6\"/>",
+   "name": "Public Insight Feed",
+   "role": "Owns the only part of the app a stranger can see, which makes it the only part where server rendering and SEO can be demonstrated. You open the presentation.",
+   "owns": "app/pages/insights · components/insights · server/api/insights",
+   "teaches": "Dynamic routes, SSR view-source, useSeoMeta, cached rendering",
+   "talk": "5 min",
+   "overview": "\n<p>Your module is small in code and the largest in evidence. Everything else in the project is behind a login and client-rendered. Yours is the only place Nuxt gets to do the thing Nuxt is famous for.</p>\n<h4>Files you own</h4>\n<pre>app/pages/insights/\n├── index.vue          the public feed\n└── [slug].vue         one published insight\n\napp/components/insights/\n├── InsightCard.vue\n└── InsightMeta.vue\n\nserver/api/insights/   public read only</pre>\n<div class=\"note stop\"><span class=\"lab\">You open the talk</span>Your view-source demo is the first ninety seconds of the presentation. It sets up everything the other four members explain afterwards. Rehearse it more than anything else.</div>\n<div class=\"note\"><span class=\"lab\">Read-only by design</span>You never write to the database. Member 4 publishes; you display. That keeps the seam between your modules to a single collection and a handful of field names.</div>\n",
+   "learn": "\n<h4>Study list</h4>\n<ol>\n  <li>Dynamic routes with <code>[slug].vue</code> and <code>useRoute()</code></li>\n  <li><code>useFetch</code> during server rendering, and what lands in the payload</li>\n  <li><code>useSeoMeta</code> — titles, descriptions, social preview tags</li>\n  <li><code>swr</code> caching in <code>routeRules</code></li>\n  <li><code>&lt;NuxtLink&gt;</code> and why it beats a plain anchor</li>\n  <li><code>createError</code> for an unknown slug</li>\n</ol>\n<h4>Why your pages are in the HTML and the dashboard is not</h4>\n<p>Member 1's config marks <code>/insights/**</code> as cached server-rendered and <code>/dashboard/**</code> as client-only. That means your page arrives with its content already written into the HTML, while the dashboard arrives as an empty shell that JavaScript fills in.</p>\n<div class=\"note\"><span class=\"lab\">Your whole demo in one sentence</span>Right-click the published insight, View Page Source, and the text is there. Right-click the dashboard, and it is an empty div. Same app, two deliberate choices.</div>\n<h4>Why NuxtLink</h4>\n<p>A plain <code>&lt;a&gt;</code> reloads the whole page from the server. <code>&lt;NuxtLink&gt;</code> swaps only what changed, and Nuxt quietly preloads the target page before the click.</p>\n",
+   "plan": "\n<div class=\"step\"><span class=\"d\">D2</span><p class=\"t\"><b>Build the feed page</b> against seed data. Member 1 seeds three fake published insights on day one so you are never blocked waiting for Member 4.</p></div>\n<div class=\"step\"><span class=\"d\">D2</span><p class=\"t\"><b>Build InsightCard.vue.</b> Display name, the headline metric, the caption, the date. Keep it plain and readable.</p></div>\n<div class=\"step\"><span class=\"d\">D3</span><p class=\"t\"><b>Build the detail page</b> at <code>[slug].vue</code>. Fetch by slug at the top level with <code>useFetch</code>, and throw <code>createError</code> with a 404 for an unknown slug.</p></div>\n<div class=\"step\"><span class=\"d\">D3</span><p class=\"t\"><b>Add the public read endpoints.</b> They must never return raw sales rows or anything belonging to a signed-in user — only the published fields.</p></div>\n<div class=\"step\"><span class=\"d\">D3</span><p class=\"t\"><b>Add <code>useSeoMeta</code></b> to the detail page: title from the display name and metric, description from the caption, plus social preview tags.</p></div>\n<div class=\"step\"><span class=\"d\">D4</span><p class=\"t\"><b>Wire to Member 4's real publish flow</b> and confirm a freshly published insight appears in the feed.</p></div>\n<div class=\"step\"><span class=\"d\">D4</span><p class=\"t\"><b>Confirm the middleware boundary.</b> Open the feed in a private window with no session and check nothing redirects you to login. This is the test that proves the public half is genuinely public.</p></div>\n<div class=\"step\"><span class=\"d\">D4</span><p class=\"t\"><b>Verify view-source on the deployed URL</b>, not localhost. Screenshot it as a backup in case the projector fights you.</p></div>\n<div class=\"step\"><span class=\"d\">D5</span><p class=\"t\"><b>Rehearse the opening ninety seconds until it is automatic.</b> Record the backup demo video the same day.</p></div>\n",
+   "deliver": "\n<ul>\n  <li>Public feed page and public detail page</li>\n  <li>Two components, both server-safe</li>\n  <li>Public read endpoints exposing published fields only</li>\n  <li>Per-insight titles, descriptions and social preview tags</li>\n  <li>404 handling for an unknown slug</li>\n  <li>View-source demo verified on the live URL, plus a screenshot backup</li>\n  <li>Recorded backup demo video for the whole team</li>\n  <li>SSR, SEO and deployment slides</li>\n</ul>\n",
+   "present": "\n<h4>00 &middot; The hook &mdash; you open the presentation, 1.5 min</h4>\n<p>Open a published insight on the live site. Right-click, View Page Source. Scroll to the text and let the room see it sitting in the raw HTML.</p>\n<div class=\"say\">This page was built on the server before it reached my browser. If this were a normal single-page app, this would be an empty div, and a search engine would see nothing. That is what Nuxt is for, and it is why we gave our product a public side at all.</div>\n<p>Then hand to Member 1 for the architecture.</p>\n<h4>01 &middot; Dynamic routes and SEO &mdash; 2 min</h4>\n<p>Show <code>[slug].vue</code>, then open two different insights and let the browser tab title change. Show the social preview if you can.</p>\n<div class=\"say\">One file serves every published insight. The file name in square brackets is the route parameter, and Nuxt does the rest.</div>\n<h4>02 &middot; Public versus private &mdash; 1.5 min</h4>\n<p>Open the feed in a private window: it loads. Open the dashboard in the same window: it redirects to login. Two rules, two behaviours, one app.</p>\n",
+   "check": [
+    "Feed page built against seed data on day two",
+    "Detail page with dynamic slug route",
+    "Public endpoints expose published fields only",
+    "useSeoMeta set per insight",
+    "404 handled for an unknown slug",
+    "Feed loads with no session, dashboard redirects",
+    "View-source verified on the deployed URL",
+    "Screenshot backup of the view-source moment",
+    "Backup demo video recorded for the whole team",
+    "Opening ninety seconds rehearsed until automatic"
+   ]
+  }
+ ]
+};
+
+/* ============================================================================
+   INSIGHTFLOW ROADMAP — single-file application
+   ----------------------------------------------------------------------------
+   The PHASE constant above holds every word of content for this file. The code
+   below turns it into a page. All three phase files share this exact script, so
+   fixing a bug here fixes it in all of them.
+
+   Systems:
+     A. RENDER      header, briefing panel and member modules, built once
+     B. FILTER      member switches + search, composed together
+     C. RAIL        contents list, regenerated whenever the view changes
+     D. SCROLLSPY   IntersectionObserver-driven active section tracking
+     E. STATE       checklists, accordions, progress rings (in memory only)
+     F. CHROME      theme, dock actions, counters, reveal, keyboard
+   Checklist ticks are per-session by design: this file is meant to be copied,
+   printed and handed around, not to act as a database.
+   ========================================================================== */
+
+const state = {
+  filter:'all',
+  query:'',
+  done:new Set(),
+  closed:new Set(),
+  originals:new Map()
+};
+
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const pad = n => String(n).padStart(2,'0');
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ------------------------------------------------------------- A. RENDER -- */
+
+function headerHTML(){
+  const p = PHASE;
+  const phases = p.phases.map(x=>{
+    const cur = x.code===p.code;
+    const lock = x.locked && !cur
+      ? '<svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>'
+      : '';
+    return `<a class="pb" href="${x.file}" ${cur?'aria-current="page"':''}><span class="pbn">${esc(x.code)}</span>${esc(x.short)}${lock}</a>`;
+  }).join('');
+
+  const chips = p.chips.map(c=>`<span class="chip">${c}</span>`).join('');
+
+  const widgets = p.widgets.map(w=>
+    `<div class="w"><span class="k">${esc(w.k)}</span><span class="v num" data-count="${w.v}">0</span></div>`).join('');
+
+  return `
+    <div>
+      <nav class="phasebar" aria-label="Project phases">${phases}</nav>
+      <div class="ident-line">
+        <svg class="ident-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <path d="M3 20h18"/><path d="M6 20V11M11 20V5M16 20v-6M21 20v-9"/>
+        </svg>
+        <span class="eyebrow">${esc(p.eyebrow)}</span>
+      </div>
+      <h1>${esc(p.title)} <span class="thin">${esc(p.subtitle)}</span></h1>
+      <p class="lede">${p.lede}</p>
+      <div class="status-row">
+        <span class="chip"><span class="pulse"></span> ${esc(p.status)}</span>
+        ${chips}
+      </div>
+    </div>
+    <div class="widgets" role="group" aria-label="Phase statistics">
+      ${widgets}
+      <div class="w ring-w">
+        <svg class="ring" viewBox="0 0 44 44" aria-hidden="true">
+          <circle class="trk" cx="22" cy="22" r="18"></circle>
+          <circle class="val" id="ringVal" cx="22" cy="22" r="18" stroke-dasharray="113" stroke-dashoffset="113"></circle>
+        </svg>
+        <div>
+          <span class="k">Checklist</span>
+          <span class="v num" id="ringPc">0<small>%</small></span>
+          <div class="active-dots" id="activeDots" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function subShell(id,index,title,inner){
+  return `
+  <section class="sub" id="${id}" data-title="${esc(title)}">
+    <div class="sub-headrow">
+      <button class="sub-head" aria-expanded="true" aria-controls="${id}-body">
+        <span class="idx">${pad(index)}</span>
+        <h3>${esc(title)}</h3>
+        <span class="rule"></span>
+        <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <button class="copy" type="button" data-copy="${id}" aria-label="Copy the ${esc(title)} section as text">Copy</button>
+    </div>
+    <div class="sub-wrap"><div class="sub-body" id="${id}-body"><div class="inner">${inner}</div></div></div>
+  </section>`;
+}
+
+function checklistHTML(m){
+  const items = m.check.map((t,i)=>{
+    const id = m.id+'-c'+i;
+    return `<li><label class="chk" for="${id}">
+      <input type="checkbox" id="${id}" data-chk="${id}">
+      <span class="box" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12 5.5 5.5L20 6"/></svg>
+      </span>
+      <span class="lbl">${t}</span>
+    </label></li>`;
+  }).join('');
+  return `<ul class="checks">${items}</ul>
+    <div class="chk-meter">
+      <div class="strip" data-strip="${m.id}">${m.check.map(()=>'<i></i>').join('')}</div>
+      <span class="pc" data-pc="${m.id}">0%</span>
+    </div>`;
+}
+
+function memberHTML(m){
+  const subs = PHASE.subs.map(([key,title],i)=>{
+    const body = key==='check' ? checklistHTML(m) : (m[key]||'');
+    return subShell(`${m.id}-${key}`, i+1, title, body);
+  }).join('');
+
+  const teaches = m.teaches
+    ? `<div class="teaches"><b>Owns the concept</b> ${esc(m.teaches)}</div>` : '';
+  const stat2 = m.talk
+    ? `<div class="mstat"><span class="k">Speaking</span><span class="v">${esc(m.talk)}</span></div>` : '';
+
+  return `
+  <article class="panel member rev" id="${m.id}" data-member="${m.id}" style="--accent:${m.color}">
+    <div class="idrail" aria-hidden="true">
+      <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${m.icon}</svg>
+      <span class="bar"></span>
+      <span class="vlabel">Member ${m.n}</span>
+      <span class="bar"></span>
+    </div>
+    <div class="member-body">
+      <div class="mhead">
+        <div>
+          <span class="eyebrow">Module 0${m.n} &mdash; ${esc(m.owns)}</span>
+          <h2 style="margin-top:6px">${esc(m.name)}</h2>
+          <p class="role">${esc(m.role)}</p>
+          ${teaches}
+        </div>
+        <div class="mstats">
+          ${stat2}
+          <div class="mstat"><span class="k">Tasks</span><span class="v num">${m.check.length}</span></div>
+        </div>
+      </div>
+      ${subs}
+    </div>
+  </article>`;
+}
+
+function briefHTML(){
+  const b = PHASE.brief;
+  const subs = b.subs.map(([id,title,inner],i)=>subShell(id,i+1,title,inner)).join('');
+  const gate = b.gate ? `<div class="gate"><span class="lab">${esc(b.gate.label)}</span>${b.gate.html}</div>` : '';
+  return `
+  <article class="panel brief rev" id="brief" data-member="shared" style="--accent:${b.color||'var(--m1)'}">
+    <div class="mhead">
+      <div>
+        <span class="eyebrow">${esc(b.kicker)}</span>
+        <h2 style="margin-top:6px">${esc(b.title)}</h2>
+        <p class="role">${esc(b.role)}</p>
+      </div>
+      <div class="mstats">
+        <div class="mstat"><span class="k">Repo</span><span class="v">1</span></div>
+        <div class="mstat"><span class="k">App</span><span class="v">1</span></div>
+      </div>
+    </div>
+    ${gate}
+    ${subs}
+  </article>`;
+}
+
+function render(){
+  $('#opsIn').innerHTML = headerHTML();
+  $('#content').innerHTML = briefHTML() + PHASE.members.map(memberHTML).join('') +
+    `<div class="no-result hidden" id="noResult"><b>Nothing matches that search</b>Try a shorter word, or clear the search to see everything again.</div>`;
+  $$('.sub-body .inner').forEach(el=>state.originals.set(el.closest('.sub').id, el.innerHTML));
+  buildSwitches();
+}
+
+/* ------------------------------------------------------------- B. FILTER -- */
+
+function buildSwitches(){
+  const box = $('#switches');
+  const mk = (val,label,color)=>{
+    const b = document.createElement('button');
+    b.className='sw'; b.type='button';
+    b.dataset.filter=val;
+    b.setAttribute('aria-pressed', String(val===state.filter));
+    b.innerHTML = `<span class="tick"></span>${label}`;
+    if(color) b.style.setProperty('--accent',color);
+    box.appendChild(b);
+  };
+  mk('all','All');
+  PHASE.members.forEach(m=>mk(m.id,'Member '+m.n,m.color));
+  applyFilter('all',true);
+}
+
+function applyFilter(val,instant){
+  state.filter = val;
+  const accent = val==='all' ? PHASE.members[0].color : (PHASE.members.find(m=>m.id===val)||{}).color;
+  document.documentElement.style.setProperty('--accent',accent);
+
+  $$('.sw').forEach(b=>{
+    const on = b.dataset.filter===val;
+    b.setAttribute('aria-pressed',String(on));
+    if(on) moveRail(b,instant);
+  });
+
+  $$('#content > .panel').forEach(p=>{
+    const show = val==='all' ? true : p.dataset.member===val;
+    p.classList.toggle('hidden', !show);
+  });
+
+  $$('#activeDots i').forEach((d,i)=>{
+    const m = PHASE.members[i];
+    d.style.background = (val==='all' || val===m.id) ? m.color : 'var(--border)';
+  });
+
+  applySearch();
+  buildRail();
+}
+
+function moveRail(btn,instant){
+  const rail = $('#swRail');
+  if(instant) rail.style.transition='none';
+  rail.style.left  = btn.offsetLeft+'px';
+  rail.style.width = btn.offsetWidth+'px';
+  if(instant) requestAnimationFrame(()=>rail.style.transition='');
+}
+
+/* --------------------------------------------------------------- SEARCH --- */
+
+function highlight(node,rx){
+  const walker = document.createTreeWalker(node,NodeFilter.SHOW_TEXT,null);
+  const hits=[]; let n;
+  while((n=walker.nextNode())){ rx.lastIndex=0; if(rx.test(n.nodeValue)) hits.push(n); }
+  hits.forEach(t=>{
+    const frag = document.createDocumentFragment();
+    let last=0, s=t.nodeValue, m; rx.lastIndex=0;
+    while((m=rx.exec(s))){
+      frag.append(s.slice(last,m.index));
+      const mk=document.createElement('mark'); mk.textContent=m[0]; frag.append(mk);
+      last=m.index+m[0].length;
+    }
+    frag.append(s.slice(last));
+    t.replaceWith(frag);
+  });
+}
+
+function applySearch(){
+  const q = state.query.trim();
+  $('#searchWrap').classList.toggle('has', q.length>0);
+
+  /* reset to whatever the member filter allows, then let the query narrow it.
+     without this, clearing a search leaves panels the search hid still hidden. */
+  $$('#content > .panel').forEach(p=>{
+    p.classList.toggle('hidden', !(state.filter==='all' || p.dataset.member===state.filter));
+  });
+
+  $$('.sub').forEach(sub=>{
+    const inner = sub.querySelector('.inner');
+    const orig = state.originals.get(sub.id);
+    if(orig !== undefined && inner.innerHTML !== orig) inner.innerHTML = orig;
+    sub.classList.remove('hidden');
+  });
+
+  if(q){
+    const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
+    $$('#content > .panel:not(.hidden)').forEach(panel=>{
+      let panelHit = false;
+      $$('.sub',panel).forEach(sub=>{
+        const hay = sub.dataset.title+' '+sub.querySelector('.inner').textContent;
+        rx.lastIndex=0;
+        const hit = rx.test(hay);
+        sub.classList.toggle('hidden',!hit);
+        if(hit){ panelHit=true; rx.lastIndex=0; highlight(sub.querySelector('.inner'),rx); }
+      });
+      panel.classList.toggle('hidden',!panelHit);
+    });
+  }
+
+  $('#noResult').classList.toggle('hidden', $$('#content > .panel:not(.hidden)').length>0);
+  restoreState();
+  buildRail();
+}
+
+/* ----------------------------------------------------------------- C. RAIL */
+
+function buildRail(){
+  const list = $('#railList');
+  list.querySelectorAll('.rail-grp,.rail-empty').forEach(n=>n.remove());
+  let count=0;
+
+  $$('#content > .panel:not(.hidden)').forEach(p=>{
+    const subs = $$('.sub:not(.hidden)',p);
+    if(!subs.length) return;
+    const shared = p.dataset.member==='shared';
+    const m = PHASE.members.find(x=>x.id===p.dataset.member);
+    const g = document.createElement('div');
+    g.className='rail-grp';
+    if(m) g.style.setProperty('--accent',m.color);
+    g.innerHTML = `<div class="g-title"><span class="swatch"></span>${shared?esc(PHASE.brief.title):'Member '+m.n}</div>`;
+    const box = document.createElement('div');
+    box.className='rail-sub';
+    subs.forEach(s=>{
+      const a=document.createElement('a');
+      a.className='rail-link'; a.href='#'+s.id; a.dataset.target=s.id;
+      a.textContent = s.dataset.title;
+      box.appendChild(a); count++;
+    });
+    g.appendChild(box);
+    list.appendChild(g);
+  });
+
+  if(!count){
+    const e=document.createElement('div'); e.className='rail-empty';
+    e.textContent='No sections in this view.'; list.appendChild(e);
+    $('#railTrack').style.opacity=0;
+  }
+  $('#railCount').textContent = count ? count+' sections' : '\u2014';
+  observeSections();
+}
+
+/* ------------------------------------------------------------ D. SCROLLSPY */
+let spy = null;
+function observeSections(){
+  if(spy) spy.disconnect();
+  const visible = $$('#content .sub:not(.hidden)').filter(s=>!s.closest('.panel').classList.contains('hidden'));
+  if(!visible.length) return;
+  spy = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{ if(e.isIntersecting) setActive(e.target.id); });
+  },{rootMargin:'-150px 0px -66% 0px',threshold:0});
+  visible.forEach(s=>spy.observe(s));
+}
+
+function setActive(id){
+  let hit=null;
+  $$('.rail-link').forEach(a=>{
+    const on = a.dataset.target===id;
+    a.classList.toggle('on',on);
+    if(on) hit=a;
+  });
+  const track=$('#railTrack');
+  if(hit){
+    const list=$('#railList');
+    track.style.opacity=1;
+    track.style.top   = (hit.offsetTop+4)+'px';
+    track.style.height= (hit.offsetHeight-8)+'px';
+    const t=hit.offsetTop, b=t+hit.offsetHeight;
+    if(t<list.scrollTop || b>list.scrollTop+list.clientHeight){
+      list.scrollTo({top:t-list.clientHeight/2,behavior:'smooth'});
+    }
+  }
+}
+
+/* --------------------------------------------------- E. CHECKS & PROGRESS - */
+
+function restoreState(){
+  $$('[data-chk]').forEach(cb=>{ cb.checked = state.done.has(cb.dataset.chk); });
+  $$('.sub').forEach(sub=>{
+    const closed = state.closed.has(sub.id);
+    sub.classList.toggle('closed',closed);
+    const btn=sub.querySelector('.sub-head');
+    if(btn) btn.setAttribute('aria-expanded',String(!closed));
+  });
+  updateProgress();
+}
+
+function updateProgress(){
+  let total=0, done=0;
+  PHASE.members.forEach(m=>{
+    const n=m.check.length; let d=0;
+    for(let i=0;i<n;i++) if(state.done.has(m.id+'-c'+i)) d++;
+    total+=n; done+=d;
+    const strip=$('[data-strip="'+m.id+'"]');
+    if(strip) [...strip.children].forEach((seg,i)=>seg.classList.toggle('fill',i<d));
+    const pc=$('[data-pc="'+m.id+'"]');
+    if(pc) pc.textContent = Math.round(d/n*100)+'%';
+  });
+  const ratio = total? done/total : 0;
+  $('#ringVal').style.strokeDashoffset = String(2*Math.PI*18*(1-ratio));
+  $('#ringPc').innerHTML = Math.round(ratio*100)+'<small>%</small>';
+}
+
+/* ------------------------------------------------------------- F. CHROME -- */
+
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),1700);
+}
+
+function setTheme(next){
+  document.documentElement.dataset.theme = next;
+  $('#themeLabel').textContent = next==='dark' ? 'Dark' : 'Light';
+  $('#themeIcon').innerHTML = next==='dark'
+    ? '<path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/>'
+    : '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/>';
+}
+
+function countUp(el){
+  const target = +el.dataset.count, dur = 900, t0 = performance.now();
+  const step = t => {
+    const p = Math.min(1,(t-t0)/dur);
+    el.textContent = Math.round(target*(1-Math.pow(1-p,3)));
+    if(p<1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function copySection(id){
+  const sub = document.getElementById(id);
+  if(!sub) return;
+  const title = sub.dataset.title;
+  const text  = title+'\n'+'-'.repeat(title.length)+'\n\n'+sub.querySelector('.inner').innerText.trim();
+  const done = ()=>{
+    toast('Section copied');
+    const btn=sub.querySelector('.copy');
+    btn.classList.add('ok'); btn.textContent='Copied';
+    setTimeout(()=>{btn.classList.remove('ok');btn.textContent='Copy';},1500);
+  };
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+  } else fallbackCopy(text,done);
+}
+function fallbackCopy(text,cb){
+  const ta=document.createElement('textarea');
+  ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); cb(); }catch(e){ toast('Copy not available'); }
+  ta.remove();
+}
+
+function setAll(closed){
+  state.closed.clear();
+  if(closed) $$('.sub').forEach(s=>state.closed.add(s.id));
+  restoreState();
+  toast(closed?'All sections collapsed':'All sections expanded');
+}
+
+function closeRail(){
+  $('#rail').classList.remove('open');
+  $('#scrim').classList.remove('on');
+  $('#tocBtn').setAttribute('aria-expanded','false');
+}
+
+/* --------------------------------------------------------------- WIRING --- */
+
+function init(){
+  document.title = PHASE.docTitle;
+  render();
+  setTheme('dark');
+
+  $$('[data-count]').forEach(countUp);
+  PHASE.members.forEach(m=>{
+    const d=document.createElement('i');
+    d.style.background=m.color;
+    $('#activeDots').appendChild(d);
+  });
+  updateProgress();
+
+  /* delegated so search-driven innerHTML swaps never orphan a handler */
+  document.addEventListener('click',e=>{
+    const sw = e.target.closest('.sw');
+    if(sw){ applyFilter(sw.dataset.filter); window.scrollTo({top:0,behavior:'smooth'}); return; }
+
+    const cp = e.target.closest('.copy');
+    if(cp){ e.preventDefault(); copySection(cp.dataset.copy); return; }
+
+    const head = e.target.closest('.sub-head');
+    if(head){
+      const sub = head.closest('.sub');
+      if(state.closed.has(sub.id)) state.closed.delete(sub.id); else state.closed.add(sub.id);
+      sub.classList.toggle('closed');
+      head.setAttribute('aria-expanded',String(!sub.classList.contains('closed')));
+      return;
+    }
+
+    const link = e.target.closest('.rail-link');
+    if(link){
+      e.preventDefault();
+      const t=document.getElementById(link.dataset.target);
+      if(t){
+        state.closed.delete(t.id); t.classList.remove('closed');
+        t.querySelector('.sub-head').setAttribute('aria-expanded','true');
+        t.scrollIntoView({behavior:'smooth',block:'start'});
+        setActive(t.id);
+      }
+      closeRail();
+    }
+  });
+
+  document.addEventListener('change',e=>{
+    const cb=e.target.closest('[data-chk]');
+    if(!cb) return;
+    if(cb.checked) state.done.add(cb.dataset.chk); else state.done.delete(cb.dataset.chk);
+    updateProgress();
+  });
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='/' && !/input|textarea/i.test(e.target.tagName)){ e.preventDefault(); $('#search').focus(); }
+    if(e.key==='Escape'){
+      if($('#search').value){ $('#search').value=''; state.query=''; applySearch(); }
+      closeRail();
+    }
+  });
+
+  let deb;
+  $('#search').addEventListener('input',e=>{
+    clearTimeout(deb);
+    deb=setTimeout(()=>{ state.query=e.target.value; applySearch(); },140);
+  });
+  $('#clearSearch').addEventListener('click',()=>{
+    $('#search').value=''; state.query=''; applySearch(); $('#search').focus();
+  });
+
+  $('#btnTop').onclick      = ()=>window.scrollTo({top:0,behavior:'smooth'});
+  $('#btnExpand').onclick   = ()=>setAll(false);
+  $('#btnCollapse').onclick = ()=>setAll(true);
+  $('#btnPrint').onclick    = ()=>window.print();
+  $('#themeToggle').onclick = ()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+
+  $('#tocBtn').onclick = ()=>{
+    const open = $('#rail').classList.toggle('open');
+    $('#scrim').classList.toggle('on',open);
+    $('#tocBtn').setAttribute('aria-expanded',String(open));
+  };
+  $('#scrim').onclick = closeRail;
+
+  const ro = new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); ro.unobserve(e.target); } });
+  },{rootMargin:'0px 0px -8% 0px'});
+  $$('.rev').forEach(el=>ro.observe(el));
+
+  window.addEventListener('resize',()=>{
+    const on=$('.sw[aria-pressed="true"]');
+    if(on) moveRail(on,true);
+  });
+}
+
+document.addEventListener('DOMContentLoaded',init);
+
+</script>
+</body>
+</html>
