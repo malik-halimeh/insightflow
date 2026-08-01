@@ -68,8 +68,19 @@ export async function getMongoClient(): Promise<MongoClient> {
   if (state.client) return state.client
 
   // Store the in-flight promise so parallel callers during a cold start share
-  // one connection attempt rather than racing to open several.
-  state.connecting ??= new MongoClient(readConfig().uri).connect()
+  // one connection attempt rather than racing to open several. A *failed* attempt
+  // is discarded rather than cached: otherwise one unreachable moment at startup
+  // would leave this instance permanently unable to reach the database, still
+  // rejecting instantly long after the database came back.
+  if (!state.connecting) {
+    state.connecting = new MongoClient(readConfig().uri)
+      .connect()
+      .catch((error: unknown) => {
+        delete state.connecting
+        throw error
+      })
+  }
+
   state.client = await state.connecting
 
   return state.client

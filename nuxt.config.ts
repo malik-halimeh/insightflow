@@ -7,6 +7,14 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2026-06-30',
 
+  // Render runs a long-lived Node process. This preset extends node-server and
+  // produces .output/server/index.mjs, which the start command runs. The build
+  // command stays `nuxt build` — `nuxt generate` would emit static files with no
+  // server, silently removing every API route, the login and the publish flow.
+  nitro: {
+    preset: 'render-com'
+  },
+
   // How each part of the site is rendered, and why.
   // '/'                    Built once at deploy time. It is the same for every visitor, so nobody should wait for a server.
   // '/insights'            Rendered on the server and cached for a minute. The public feed must be readable without an account, and by search engines.
