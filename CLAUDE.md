@@ -2,6 +2,9 @@
 
 Standing brief for every session in this repository. Read it before writing any code.
 
+New to the project? Start with `docs/HANDOFF.md`, then `docs/DESIGN-SYSTEM.md`.
+Record what blocked you each day in `/CHALLENGES.md`.
+
 ## PROJECT
 
 InsightFlow — a business intelligence tool for small businesses. A signed-in owner uploads sales data and receives plain-language recommendations. Interesting findings can be published to a public, server-rendered insight feed that requires no account.
