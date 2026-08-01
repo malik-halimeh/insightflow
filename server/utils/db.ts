@@ -50,8 +50,20 @@ function cache(): MongoCache {
  * the seed script can populate process.env before the first connection is made.
  */
 function readConfig(): { uri: string, dbName: string } {
-  const uri = process.env.MONGODB_URI
-  const dbName = process.env.MONGODB_DB
+  let uri = process.env.MONGODB_URI
+  let dbName = process.env.MONGODB_DB
+
+  // Inside Nitro, runtimeConfig wins: it applies the NUXT_-prefixed overrides that
+  // reading process.env alone would miss, so a secret can be rotated on the host
+  // without a rebuild. The seed script runs outside Nitro, where this function does
+  // not exist, and falls back to the environment.
+  try {
+    const config = useRuntimeConfig()
+    uri = config.mongodbUri || uri
+    dbName = config.mongodbDb || dbName
+  } catch {
+    // Not running inside Nitro.
+  }
 
   if (!uri) {
     throw new Error('MONGODB_URI is not set. Copy .env.example to .env and fill it in.')

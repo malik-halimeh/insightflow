@@ -83,6 +83,28 @@ Add all six in **Environment** before the first build.
 | `SESSION_SECRET` | 32+ random characters | Sign-in returns **500**. If it were merely weak rather than missing, session cookies could be forged — treat it as a password. |
 | `NUXT_PUBLIC_SITE_URL` | `https://insightflow.onrender.com` | **Nothing today.** No code currently reads it. Set it correctly anyway: it is exposed to the browser, so it must never hold a secret, and it is what canonical URLs and share links will use when the public feed needs them. |
 
+### The production server does not read `.env`
+
+`.env` is a convenience for local development only. `nuxt dev` and `npm run seed` read
+it; **`node .output/server/index.mjs` does not.** The deployed app sees only real
+environment variables, which is exactly what Render's Environment tab provides.
+
+This matters if you ever test the production build on your own machine. This fails:
+
+```bash
+node .output/server/index.mjs          # health says database: down
+```
+
+This works:
+
+```bash
+node --env-file=.env .output/server/index.mjs
+```
+
+If you test that way, note that the session cookie is issued with `Secure` outside
+development, so a browser will refuse to store it over plain `http://localhost`.
+Sign-in will appear to fail locally and work fine on Render, which serves HTTPS.
+
 ### The build-time trap you need to understand
 
 Five of these six names are not prefixed with `NUXT_`, so Nuxt cannot bind them

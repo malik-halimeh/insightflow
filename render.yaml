@@ -1,0 +1,30 @@
+# Render Blueprint. Render reads this when you create a service from the repository,
+# so the build command, start command and health check path cannot be mistyped.
+#
+# The six environment variables are declared but deliberately have no values here:
+# `sync: false` makes Render prompt for each one instead, so no secret is committed.
+services:
+  - type: web
+    name: insightflow
+    runtime: node
+    plan: free
+    branch: main
+    buildCommand: npm install && npm run build
+    startCommand: node .output/server/index.mjs
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Prompted at deploy time. See docs/DEPLOY.md for what breaks without each.
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB
+        sync: false
+      - key: AUTH_USERNAME
+        sync: false
+      - key: AUTH_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: NUXT_PUBLIC_SITE_URL
+        sync: false
