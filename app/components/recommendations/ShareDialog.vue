@@ -34,6 +34,7 @@
 
 <script setup lang="ts">
 import { formatPercentChange } from '#shared/format'
+import type { PublishedInsight } from '#shared/schemas'
 
 const props = defineProps<{
   /** The finding being published, for the preview. */
@@ -46,7 +47,9 @@ const props = defineProps<{
 
 const open = defineModel<boolean>('open', { default: false })
 
-const form = reactive({
+// The three fields the owner fills in, taken from the published record rather than
+// retyped, so the form cannot drift from what actually gets stored.
+const form = reactive<Pick<PublishedInsight, 'displayName' | 'caption' | 'hideAbsoluteNumbers'>>({
   displayName: '',
   caption: '',
   hideAbsoluteNumbers: true

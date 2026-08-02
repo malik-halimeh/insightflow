@@ -33,6 +33,7 @@
 
 <script setup lang="ts">
 import { formatCount, formatMoney } from '#shared/format'
+import type { SalesRow } from '#shared/schemas'
 
 definePageMeta({ middleware: 'auth', layout: 'app' })
 useSeoMeta({ title: 'Dashboard — InsightFlow' })
@@ -64,11 +65,13 @@ const DEMO_TOTALS = {
   worstSeller: 'Beetroot & Feta Salad'
 }
 
-interface ItemRow {
-  itemName: string
-  category: string
-  quantity: number
-  revenue: number
+/**
+ * One line of the item table: the sales-row fields, totalled up, plus the change
+ * against the previous period. The field names are taken from SalesRow rather than
+ * retyped, so if M1 ever renames one this page fails to compile instead of quietly
+ * showing blank cells.
+ */
+type ItemRow = Pick<SalesRow, 'itemName' | 'category' | 'quantity' | 'revenue'> & {
   changePercent: number
 }
 
