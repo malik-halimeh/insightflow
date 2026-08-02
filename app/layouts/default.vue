@@ -1,3 +1,20 @@
+<script setup lang="ts">
+/**
+ * Checked in the browser only, never during rendering. Two reasons, both of which
+ * would be bugs rather than inefficiencies:
+ *
+ *   '/' is prerendered, so its HTML is built once at deploy time with nobody signed
+ *   in. A server-rendered header would say "Sign in" to everyone, for ever.
+ *
+ *   '/insights' is cached with swr, so a server-rendered header would store one
+ *   visitor's session state and hand it to the next person who asked.
+ *
+ * `server: false` keeps this page HTML identical for everybody and swaps the link
+ * after hydration, for whoever is actually holding the browser.
+ */
+const { data: session } = await useFetch('/api/auth/session', { server: false })
+</script>
+
 <template>
   <div class="min-h-screen flex flex-col">
     <header class="border-b border-default">
@@ -11,7 +28,14 @@
           <NuxtLink to="/insights" class="text-muted hover:text-default">
             Insight feed
           </NuxtLink>
-          <NuxtLink to="/login" class="text-muted hover:text-default">
+          <NuxtLink
+            v-if="session?.authenticated"
+            to="/dashboard"
+            class="text-muted hover:text-default"
+          >
+            Dashboard
+          </NuxtLink>
+          <NuxtLink v-else to="/login" class="text-muted hover:text-default">
             Sign in
           </NuxtLink>
         </nav>
