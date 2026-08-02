@@ -58,9 +58,35 @@ useSeoMeta({
         {{ formatPercentChange(publishedInsight.metricValue) }}
       </p>
 
+      <p class="mt-2 text-sm text-muted">
+        Shared as a change, not a figure.
+      </p>
+
       <p class="mt-4 text-lg text-muted">
         {{ publishedInsight.caption }}
       </p>
     </header>
+
+    <!--
+      The honest answer to "what next". There is no sign-up in this product, so
+      inviting a stranger to create an account would be selling something that does
+      not exist. What is true is that they can read more, and that the same pattern
+      is probably sitting in their own records.
+    -->
+    <footer class="mt-12 border-t border-default pt-8">
+      <h2 class="text-base font-semibold">
+        What now?
+      </h2>
+
+      <p class="mt-2 max-w-xl text-sm text-muted">
+        There is nothing to sign up for here. This is one business sharing something
+        they noticed in their own sales. If you keep a record of yours, the same kind
+        of pattern is probably already sitting in it.
+      </p>
+
+      <UButton to="/insights" color="neutral" variant="subtle" class="mt-6">
+        Read other insights
+      </UButton>
+    </footer>
   </article>
 </template>

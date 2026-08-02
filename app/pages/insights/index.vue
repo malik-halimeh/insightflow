@@ -15,8 +15,18 @@ const { data: insights, status, error } = await useFetch('/api/insights', {
   <div>
     <UiPageHeader
       title="Insight feed"
-      description="Sales findings shared by small businesses."
+      description="What small businesses learned from their own sales."
     />
+
+    <!--
+      States the rule rather than leaving a reader to notice the gap. Without this
+      line the missing figures read as something the page forgot; with it, they read
+      as the point.
+    -->
+    <p class="-mt-4 mb-8 max-w-2xl text-sm text-muted">
+      Everyone here shares what changed, never what they earn. You will not find
+      anyone's takings on this page.
+    </p>
 
     <div v-if="status === 'pending'" class="grid gap-4 sm:grid-cols-2">
       <USkeleton class="h-48 w-full" />
