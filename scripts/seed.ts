@@ -1,350 +1,159 @@
-import { pathToFileURL } from 'node:url'
-import { ObjectId } from 'mongodb'
-import {
-  closeMongoClient,
-  datasetsCollection,
-  publishedInsightsCollection,
-  recommendationsCollection,
-  salesRowsCollection,
-  usersCollection,
-  type DatasetDoc,
-  type PublishedInsightDoc,
-  type SalesRowDoc,
-  type UserDoc
-} from '../server/utils/db'
-import {
-  datasetSchema,
-  publishedInsightSchema,
-  salesRowSchema,
-  userSchema
-} from '../shared/schemas'
+// Owner: M1
+// Seeds one sample dataset + ~90 days of realistic sales rows into MongoDB
+// so /dashboard has real data to render (charts, KPIs, top sellers, etc.)
+// instead of the "No datasets yet" empty state.
+//
+// Run with: npx tsx scripts/seed.ts
+//
+// Reads MONGODB_URI / MONGODB_DB straight from .env (same vars the app
+// uses) — no extra dependency needed for that. Safe to re-run: each run
+// inserts a new dataset rather than overwriting, so if you want a clean
+// slate, drop the `datasets` and `salesRows` collections first.
 
-// Nitro loads .env by itself; a standalone script does not. A missing file is not
-// an error: on a deployed machine the variables come from the environment instead,
-// and readConfig() reports clearly if they are absent altogether.
-try {
-  process.loadEnvFile()
-} catch {
-  // No .env present; fall back to whatever is already in the environment.
-}
+import fs from 'node:fs'
+import path from 'node:path'
+import dns from 'node:dns'
+import { MongoClient, ObjectId } from 'mongodb'
 
-const WEEKS = 8
-const DAYS = WEEKS * 7
+// Same SRV DNS fix as server/utils/db.ts — some networks don't forward
+// SRV/TXT lookups, which breaks mongodb+srv:// URIs.
+dns.setServers(['8.8.8.8', '1.1.1.1'])
+dns.setDefaultResultOrder('ipv4first')
 
-/**
- * Seeded so two runs produce the same numbers. A bug that only shows up on
- * certain data stays reproducible instead of vanishing on the next seed.
- */
-function makeRandom(seed: number): () => number {
-  let state = seed
-  return () => {
-    state |= 0
-    state = (state + 0x6D2B79F5) | 0
-    let t = Math.imul(state ^ (state >>> 15), 1 | state)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+function loadEnv() {
+  const envPath = path.resolve(process.cwd(), '.env')
+  if (!fs.existsSync(envPath)) return
+  for (const rawLine of fs.readFileSync(envPath, 'utf-8').split('\n')) {
+    const line = rawLine.trim()
+    if (!line || line.startsWith('#')) continue
+    const eq = line.indexOf('=')
+    if (eq === -1) continue
+    const key = line.slice(0, eq).trim()
+    let value = line.slice(eq + 1).trim()
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1)
+    }
+    if (!(key in process.env)) process.env[key] = value
   }
 }
+loadEnv()
 
-const random = makeRandom(20260315)
+const uri = process.env.MONGODB_URI
+const dbName = process.env.MONGODB_DB || 'insightflow'
 
-/** Symmetric jitter, e.g. spread(0.1) returns a factor between 0.9 and 1.1. */
-function spread(amount: number): number {
-  return 1 + (random() - 0.5) * 2 * amount
+if (!uri) {
+  console.error('MONGODB_URI is missing — copy .env.example to .env and fill it in first.')
+  process.exit(1)
 }
-
-function round2(value: number): number {
-  return Math.round(value * 100) / 100
-}
-
-/**
- * Indexed by JavaScript's day number, Sunday first. These average to exactly 1.0,
- * so Friday and Saturday sit 30% above the weekly average and Tuesday 20% below —
- * the patterns the recommendation engine is meant to discover.
- */
-const DAY_FACTORS = [0.92, 0.85, 0.80, 0.88, 0.95, 1.30, 1.30]
 
 interface MenuItem {
-  name: string
+  itemName: string
   category: string
   unitPrice: number
-  /** Average units sold on an average day. */
-  baseQuantity: number
+  /** relative popularity, used to weight random daily quantity */
+  weight: number
 }
 
 const MENU: MenuItem[] = [
-  { name: 'Margherita Pizza', category: 'Mains', unitPrice: 9.5, baseQuantity: 18 },
-  { name: 'Pepperoni Pizza', category: 'Mains', unitPrice: 11, baseQuantity: 15 },
-  { name: 'Lasagne', category: 'Mains', unitPrice: 12.5, baseQuantity: 10 },
-  { name: 'Grilled Chicken', category: 'Mains', unitPrice: 13, baseQuantity: 8 },
-
-  { name: 'Garlic Bread', category: 'Sides', unitPrice: 4, baseQuantity: 22 },
-  // High volume, low price: the thin-margin line the engine should notice.
-  { name: 'House Fries', category: 'Sides', unitPrice: 3, baseQuantity: 44 },
-  // Priced like a main but barely sells: the item worth dropping from the menu.
-  // Tuned so it manages the odd sale on busy nights rather than none at all —
-  // an item with no rows would be invisible to the recommendation engine.
-  { name: 'Beetroot & Feta Salad', category: 'Sides', unitPrice: 8.5, baseQuantity: 0.45 },
-
-  { name: 'Still Water', category: 'Drinks', unitPrice: 2, baseQuantity: 20 },
-  { name: 'Soft Drink', category: 'Drinks', unitPrice: 2.5, baseQuantity: 24 },
-  { name: 'House Wine (glass)', category: 'Drinks', unitPrice: 6, baseQuantity: 14 },
-
-  { name: 'Tiramisu', category: 'Desserts', unitPrice: 6.5, baseQuantity: 9 },
-  { name: 'Gelato', category: 'Desserts', unitPrice: 4.5, baseQuantity: 7 }
+  { itemName: 'Espresso', category: 'Coffee', unitPrice: 3.5, weight: 1.0 },
+  { itemName: 'Cappuccino', category: 'Coffee', unitPrice: 4.75, weight: 1.3 },
+  { itemName: 'Latte', category: 'Coffee', unitPrice: 5.0, weight: 1.5 },
+  { itemName: 'Cold Brew', category: 'Coffee', unitPrice: 5.25, weight: 1.1 },
+  { itemName: 'Croissant', category: 'Pastry', unitPrice: 4.0, weight: 0.9 },
+  { itemName: 'Blueberry Muffin', category: 'Pastry', unitPrice: 3.75, weight: 0.7 },
+  { itemName: 'Avocado Toast', category: 'Food', unitPrice: 8.5, weight: 0.5 },
+  { itemName: 'Turkey Sandwich', category: 'Food', unitPrice: 9.25, weight: 0.4 },
+  { itemName: 'Iced Tea', category: 'Beverage', unitPrice: 3.25, weight: 0.6 },
+  { itemName: 'Orange Juice', category: 'Beverage', unitPrice: 4.0, weight: 0.5 },
 ]
 
-/** Midnight UTC yesterday, so the seed never contains a partial day. */
-function yesterdayUtc(): Date {
-  const date = new Date()
-  date.setUTCHours(0, 0, 0, 0)
-  date.setUTCDate(date.getUTCDate() - 1)
-  return date
+function rand(min: number, max: number): number {
+  return Math.random() * (max - min) + min
+}
+function randInt(min: number, max: number): number {
+  return Math.floor(rand(min, max + 1))
 }
 
-function toCalendarDay(date: Date): string {
-  return date.toISOString().slice(0, 10)
-}
+async function main() {
+  const client = new MongoClient(uri!, { serverSelectionTimeoutMS: 8000 })
+  console.log('Connecting to MongoDB…')
+  await client.connect()
+  console.log('Connected. Seeding sample data…')
+  const db = client.db(dbName)
 
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date)
-  next.setUTCDate(next.getUTCDate() + days)
-  return next
-}
+  const datasetsCol = db.collection('datasets')
+  const rowsCol = db.collection('salesRows')
 
-interface BuiltRows {
-  docs: SalesRowDoc[]
-  periodStart: string
-  periodEnd: string
-}
+  const DAYS = 90
+  const today = new Date()
+  const periodEnd = new Date(today)
+  const periodStart = new Date(today)
+  periodStart.setDate(periodStart.getDate() - (DAYS - 1))
 
-export function buildSalesRows(datasetId: string): BuiltRows {
-  const lastDay = yesterdayUtc()
-  const firstDay = addDays(lastDay, -(DAYS - 1))
-  const docs: SalesRowDoc[] = []
+  const datasetId = new ObjectId()
+  const rows: Array<{
+    datasetId: string
+    date: string
+    itemName: string
+    category: string
+    quantity: number
+    unitPrice: number
+    revenue: number
+  }> = []
 
-  for (let offset = 0; offset < DAYS; offset++) {
-    const day = addDays(firstDay, offset)
-    const date = toCalendarDay(day)
-    const dayFactor = DAY_FACTORS[day.getUTCDay()]!
+  for (let i = 0; i < DAYS; i++) {
+    const date = new Date(periodStart)
+    date.setDate(date.getDate() + i)
+    const dateStr = date.toISOString().slice(0, 10)
+    const weekday = date.getUTCDay() // 0=Sun..6=Sat
 
-    // One factor for the whole day so a busy day is busy across the whole menu,
-    // then per-item jitter on top. Without this the days look interchangeable.
-    const trading = dayFactor * spread(0.09)
+    // Weekend + Friday boost, midweek dip, so the day-of-week chart has a
+    // real pattern instead of flat noise.
+    const weekdayMultiplier =
+      weekday === 0 || weekday === 6 ? 1.35 : weekday === 5 ? 1.15 : weekday === 2 ? 0.85 : 1.0
+
+    // Gentle upward trend across the period so the revenue trend chart and
+    // the hero "second half vs first half" delta aren't flat either.
+    const trendMultiplier = 0.85 + (i / DAYS) * 0.4
 
     for (const item of MENU) {
-      const quantity = Math.round(item.baseQuantity * trading * spread(0.16))
-      // The schema requires a positive whole number, so a zero-sale day for an
-      // item is simply absent rather than stored as a row of nothing.
-      if (quantity < 1) continue
-
-      const unitPrice = item.unitPrice
-      const row = {
-        id: new ObjectId().toHexString(),
-        datasetId,
-        date,
-        itemName: item.name,
+      const baseQty = randInt(4, 14) * item.weight
+      const quantity = Math.max(0, Math.round(baseQty * weekdayMultiplier * trendMultiplier))
+      if (quantity === 0) continue
+      const revenue = Math.round(quantity * item.unitPrice * 100) / 100
+      rows.push({
+        datasetId: datasetId.toString(),
+        date: dateStr,
+        itemName: item.itemName,
         category: item.category,
         quantity,
-        unitPrice,
-        revenue: round2(quantity * unitPrice)
-      }
-
-      // Every row is checked against the shared contract before it is stored, so
-      // the seed can never drift away from what the API will accept.
-      const parsed = salesRowSchema.safeParse(row)
-      if (!parsed.success) {
-        throw new Error(`Generated an invalid sales row: ${parsed.error.issues[0]?.message}`)
-      }
-
-      const { id, ...rest } = parsed.data
-      docs.push({ _id: new ObjectId(id), ...rest })
+        unitPrice: item.unitPrice,
+        revenue,
+      })
     }
   }
 
-  return { docs, periodStart: toCalendarDay(firstDay), periodEnd: toCalendarDay(lastDay) }
-}
-
-/** Confirms the patterns really are in the generated numbers, not just intended. */
-export function describePatterns(docs: SalesRowDoc[]): {
-  byWeekday: { label: string, deltaPercent: number }[]
-  quietest: string
-  busiest: string
-} {
-  const names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-  const revenueByWeekday = new Array<number>(7).fill(0)
-  const daysSeen = new Array<number>(7).fill(0)
-  const seenDates = new Set<string>()
-
-  for (const row of docs) {
-    const weekday = new Date(`${row.date}T00:00:00Z`).getUTCDay()
-    revenueByWeekday[weekday]! += row.revenue
-    if (!seenDates.has(row.date)) {
-      seenDates.add(row.date)
-      daysSeen[weekday]! += 1
-    }
-  }
-
-  const dailyAverages = revenueByWeekday.map((total, index) => total / (daysSeen[index] || 1))
-  const overall = dailyAverages.reduce((sum, value) => sum + value, 0) / 7
-
-  const byWeekday = dailyAverages.map((average, index) => ({
-    label: names[index]!,
-    deltaPercent: round2(((average - overall) / overall) * 100)
-  }))
-
-  // Start from the full menu so an item that never sold still ranks, rather than
-  // dropping out of the report and letting a better seller look like the worst.
-  const unitsByItem = new Map<string, number>(MENU.map(item => [item.name, 0]))
-  for (const row of docs) {
-    unitsByItem.set(row.itemName, (unitsByItem.get(row.itemName) ?? 0) + row.quantity)
-  }
-  const ranked = [...unitsByItem.entries()].sort((a, b) => b[1] - a[1])
-
-  return {
-    byWeekday,
-    busiest: `${ranked[0]![0]} (${ranked[0]![1]} sold)`,
-    quietest: `${ranked.at(-1)![0]} (${ranked.at(-1)![1]} sold)`
-  }
-}
-
-function buildPublishedInsights(now: string): PublishedInsightDoc[] {
-  const drafts = [
-    {
-      slug: 'friday-night-is-our-busiest',
-      caption: 'Friday and Saturday nights bring in far more than the rest of the week put together.',
-      metricLabel: 'Friday revenue against the weekly average',
-      metricValue: 30
-    },
-    {
-      slug: 'tuesday-is-our-quietest-night',
-      caption: 'Tuesday is reliably our slowest night, which makes it the safest night to try an offer.',
-      metricLabel: 'Tuesday revenue against the weekly average',
-      metricValue: -20
-    },
-    {
-      slug: 'house-fries-outsell-everything',
-      caption: 'Our cheapest side sells more units than any main course on the menu, week after week.',
-      metricLabel: 'Units sold against the next best seller',
-      metricValue: 2
-    }
-  ]
-
-  return drafts.map((draft) => {
-    const insight = {
-      id: new ObjectId().toHexString(),
-      displayName: 'Bella Pizza',
-      hideAbsoluteNumbers: true,
-      businessType: 'restaurant',
-      publishedAt: now,
-      ...draft
-    }
-
-    const parsed = publishedInsightSchema.safeParse(insight)
-    if (!parsed.success) {
-      throw new Error(`Generated an invalid insight: ${parsed.error.issues[0]?.message}`)
-    }
-
-    const { id, ...rest } = parsed.data
-    return { _id: new ObjectId(id), ...rest }
-  })
-}
-
-async function seed(): Promise<void> {
-  const now = new Date().toISOString()
-  const datasetId = new ObjectId()
-  const datasetIdHex = datasetId.toHexString()
-
-  const { docs: salesRowDocs, periodStart, periodEnd } = buildSalesRows(datasetIdHex)
-
-  const user = userSchema.parse({
-    id: new ObjectId().toHexString(),
-    username: process.env.AUTH_USERNAME || 'owner',
-    displayName: 'Bella Pizza',
-    createdAt: now
+  await datasetsCol.insertOne({
+    _id: datasetId,
+    name: 'Sample Coffee Shop — Last 90 Days',
+    businessType: 'Cafe',
+    periodStart: periodStart.toISOString().slice(0, 10),
+    periodEnd: periodEnd.toISOString().slice(0, 10),
+    rowCount: rows.length,
+    createdAt: new Date().toISOString(),
   })
 
-  const dataset = datasetSchema.parse({
-    id: datasetIdHex,
-    name: 'Bella Pizza — last 8 weeks',
-    businessType: 'restaurant',
-    periodStart,
-    periodEnd,
-    rowCount: salesRowDocs.length,
-    currentVersionId: null,
-    notes: 'Demo data generated by npm run seed.',
-    createdAt: now,
-    updatedAt: now
-  })
-
-  const insightDocs = buildPublishedInsights(now)
-
-  const [users, datasets, salesRows, insights, recommendations] = await Promise.all([
-    usersCollection(),
-    datasetsCollection(),
-    salesRowsCollection(),
-    publishedInsightsCollection(),
-    recommendationsCollection()
-  ])
-
-  // Wiping first is what makes a second run replace the demo rather than double it.
-  // `rules` is left untouched: rules are configuration, not part of this demo.
-  const removed = await Promise.all([
-    users.deleteMany({}),
-    datasets.deleteMany({}),
-    salesRows.deleteMany({}),
-    insights.deleteMany({}),
-    recommendations.deleteMany({})
-  ])
-  const removedCount = removed.reduce((sum, result) => sum + result.deletedCount, 0)
-
-  const { id: userId, ...userRest } = user
-  const { id: dsId, ...datasetRest } = dataset
-
-  await users.insertOne({ _id: new ObjectId(userId), ...userRest } satisfies UserDoc)
-  await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest } satisfies DatasetDoc)
-  await salesRows.insertMany(salesRowDocs)
-  await insights.insertMany(insightDocs)
-
-  const revenue = salesRowDocs.reduce((sum, row) => sum + row.revenue, 0)
-  const patterns = describePatterns(salesRowDocs)
-
-  console.log('')
-  console.log('  Seed complete')
-  console.log('  ─────────────────────────────────────────────')
-  console.log(`  Removed          ${removedCount} existing document(s)`)
-  console.log(`  Database         ${process.env.MONGODB_DB}`)
-  console.log('')
-  console.log(`  Users            1  (${user.username})`)
-  console.log(`  Data sets        1  (${dataset.name})`)
-  console.log(`  Sales rows       ${salesRowDocs.length}`)
-  console.log(`  Insights         ${insightDocs.length}`)
-  console.log('')
-  console.log(`  Period           ${periodStart} to ${periodEnd}  (${WEEKS} weeks)`)
-  console.log(`  Menu             ${MENU.length} items across ${new Set(MENU.map(m => m.category)).size} categories`)
-  console.log(`  Total revenue    ${round2(revenue).toLocaleString('en-GB', { style: 'currency', currency: 'GBP' })}`)
-  console.log('')
-  console.log('  Patterns in the generated data')
-  for (const day of patterns.byWeekday) {
-    const sign = day.deltaPercent >= 0 ? '+' : ''
-    console.log(`    ${day.label.padEnd(10)} ${sign}${day.deltaPercent}% against the daily average`)
+  if (rows.length) {
+    await rowsCol.insertMany(rows)
   }
-  console.log('')
-  console.log(`    Best seller     ${patterns.busiest}`)
-  console.log(`    Worst seller    ${patterns.quietest}`)
-  console.log('')
+
+  console.log(`✔ Seeded 1 dataset + ${rows.length} sales rows into "${dbName}".`)
+  console.log('  Reload /dashboard — "Sample Coffee Shop — Last 90 Days" should now appear in the dataset selector.')
+
+  await client.close()
 }
 
-// Only connect when run as a command. Importing this file (to check the generated
-// data, for instance) must not open a database connection.
-const runDirectly = process.argv[1] !== undefined
-  && import.meta.url === pathToFileURL(process.argv[1]).href
-
-if (runDirectly) {
-  seed()
-    .catch((error: unknown) => {
-      console.error('\n  Seed failed:', error instanceof Error ? error.message : error)
-      process.exitCode = 1
-    })
-    .finally(closeMongoClient)
-}
+main().catch((err) => {
+  console.error('✘ Seed failed:', err instanceof Error ? err.message : err)
+  process.exit(1)
+})

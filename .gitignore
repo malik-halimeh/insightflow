@@ -1,17 +1,5 @@
-# Dependencies
 node_modules
-
-# Nuxt build artefacts
 .nuxt
 .output
-.data
-dist
-
-# Local env — never commit real credentials
 .env
-.env.*
-!.env.example
-
-# Logs and OS noise
-*.log
-.DS_Store
+dist

@@ -1,7 +1,8 @@
+<!-- Owner: M1 -->
 <template>
-  <UApp>
+  <div>
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
-  </UApp>
+  </div>
 </template>
