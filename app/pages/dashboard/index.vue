@@ -29,23 +29,35 @@ useSeoMeta({ title: 'Dashboard — InsightFlow' })
 /** Four weeks of trading days. Below this, comparisons are hidden rather than guessed. */
 const MINIMUM_DAYS_FOR_TRENDS = 28
 
-const { data: datasets, status: datasetsStatus } = await useFetch('/api/analytics/datasets', {
+const {
+  data: datasets,
+  status: datasetsStatus,
+  error: datasetsError
+} = await useFetch('/api/analytics/datasets', {
   default: (): DatasetSummary[] => []
 })
 
-const selectedId = ref('')
+// The list above is awaited, so it is already resolved here. Seed the selection
+// from it directly rather than through a watcher: a watcher would set the id
+// before the request below is registered, and that request would then sit waiting
+// for a change that had already happened.
+const selectedId = ref(datasets.value[0]?.id ?? '')
 
-watch(datasets, (list) => {
-  if (!selectedId.value && list.length) selectedId.value = list[0]!.id
-}, { immediate: true })
-
-const { data: summary, status: summaryStatus } = await useFetch<AnalyticsSummary>(
+const {
+  data: summary,
+  status: summaryStatus,
+  error: summaryError
+} = await useFetch<AnalyticsSummary>(
   () => `/api/analytics/${selectedId.value}/summary`,
-  { immediate: false, watch: [selectedId] }
+  { immediate: selectedId.value !== '', watch: [selectedId] }
 )
 
+const failed = computed(() => Boolean(datasetsError.value || summaryError.value))
+
 const loading = computed(() =>
-  datasetsStatus.value === 'pending' || summaryStatus.value === 'pending' || !summary.value
+  !failed.value
+  && selectedId.value !== ''
+  && (datasetsStatus.value === 'pending' || summaryStatus.value === 'pending' || !summary.value)
 )
 
 const enoughHistory = computed(() => (summary.value?.activeDays ?? 0) >= MINIMUM_DAYS_FOR_TRENDS)
@@ -66,9 +78,22 @@ const worstSeller = computed(() => summary.value?.topItems.at(-1)?.itemName ?? '
       </template>
     </UiPageHeader>
 
+    <!--
+      A failed request must not render as an empty screen. "Nothing to show yet"
+      sends an owner off to upload data they have already uploaded.
+    -->
+    <UAlert
+      v-if="failed"
+      color="error"
+      variant="subtle"
+      icon="i-lucide-triangle-alert"
+      title="We could not load your figures"
+      description="Your data is safe. Refresh the page to try again, and if it keeps happening it is a problem on our side rather than with your account."
+    />
+
     <!-- Nothing uploaded yet -->
     <UiEmptyState
-      v-if="datasetsStatus !== 'pending' && datasets.length === 0"
+      v-else-if="datasetsStatus !== 'pending' && datasets.length === 0"
       icon="i-lucide-chart-column"
       title="Nothing to show yet"
       description="Add a data set and your sales appear here within a few seconds."
