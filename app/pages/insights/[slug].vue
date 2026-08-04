@@ -6,6 +6,17 @@ const route = useRoute()
 const config = useRuntimeConfig()
 const slug = String(route.params.slug)
 
+/**
+ * The host this page was actually served from, preferred over the configured
+ * site URL. NUXT_PUBLIC_SITE_URL is baked in at build time, so a wrong or stale
+ * value silently publishes share links pointing at a host that does not exist —
+ * and it can only be corrected by a full redeploy. Reading the request means the
+ * canonical URL is right wherever this is deployed, with the configured value
+ * kept as a fallback for prerendering.
+ */
+const requestOrigin = useRequestURL().origin
+const siteOrigin = computed(() => requestOrigin || config.public.siteUrl)
+
 const { data: insight, error } = await useFetch<PublishedInsight>(`/api/insights/${slug}`)
 
 if (error.value || !insight.value) {
@@ -20,7 +31,7 @@ const pageTitle = computed(() =>
   `${publishedInsight.displayName}: ${publishedInsight.metricLabel} — InsightFlow`
 )
 const canonicalUrl = computed(() =>
-  `${config.public.siteUrl}/insights/${publishedInsight.slug}`
+  `${siteOrigin.value}/insights/${publishedInsight.slug}`
 )
 
 useSeoMeta({
