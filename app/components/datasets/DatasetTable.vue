@@ -54,7 +54,7 @@ const BUSINESS_TYPE_LABELS: Record<string,string> = {
 
 <template #businessType-cell="{row}">
 
-{{ 
+{{
 BUSINESS_TYPE_LABELS[row.original.businessType]
 ?? row.original.businessType
 }}
