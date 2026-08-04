@@ -4,10 +4,11 @@ import {
   ruleSchema,
   type Recommendation,
   type Rule,
+  type RuleCreate,
   type SalesRow
 } from '#shared/schemas'
 
-const starterRuleDefinitions: Array<Omit<Rule, 'id'>> = [
+const starterRuleDefinitions: RuleCreate[] = [
   {
     name: 'Busy days',
     metric: 'revenue',
@@ -36,6 +37,39 @@ const starterRuleDefinitions: Array<Omit<Rule, 'id'>> = [
     enabled: true
   }
 ]
+
+interface EvaluatedRule {
+  rule: Rule
+  ruleId: string | null
+}
+
+async function rulesToEvaluate(): Promise<EvaluatedRule[]> {
+  const documents = await (await rulesCollection())
+    .find({})
+    .sort({ name: 1 })
+    .toArray()
+
+  if (documents.length > 0) {
+    return documents
+      .map(({ _id, ...rule }) => ruleSchema.parse({
+        id: _id.toHexString(),
+        ...rule
+      }))
+      .filter(rule => rule.enabled)
+      .map(rule => ({ rule, ruleId: rule.id }))
+  }
+
+  // The starter rules keep the first-run experience useful before the owner has
+  // saved any rules. They are not database records, so their findings have no
+  // ruleId. Once the owner saves a rule, only saved rules are evaluated.
+  return starterRuleDefinitions.map(definition => ({
+    rule: ruleSchema.parse({
+      id: new ObjectId().toHexString(),
+      ...definition
+    }),
+    ruleId: null
+  }))
+}
 
 export default defineEventHandler(async (event): Promise<Recommendation[]> => {
   requireSession(event)
@@ -73,23 +107,74 @@ export default defineEventHandler(async (event): Promise<Recommendation[]> => {
     ...row
   }))
 
-  const rules = starterRuleDefinitions.map(definition =>
-    ruleSchema.parse({
-      id: new ObjectId().toHexString(),
-      ...definition
-    })
+  const evaluatedRules = await rulesToEvaluate()
+  const findings = evaluatedRules.flatMap(({ rule, ruleId }) =>
+    evaluateRule(rows, rule).map(finding => ({ finding, ruleId }))
   )
-
-  const findings = generateFindings(rows, rules)
   const createdAt = new Date().toISOString()
+  const recommendations = await recommendationsCollection()
 
-  return findings.map(finding =>
+  await Promise.all(findings.map(async ({ finding, ruleId }) => {
+    // A recommendation must keep the same id across refreshes. Publishing links
+    // to this id, so returning a fresh ObjectId on every GET would make an insight
+    // appear unpublished as soon as the owner reloaded the page.
+    const document = await recommendations.findOneAndUpdate(
+      {
+        datasetId,
+        ruleId,
+        title: finding.title,
+        metric: finding.metric,
+        dimension: finding.dimension
+      },
+      {
+        $set: {
+          body: finding.body,
+          action: finding.action,
+          changePercent: finding.changePercent,
+          severity: finding.severity
+        },
+        $setOnInsert: {
+          _id: new ObjectId(),
+          datasetId,
+          ruleId,
+          title: finding.title,
+          metric: finding.metric,
+          dimension: finding.dimension,
+          createdAt
+        }
+      },
+      {
+        upsert: true,
+        returnDocument: 'after'
+      }
+    )
+
+    if (!document) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'This recommendation could not be saved. Please try again.'
+      })
+    }
+
+    const { _id, ...recommendation } = document
+    return recommendationSchema.parse({
+      id: _id.toHexString(),
+      ...recommendation
+    })
+  }))
+
+  // Findings are records of what the engine discovered. Removing or disabling a
+  // rule stops future evaluation, but it must not strand a public insight by
+  // making its private unpublish control disappear.
+  const stored = await recommendations
+    .find({ datasetId })
+    .sort({ createdAt: -1 })
+    .toArray()
+
+  return stored.map(({ _id, ...recommendation }) =>
     recommendationSchema.parse({
-      id: new ObjectId().toHexString(),
-      datasetId,
-      ruleId: null,
-      ...finding,
-      createdAt
+      id: _id.toHexString(),
+      ...recommendation
     })
   )
 })

@@ -44,7 +44,7 @@ function tryAgain() {
 <template>
   <div class="min-h-screen flex flex-col">
     <header class="border-b border-default">
-      <div class="mx-auto w-full max-w-4xl px-4 py-3">
+      <div class="mx-auto w-full max-w-4xl px-4 py-4">
         <NuxtLink to="/" class="font-semibold tracking-tight">
           InsightFlow
         </NuxtLink>
@@ -52,14 +52,14 @@ function tryAgain() {
     </header>
 
     <main class="flex flex-1 items-center">
-      <div class="mx-auto w-full max-w-4xl px-4 py-16">
+      <div class="mx-auto w-full max-w-4xl px-4 py-8">
         <div class="max-w-xl">
           <UIcon
             :name="notFound ? 'i-lucide-map-pin-off' : authenticationRequired ? 'i-lucide-log-in' : 'i-lucide-unplug'"
             class="size-8 text-muted"
           />
 
-          <h1 class="mt-6 text-3xl font-semibold tracking-tight">
+          <h1 class="mt-8 text-2xl font-semibold tracking-tight">
             {{ heading }}
           </h1>
 
@@ -67,7 +67,7 @@ function tryAgain() {
             {{ explanation }}
           </p>
 
-          <div class="mt-8 flex flex-wrap gap-3">
+          <div class="mt-8 flex flex-wrap gap-4">
             <UButton
               v-if="authenticationRequired"
               to="/login"
