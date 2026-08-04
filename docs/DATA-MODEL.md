@@ -135,12 +135,14 @@ These are real and deliberate, not oversights to route around quietly.
 1. **`datasets.currentVersionId` points at nothing.** There is no versions
    collection. The field exists because the contract anticipated data set
    versioning; today it is always `null`. Do not build against it without asking M1.
-2. **A published insight cannot be traced back to its source.** There is no
-   `recommendationId` or `datasetId` on `publishedInsights`. That means you cannot
-   currently answer "which finding did this public page come from", and deleting a
-   data set cannot automatically unpublish what came from it — even though the
-   delete confirmation promises exactly that. **M4 and M1 need to settle this before
-   publishing ships.**
+2. ~~**A published insight cannot be traced back to its source.**~~ **Closed.**
+   `publishedInsights` now carries `recommendationId` and `datasetId`, both
+   nullable. `recommendationId` is what makes "already published" survive a page
+   refresh and lets unpublish find the record again. `datasetId` is stored directly
+   rather than followed through the recommendation, so deleting a data set takes
+   down anything published from it even when the finding itself has already gone —
+   which is what the delete confirmation has always promised. The delete route
+   cascades to all three collections.
 3. **There is no owner on anything.** No `userId` on `datasets` or anywhere else.
    The product is single-tenant: one account, one set of data. Adding a second
    business later means adding an owner reference to almost every collection.

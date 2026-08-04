@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb'
 import { requireSession } from '../../utils/auth'
 import {
   datasetsCollection,
+  publishedInsightsCollection,
   recommendationsCollection,
   salesRowsCollection
 } from '../../utils/db'
@@ -36,9 +37,13 @@ export default defineEventHandler(async (event) => {
   }
 
   // Foreign keys are stored as hex strings, not ObjectIds.
-  const [rows, recommendations] = await Promise.all([
+  const [rows, recommendations, insights] = await Promise.all([
     (await salesRowsCollection()).deleteMany({ datasetId: id }),
-    (await recommendationsCollection()).deleteMany({ datasetId: id })
+    (await recommendationsCollection()).deleteMany({ datasetId: id }),
+    // The confirmation promises that anything published from this data set comes
+    // down, including its public link. Without this the page stays live on the
+    // open internet after the data behind it is gone.
+    (await publishedInsightsCollection()).deleteMany({ datasetId: id })
   ])
 
   await datasets.deleteOne({ _id: new ObjectId(id) })
@@ -47,7 +52,8 @@ export default defineEventHandler(async (event) => {
     deleted: {
       dataset: existing.name,
       salesRows: rows.deletedCount,
-      recommendations: recommendations.deletedCount
+      recommendations: recommendations.deletedCount,
+      publishedInsights: insights.deletedCount
     }
   }
 })

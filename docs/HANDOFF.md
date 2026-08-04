@@ -127,7 +127,7 @@ need it, stop and say so — do not edit and do not work around it.
 | **M1** (lead) | `nuxt.config.ts`, `app/app.config.ts`, `shared/**`, `server/utils/**`, `server/api/auth/**`, `app/app.vue`, `app/assets/**`, `app/layouts/**`, `app/middleware/**`, `app/components/ui/**`, `app/pages/index.vue`, `app/pages/login.vue`, `scripts/**`, `docs/**`, `README.md` |
 | **M2** | `app/pages/datasets/**`, `app/components/datasets/**`, `server/api/datasets/**` |
 | **M3** | `app/pages/dashboard/**`, `app/components/dashboard/**`, `server/api/analytics/**` |
-| **M4** | `app/pages/recommendations/**`, `app/components/recommendations/**`, `server/api/recommendations/**`, `server/api/publish/**`, `app/error.vue` |
+| **M4** | `app/pages/recommendations/**`, `app/components/recommendations/**`, `server/api/recommendations/**`, `server/api/publish/**`, `server/utils/rules.ts`, `app/error.vue` |
 | **M5** | `app/pages/insights/**`, `app/components/insights/**`, `server/api/insights/**` |
 
 You may **import from** any folder. You may only **edit** your own.
@@ -163,6 +163,8 @@ import { datasetSchema, type Dataset } from '#shared/schemas'
 | Import | What it is |
 | --- | --- |
 | `datasetCreateSchema` / `DatasetCreate` | The five fields for creating a data set |
+| `ruleCreateSchema` / `RuleCreate` | A rule without its id |
+| `publishedInsightCreateSchema` / `PublishedInsightCreate` | Publishing a finding: display name, caption, hide-figures, and the recommendation it came from |
 | `loginSchema` / `LoginInput` | Username and password |
 
 > **Bind forms to the create schema, never to the record schema.** A record schema

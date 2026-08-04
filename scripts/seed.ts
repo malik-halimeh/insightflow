@@ -208,7 +208,7 @@ export function describePatterns(docs: SalesRowDoc[]): {
   }
 }
 
-function buildPublishedInsights(now: string): PublishedInsightDoc[] {
+function buildPublishedInsights(now: string, datasetId: string): PublishedInsightDoc[] {
   const drafts = [
     {
       slug: 'friday-night-is-our-busiest',
@@ -236,6 +236,11 @@ function buildPublishedInsights(now: string): PublishedInsightDoc[] {
       displayName: 'Bella Pizza',
       hideAbsoluteNumbers: true,
       businessType: 'restaurant',
+      // These demo insights were written by hand rather than published from a
+      // finding, so there is no recommendation to point at. The data set is real,
+      // so deleting it still takes these down with it.
+      recommendationId: null,
+      datasetId,
       publishedAt: now,
       ...draft
     }
@@ -277,7 +282,7 @@ async function seed(): Promise<void> {
     updatedAt: now
   })
 
-  const insightDocs = buildPublishedInsights(now)
+  const insightDocs = buildPublishedInsights(now, datasetIdHex)
 
   const [users, datasets, salesRows, insights, recommendations] = await Promise.all([
     usersCollection(),
