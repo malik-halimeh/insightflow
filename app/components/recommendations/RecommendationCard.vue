@@ -73,6 +73,14 @@ function handlePublish(input: {
           against the average
         </span>
       </div>
+
+      <!-- The action is the point of the product, so it gets its own block. -->
+      <div class="flex gap-3 rounded-md bg-elevated p-3">
+        <UIcon name="i-lucide-arrow-right" class="mt-0.5 size-4 shrink-0 text-muted" />
+        <p class="text-sm font-medium">
+          {{ recommendation.action }}
+        </p>
+      </div>
     </div>
     <template #footer>
       <div class="flex justify-end">

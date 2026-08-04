@@ -9,7 +9,7 @@ import type {
 
 type Finding = Pick<
   Recommendation,
-  'title' | 'body' | 'metric' | 'dimension' | 'changePercent' | 'severity'
+  'title' | 'body' | 'action' | 'metric' | 'dimension' | 'changePercent' | 'severity'
 >
 
 interface GroupSummary {
@@ -128,7 +128,11 @@ function buildComparisonFinding(
 
   return {
     title: `${group.label} is ${direction} average`,
+    // Interim: body and action are the same sentence, because the rule only
+    // carries one. Splitting them — body explains the finding, action says what
+    // to do — is M4's to do when the rule gains a separate explanation.
     body: rule.advice,
+    action: rule.advice,
     metric: rule.metric,
     dimension: rule.dimension,
     changePercent,
@@ -202,6 +206,7 @@ function evaluateUnsoldRule(rows: SalesRow[], rule: Rule): Finding[] {
     return [{
       title: `${group.label} has not sold for ${unsoldDays} days`,
       body: rule.advice,
+      action: rule.advice,
       metric: rule.metric,
       dimension: rule.dimension,
       changePercent: 0,
