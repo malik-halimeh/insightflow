@@ -21,22 +21,26 @@ ref behind it, when you wire real data.**
 
 | Route | File | State |
 | --- | --- | --- |
-| `/datasets` | `app/pages/datasets/index.vue` | Scaffold |
-| `/datasets/new` | `app/pages/datasets/new.vue` | Scaffold |
-| `/datasets/:id` | `app/pages/datasets/[id].vue` | Scaffold |
+| `/datasets` | `app/pages/datasets/index.vue` | **Live** |
+| `/datasets/new` | `app/pages/datasets/new.vue` | **Live** |
+| `/datasets/:id` | `app/pages/datasets/[id].vue` | **Live** |
 
-**Replace:** the `DEMO_DATASETS`, `DEMO_ROWS`, `DEMO_TOTALS` and `DEMO_PROBLEMS`
-constants, the `demoState` ref and its dashed box, and the empty `onDelete`,
-`onSave`, `onCheckFile` and `onImport` functions.
+All three read real data. The full API exists: list, create, read, update, delete,
+plus `POST /api/datasets/preview` to check a spreadsheet without saving anything
+and `POST /api/datasets/:id/rows` to import it. `server/utils/csv.ts` does the
+reading.
 
-**Good news:** your API already exists. `GET /api/datasets` and `POST /api/datasets`
-are built, authenticated and working. The listing page is roughly one `useFetch` away.
-There is no upload endpoint yet — that one is yours to write.
+**Nothing to replace.** The dummy data and the preview-state switcher are gone.
 
 **Do not change:**
 - The order on the partial-upload screen. **What worked comes first, always.** An owner
   whose 200-row export had 6 bad lines needs to see the 194 that are fine before the 6
   that are not.
+- Re-importing **replaces** the rows of a data set rather than adding to them.
+  Appending would let an owner upload the same export twice and watch their
+  revenue double.
+- The period on a data set is taken from the rows actually imported, not from the
+  dates the owner typed, so the dashboard never reports a range with no sales in it.
 - The per-line error wording. "Line 47: quantity must be a whole number" tells someone
   where to look. "Validation failed" does not.
 - The delete confirmation. It names the row count, the recommendations and the public
