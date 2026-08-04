@@ -5,79 +5,118 @@ const props = defineProps<{
   error: NuxtError
 }>()
 
-const statusCode = computed(() => props.error.statusCode || 500)
+const statusCode = computed(() => props.error?.statusCode ?? 500)
+const notFound = computed(() => statusCode.value === 404)
+const authenticationRequired = computed(() => statusCode.value === 401)
 
-const title = computed(() => {
-  if (statusCode.value === 401) {
-    return 'Please sign in to continue'
+const heading = computed(() => {
+  if (authenticationRequired.value) return 'Sign in to continue'
+  if (statusCode.value === 403) return 'You cannot access this page'
+  if (notFound.value) return 'That page is not here'
+  return 'Something went wrong at our end'
+})
+
+const explanation = computed(() => {
+  if (authenticationRequired.value) {
+    return 'Your session may have ended. Sign in again and we will bring you back into InsightFlow.'
   }
 
   if (statusCode.value === 403) {
-    return 'You cannot access this page'
+    return 'Your account does not have permission to open this page. Your data has not been changed.'
   }
 
-  if (statusCode.value === 404) {
-    return 'Page not found'
+  if (notFound.value) {
+    return 'The link may be out of date, or the insight it pointed to may have been unpublished by the business that shared it.'
   }
 
-  return 'Something went wrong'
+  return 'Your data is safe. Nothing you have uploaded has been changed or lost. This is a problem on our side, not with your account.'
 })
 
-const description = computed(() => {
-  if (props.error.statusMessage) {
-    return props.error.statusMessage
-  }
-
-  if (statusCode.value === 404) {
-    return 'The page you are looking for does not exist or may have moved.'
-  }
-
-  return 'The page could not be loaded. Try again or return to the home page.'
-})
-
-async function retry() {
-  await clearError()
+function goHome() {
+  clearError({ redirect: '/' })
 }
 
-async function goHome() {
-  await clearError({
-    redirect: '/'
-  })
+function tryAgain() {
+  clearError({ redirect: useRoute().fullPath })
 }
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center">
-    <UCard class="w-full max-w-lg">
-      <div class="space-y-8">
-        <div class="space-y-2">
-          <p class="text-xs text-muted">
-            Error {{ statusCode }}
-          </p>
+  <div class="min-h-screen flex flex-col">
+    <header class="border-b border-default">
+      <div class="mx-auto w-full max-w-4xl px-4 py-3">
+        <NuxtLink to="/" class="font-semibold tracking-tight">
+          InsightFlow
+        </NuxtLink>
+      </div>
+    </header>
 
-          <h1 class="text-2xl font-semibold tracking-tight">
-            {{ title }}
+    <main class="flex flex-1 items-center">
+      <div class="mx-auto w-full max-w-4xl px-4 py-16">
+        <div class="max-w-xl">
+          <UIcon
+            :name="notFound ? 'i-lucide-map-pin-off' : authenticationRequired ? 'i-lucide-log-in' : 'i-lucide-unplug'"
+            class="size-8 text-muted"
+          />
+
+          <h1 class="mt-6 text-3xl font-semibold tracking-tight">
+            {{ heading }}
           </h1>
 
-          <p class="text-sm text-muted">
-            {{ description }}
+          <p class="mt-4 text-lg text-muted">
+            {{ explanation }}
+          </p>
+
+          <div class="mt-8 flex flex-wrap gap-3">
+            <UButton
+              v-if="authenticationRequired"
+              to="/login"
+              icon="i-lucide-log-in"
+            >
+              Sign in
+            </UButton>
+
+            <UButton
+              v-else-if="!notFound"
+              icon="i-lucide-rotate-ccw"
+              @click="tryAgain"
+            >
+              Try again
+            </UButton>
+
+            <UButton
+              v-if="notFound"
+              to="/insights"
+              icon="i-lucide-newspaper"
+            >
+              Read the insight feed
+            </UButton>
+
+            <UButton
+              color="neutral"
+              variant="subtle"
+              icon="i-lucide-house"
+              @click="goHome"
+            >
+              Go to the home page
+            </UButton>
+          </div>
+
+          <p
+            v-if="!notFound && !authenticationRequired"
+            class="mt-8 text-sm text-muted"
+          >
+            If this keeps happening, tell us what you were doing just before it
+            appeared. That is usually enough to find the problem.
           </p>
         </div>
-
-        <div class="flex gap-2">
-          <UButton @click="retry">
-            Try again
-          </UButton>
-
-          <UButton
-            color="neutral"
-            variant="subtle"
-            @click="goHome"
-          >
-            Go back home
-          </UButton>
-        </div>
       </div>
-    </UCard>
+    </main>
+
+    <footer class="border-t border-default">
+      <div class="mx-auto w-full max-w-4xl px-4 py-4 text-sm text-muted">
+        InsightFlow — sales insights for small businesses.
+      </div>
+    </footer>
   </div>
 </template>

@@ -6,6 +6,8 @@ definePageMeta({
   layout: 'app'
 })
 
+useSeoMeta({ title: 'Recommendations — InsightFlow' })
+
 const {
   data: recommendations,
   status,
@@ -20,32 +22,36 @@ const {
   <div class="space-y-8">
     <UiPageHeader
       title="Recommendations"
-      description="Advice generated from patterns in your sales data."
+      description="What your sales data is telling you."
     >
       <template #actions>
         <UButton
+          to="/recommendations/rules"
           color="neutral"
           variant="subtle"
-          to="/recommendations/rules"
+          icon="i-lucide-sliders-horizontal"
         >
-          Manage rules
+          Rules
         </UButton>
       </template>
     </UiPageHeader>
 
     <div
       v-if="status === 'pending'"
-      class="grid gap-4"
+      class="space-y-4"
     >
-      <USkeleton class="h-40 w-full" />
-      <USkeleton class="h-40 w-full" />
-      <USkeleton class="h-40 w-full" />
+      <USkeleton
+        v-for="card in 3"
+        :key="card"
+        class="h-40 w-full"
+      />
     </div>
 
     <UAlert
       v-else-if="error"
       color="error"
       variant="subtle"
+      icon="i-lucide-circle-alert"
       title="Recommendations could not be loaded"
       description="Check your connection and try again."
     >
@@ -53,6 +59,7 @@ const {
         <UButton
           color="neutral"
           variant="subtle"
+          icon="i-lucide-rotate-ccw"
           @click="() => refresh()"
         >
           Try again
@@ -62,12 +69,16 @@ const {
 
     <UiEmptyState
       v-else-if="recommendations.length === 0"
+      icon="i-lucide-lightbulb"
       title="No recommendations yet"
-      description="Add sales data and rules so InsightFlow can find useful patterns."
+      description="InsightFlow looks for patterns using rules you control. Set up a rule and any matching findings appear here."
     >
       <template #action>
-        <UButton to="/recommendations/rules">
-          Create a rule
+        <UButton
+          to="/recommendations/rules"
+          icon="i-lucide-sliders-horizontal"
+        >
+          Set up a rule
         </UButton>
       </template>
     </UiEmptyState>

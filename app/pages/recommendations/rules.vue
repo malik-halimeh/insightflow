@@ -6,6 +6,8 @@ definePageMeta({
   layout: 'app'
 })
 
+useSeoMeta({ title: 'Rules — InsightFlow' })
+
 const {
   data: rules,
   status,
@@ -19,6 +21,34 @@ const showForm = ref(false)
 const editingRule = ref<Rule | null>(null)
 const deletingId = ref<string | null>(null)
 const serverError = ref<string | null>(null)
+
+const METRICS = [
+  { label: 'revenue', value: 'revenue' },
+  { label: 'quantity sold', value: 'quantity' },
+  { label: 'orders', value: 'orders' }
+]
+
+const DIMENSIONS = [
+  { label: 'day of week', value: 'dayOfWeek' },
+  { label: 'item', value: 'item' },
+  { label: 'category', value: 'category' },
+  { label: 'hour', value: 'hour' }
+]
+
+const OPERATORS = [
+  { label: 'above average by', value: 'above_average_by' },
+  { label: 'below average by', value: 'below_average_by' },
+  { label: 'unsold for', value: 'unsold_for_days' }
+]
+
+function labelFor(items: { label: string, value: string }[], value: string): string {
+  return items.find(item => item.value === value)?.label ?? value
+}
+
+function sentenceFor(rule: Rule): string {
+  const suffix = rule.operator === 'unsold_for_days' ? ' days' : '%'
+  return `When ${labelFor(METRICS, rule.metric)} by ${labelFor(DIMENSIONS, rule.dimension)} is ${labelFor(OPERATORS, rule.operator)} ${rule.threshold}${suffix}`
+}
 
 function openCreateForm() {
   editingRule.value = null
@@ -44,9 +74,7 @@ async function removeRule(rule: Rule) {
     `Delete "${rule.name}"? This action cannot be undone.`
   )
 
-  if (!confirmed) {
-    return
-  }
+  if (!confirmed) return
 
   deletingId.value = rule.id
   serverError.value = null
@@ -70,12 +98,26 @@ async function removeRule(rule: Rule) {
   <div class="space-y-8">
     <UiPageHeader
       title="Rules"
-      description="Manage the rules InsightFlow uses to generate recommendations."
+      description="What InsightFlow should look for in your sales."
     >
       <template #actions>
-        <UButton @click="openCreateForm">
-          Add rule
-        </UButton>
+        <div class="flex flex-wrap gap-2">
+          <UButton
+            to="/recommendations"
+            color="neutral"
+            variant="subtle"
+            icon="i-lucide-arrow-left"
+          >
+            Recommendations
+          </UButton>
+
+          <UButton
+            icon="i-lucide-plus"
+            @click="openCreateForm"
+          >
+            Add rule
+          </UButton>
+        </div>
       </template>
     </UiPageHeader>
 
@@ -83,6 +125,7 @@ async function removeRule(rule: Rule) {
       v-if="serverError"
       color="error"
       variant="subtle"
+      icon="i-lucide-circle-alert"
       :description="serverError"
     />
 
@@ -95,16 +138,20 @@ async function removeRule(rule: Rule) {
 
     <div
       v-if="status === 'pending'"
-      class="grid gap-4"
+      class="space-y-3"
     >
-      <USkeleton class="h-32 w-full" />
-      <USkeleton class="h-32 w-full" />
+      <USkeleton
+        v-for="row in 4"
+        :key="row"
+        class="h-24 w-full"
+      />
     </div>
 
     <UAlert
       v-else-if="error"
       color="error"
       variant="subtle"
+      icon="i-lucide-circle-alert"
       title="Rules could not be loaded"
       description="Check your connection and try again."
     >
@@ -112,6 +159,7 @@ async function removeRule(rule: Rule) {
         <UButton
           color="neutral"
           variant="subtle"
+          icon="i-lucide-rotate-ccw"
           @click="() => refresh()"
         >
           Try again
@@ -121,11 +169,15 @@ async function removeRule(rule: Rule) {
 
     <UiEmptyState
       v-else-if="rules.length === 0"
-      title="No saved rules yet"
-      description="Create a rule so InsightFlow can generate advice from your sales patterns."
+      icon="i-lucide-sliders-horizontal"
+      title="No rules yet"
+      description="Add your first rule. InsightFlow checks every rule against your sales each time you upload."
     >
       <template #action>
-        <UButton @click="openCreateForm">
+        <UButton
+          icon="i-lucide-plus"
+          @click="openCreateForm"
+        >
           Add rule
         </UButton>
       </template>
@@ -133,64 +185,63 @@ async function removeRule(rule: Rule) {
 
     <section
       v-else
-      class="space-y-4"
+      class="space-y-3"
     >
       <h2 class="text-base font-semibold">
-        Saved rules
+        Your rules
       </h2>
 
-      <div class="grid gap-4">
-        <UCard
-          v-for="rule in rules"
-          :key="rule.id"
-        >
-          <template #header>
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <h2 class="text-lg font-semibold">
-                  {{ rule.name }}
-                </h2>
+      <UCard
+        v-for="rule in rules"
+        :key="rule.id"
+      >
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div class="min-w-0 space-y-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="font-semibold">
+                {{ rule.name }}
+              </h3>
 
-                <p class="mt-2 text-xs text-muted">
-                  {{ rule.metric }} · {{ rule.dimension }} · {{ rule.operator }}
-                </p>
-              </div>
-
-              <UBadge :color="rule.enabled ? 'success' : 'neutral'">
-                {{ rule.enabled ? 'Enabled' : 'Disabled' }}
+              <UBadge
+                :color="rule.enabled ? 'success' : 'neutral'"
+                variant="subtle"
+                size="sm"
+              >
+                {{ rule.enabled ? 'On' : 'Off' }}
               </UBadge>
             </div>
-          </template>
 
-          <div class="space-y-4">
+            <p class="text-sm text-muted">
+              {{ sentenceFor(rule) }}
+            </p>
+
             <p class="text-sm">
               {{ rule.advice }}
             </p>
-
-            <p class="text-xs text-muted">
-              Threshold: {{ rule.threshold }}
-            </p>
-
-            <div class="flex gap-2">
-              <UButton
-                color="neutral"
-                variant="subtle"
-                @click="openEditForm(rule)"
-              >
-                Edit rule
-              </UButton>
-
-              <UButton
-                color="error"
-                :loading="deletingId === rule.id"
-                @click="removeRule(rule)"
-              >
-                Delete rule
-              </UButton>
-            </div>
           </div>
-        </UCard>
-      </div>
+
+          <div class="flex flex-wrap gap-2">
+            <UButton
+              color="neutral"
+              variant="subtle"
+              icon="i-lucide-pencil"
+              @click="openEditForm(rule)"
+            >
+              Edit
+            </UButton>
+
+            <UButton
+              color="error"
+              variant="subtle"
+              icon="i-lucide-trash-2"
+              :loading="deletingId === rule.id"
+              @click="removeRule(rule)"
+            >
+              Delete
+            </UButton>
+          </div>
+        </div>
+      </UCard>
     </section>
   </div>
 </template>

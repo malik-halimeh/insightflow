@@ -1,25 +1,156 @@
-<script setup lang="ts">
-// Placeholder so signing in lands somewhere real. This folder belongs to M3:
-// replace this file wholesale rather than building on top of it.
-definePageMeta({ middleware: 'auth', layout: 'app' })
+<!--
+  OWNER: M3 (dashboard and analytics)
 
+  WHAT THIS IS
+  The dashboard, reading real figures from /api/analytics. The aggregation behind
+  it is in server/api/analytics/[datasetId]/summary.get.ts.
+
+  THE STATE THAT MATTERS
+  "Not enough history". Below four weeks of trading days, every comparison is
+  hidden and the page says so. A weekday pattern drawn over eight days is not a
+  small inaccuracy, it is a confident line through noise, and an owner would order
+  stock against it.
+
+  WHAT NOT TO CHANGE
+  - The four-week rule. Lower it and the product starts inventing patterns.
+  - Best seller and worst seller carry no comparison. A single name has nothing to
+    be compared against.
+  - Money and counts go through #shared/format. Never format a figure by hand.
+  - The class names come from docs/DESIGN-SYSTEM.md.
+-->
+
+<script setup lang="ts">
+import { formatCount, formatMoney } from '#shared/format'
+import type { AnalyticsSummary, DatasetSummary } from '#shared/types/analytics'
+
+definePageMeta({ middleware: 'auth', layout: 'app' })
 useSeoMeta({ title: 'Dashboard — InsightFlow' })
+
+/** Four weeks of trading days. Below this, comparisons are hidden rather than guessed. */
+const MINIMUM_DAYS_FOR_TRENDS = 28
+
+const {
+  data: datasets,
+  status: datasetsStatus,
+  error: datasetsError
+} = await useFetch('/api/analytics/datasets', {
+  default: (): DatasetSummary[] => []
+})
+
+// The list above is awaited, so it is already resolved here. Seed the selection
+// from it directly rather than through a watcher: a watcher would set the id
+// before the request below is registered, and that request would then sit waiting
+// for a change that had already happened.
+const selectedId = ref(datasets.value[0]?.id ?? '')
+
+const {
+  data: summary,
+  status: summaryStatus,
+  error: summaryError
+} = await useFetch<AnalyticsSummary>(
+  () => `/api/analytics/${selectedId.value}/summary`,
+  { immediate: selectedId.value !== '', watch: [selectedId] }
+)
+
+const failed = computed(() => Boolean(datasetsError.value || summaryError.value))
+
+const loading = computed(() =>
+  !failed.value
+  && selectedId.value !== ''
+  && (datasetsStatus.value === 'pending' || summaryStatus.value === 'pending' || !summary.value)
+)
+
+const enoughHistory = computed(() => (summary.value?.activeDays ?? 0) >= MINIMUM_DAYS_FOR_TRENDS)
+
+const bestSeller = computed(() => summary.value?.topItems[0]?.itemName ?? '—')
+const worstSeller = computed(() => summary.value?.topItems.at(-1)?.itemName ?? '—')
 </script>
 
 <template>
-  <div class="max-w-2xl">
-    <h1 class="text-2xl font-semibold tracking-tight">
-      Dashboard
-    </h1>
+  <div>
+    <UiPageHeader title="Dashboard" description="How your sales are doing.">
+      <template #actions>
+        <DashboardDatasetSelector
+          v-if="datasets.length > 0"
+          v-model="selectedId"
+          :datasets="datasets"
+        />
+      </template>
+    </UiPageHeader>
 
-    <p class="mt-3 text-muted">
-      You are signed in. Charts and figures for your sales data will appear here.
-    </p>
+    <!--
+      A failed request must not render as an empty screen. "Nothing to show yet"
+      sends an owner off to upload data they have already uploaded.
+    -->
+    <UAlert
+      v-if="failed"
+      color="error"
+      variant="subtle"
+      icon="i-lucide-triangle-alert"
+      title="We could not load your figures"
+      description="Your data is safe. Refresh the page to try again, and if it keeps happening it is a problem on our side rather than with your account."
+    />
 
-    <div class="mt-6 flex flex-wrap gap-3">
-      <UButton to="/insights" color="neutral" variant="subtle">
-        View the public insight feed
-      </UButton>
+    <!-- Nothing uploaded yet -->
+    <UiEmptyState
+      v-else-if="datasetsStatus !== 'pending' && datasets.length === 0"
+      icon="i-lucide-chart-column"
+      title="Nothing to show yet"
+      description="Add a data set and your sales appear here within a few seconds."
+    >
+      <template #action>
+        <UButton to="/datasets/new" icon="i-lucide-plus">
+          Add data set
+        </UButton>
+      </template>
+    </UiEmptyState>
+
+    <!-- Loading -->
+    <div v-else-if="loading" class="space-y-8">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <USkeleton v-for="card in 5" :key="card" class="h-28 w-full" />
+      </div>
+      <div class="grid gap-4 lg:grid-cols-2">
+        <USkeleton class="h-64 w-full" />
+        <USkeleton class="h-64 w-full" />
+      </div>
+    </div>
+
+    <div v-else-if="summary" class="space-y-8">
+      <!--
+        Totals are true whatever the period length, so they stay. Comparisons need
+        four weeks behind them, so they go.
+      -->
+      <UAlert
+        v-if="!enoughHistory"
+        color="info"
+        variant="subtle"
+        icon="i-lucide-info"
+        title="Not enough history for trends yet"
+        :description="`This data set covers ${summary.activeDays} trading ${summary.activeDays === 1 ? 'day' : 'days'}. Weekly patterns need at least four weeks before they mean anything, so the totals below are shown without comparisons. Add more history and the trends appear on their own.`"
+      />
+
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <UiMetricCard
+          label="Total revenue"
+          :value="formatMoney(summary.kpis.totalRevenue)"
+          :change="enoughHistory ? summary.kpis.revenueChangePercent : undefined"
+          change-label="second half against the first"
+        />
+        <UiMetricCard label="Items sold" :value="formatCount(summary.kpis.totalUnits)" />
+        <UiMetricCard label="Average day" :value="formatMoney(summary.kpis.avgDailyRevenue)" />
+        <UiMetricCard label="Best seller" :value="bestSeller" />
+        <UiMetricCard label="Worst seller" :value="worstSeller" />
+      </div>
+
+      <div class="grid gap-4 lg:grid-cols-2">
+        <DashboardRevenueTrendChart :points="summary.revenueTrend" />
+        <DashboardDayOfWeekChart :days="summary.dayOfWeek" :show-comparison="enoughHistory" />
+      </div>
+
+      <DashboardCategoryBreakdown :categories="summary.categories" />
+
+      <DashboardTopItemsTable :items="summary.topItems" />
     </div>
   </div>
 </template>
