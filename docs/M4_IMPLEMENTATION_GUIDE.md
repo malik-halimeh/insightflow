@@ -275,12 +275,12 @@ revenue or quantity figure.
 
 ### Unique public slugs
 
-The human-readable part of the public URL comes from the recommendation title. It is
-normalised into a URL-safe value, then combined with the new database identity.
+The public URL combines the owner's public display name with the recommendation
+title, then normalises them into a readable URL-safe value.
 
-Including the identity makes simultaneous publications unique without first asking
-the database whether a title is already taken. The database's unique index remains
-the final storage-level safeguard.
+The readable value is attempted without a suffix first. If MongoDB's unique slug
+index reports a collision, the server retries with `-2`, `-3`, and so on. Letting the
+database report collisions avoids a race between checking a slug and inserting it.
 
 ### Idempotent publishing
 

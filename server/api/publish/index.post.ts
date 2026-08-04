@@ -1,4 +1,4 @@
-import { ObjectId } from 'mongodb'
+import { MongoServerError, ObjectId } from 'mongodb'
 import {
   publishedInsightCreateSchema,
   publishedInsightSchema,
@@ -20,17 +20,19 @@ const DIMENSION_LABELS: Record<Dimension, string> = {
   hour: 'hour'
 }
 
-function buildSlug(title: string, id: ObjectId): string {
-  const base = title
+function buildSlug(displayName: string, title: string): string {
+  return `${displayName} ${title}`
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '') || 'insight'
+}
 
-  // The database id makes the slug unique without a read-then-write race. The
-  // unique slug index remains the final safeguard at the storage boundary.
-  return `${base}-${id.toHexString()}`
+function isDuplicateSlugError(error: unknown): boolean {
+  return error instanceof MongoServerError
+    && error.code === 11000
+    && error.message.includes('publishedInsights_slug_unique')
 }
 
 export default defineEventHandler(async (event): Promise<PublishedInsight> => {
@@ -83,26 +85,40 @@ export default defineEventHandler(async (event): Promise<PublishedInsight> => {
   }
 
   const id = new ObjectId()
-  const insight = publishedInsightSchema.parse({
-    id: id.toHexString(),
-    slug: buildSlug(recommendation.title, id),
-    displayName: parsed.data.displayName,
-    caption: parsed.data.caption,
-    metricLabel: `${METRIC_LABELS[recommendation.metric]} by ${DIMENSION_LABELS[recommendation.dimension]}`,
-    metricValue: recommendation.changePercent,
-    hideAbsoluteNumbers: parsed.data.hideAbsoluteNumbers,
-    businessType: dataset.businessType,
-    recommendationId: parsed.data.recommendationId,
-    datasetId: recommendation.datasetId,
-    publishedAt: new Date().toISOString()
-  })
+  const baseSlug = buildSlug(parsed.data.displayName, recommendation.title)
+  let attempt = 1
 
-  const { id: insightId, ...document } = insight
-  await insights.insertOne({
-    _id: new ObjectId(insightId),
-    ...document
-  })
+  while (true) {
+    const insight = publishedInsightSchema.parse({
+      id: id.toHexString(),
+      slug: attempt === 1 ? baseSlug : `${baseSlug}-${attempt}`,
+      displayName: parsed.data.displayName,
+      caption: parsed.data.caption,
+      metricLabel: `${METRIC_LABELS[recommendation.metric]} by ${DIMENSION_LABELS[recommendation.dimension]}`,
+      metricValue: recommendation.changePercent,
+      hideAbsoluteNumbers: parsed.data.hideAbsoluteNumbers,
+      businessType: dataset.businessType,
+      recommendationId: parsed.data.recommendationId,
+      datasetId: recommendation.datasetId,
+      publishedAt: new Date().toISOString()
+    })
 
-  setResponseStatus(event, 201)
-  return insight
+    const { id: insightId, ...document } = insight
+
+    try {
+      await insights.insertOne({
+        _id: new ObjectId(insightId),
+        ...document
+      })
+
+      setResponseStatus(event, 201)
+      return insight
+    } catch (error) {
+      if (!isDuplicateSlugError(error)) {
+        throw error
+      }
+
+      attempt += 1
+    }
+  }
 })
