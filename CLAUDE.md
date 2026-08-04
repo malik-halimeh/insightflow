@@ -44,7 +44,7 @@ One owner per folder. Never cross the line — if a task appears to require edit
 | **M1** (lead) | `nuxt.config.ts`, `app/app.config.ts`, `shared/**`, `server/utils/**`, `server/api/auth/**`, `app/app.vue`, `app/assets/**`, `app/layouts/**`, `app/middleware/**`, `app/components/ui/**`, `app/pages/index.vue`, `app/pages/login.vue`, `scripts/**`, `docs/**`, `README.md` |
 | **M2** | `app/pages/datasets/**`, `app/components/datasets/**`, `server/api/datasets/**` |
 | **M3** | `app/pages/dashboard/**`, `app/components/dashboard/**`, `server/api/analytics/**` |
-| **M4** | `app/pages/recommendations/**`, `app/components/recommendations/**`, `server/api/recommendations/**`, `server/api/publish/**`, `app/error.vue` |
+| **M4** | `app/pages/recommendations/**`, `app/components/recommendations/**`, `server/api/recommendations/**`, `server/api/publish/**`, `server/utils/rules.ts`, `app/error.vue` |
 | **M5** | `app/pages/insights/**`, `app/components/insights/**`, `server/api/insights/**` |
 
 ## VISUAL DESIGN

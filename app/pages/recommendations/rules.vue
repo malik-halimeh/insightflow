@@ -69,13 +69,21 @@ function handleSave() {
   closeForm()
 }
 
-async function removeRule(rule: Rule) {
-  const confirmed = window.confirm(
-    `Delete "${rule.name}"? This action cannot be undone.`
-  )
+// A browser confirm cannot be styled, blocks the page, and says the same thing
+// whatever is being deleted. This one names what actually happens.
+const deleteOpen = ref(false)
+const pendingDelete = ref<Rule | null>(null)
 
-  if (!confirmed) return
+function askToDelete(rule: Rule) {
+  pendingDelete.value = rule
+  deleteOpen.value = true
+}
 
+async function removeRule() {
+  const rule = pendingDelete.value
+  if (!rule) return
+
+  deleteOpen.value = false
   deletingId.value = rule.id
   serverError.value = null
 
@@ -90,6 +98,7 @@ async function removeRule(rule: Rule) {
       ?? 'The rule could not be deleted. Please try again.'
   } finally {
     deletingId.value = null
+    pendingDelete.value = null
   }
 }
 </script>
@@ -235,7 +244,7 @@ async function removeRule(rule: Rule) {
               variant="subtle"
               icon="i-lucide-trash-2"
               :loading="deletingId === rule.id"
-              @click="removeRule(rule)"
+              @click="askToDelete(rule)"
             >
               Delete
             </UButton>
@@ -243,5 +252,33 @@ async function removeRule(rule: Rule) {
         </div>
       </UCard>
     </section>
+
+    <UModal v-model:open="deleteOpen" title="Delete this rule?">
+      <template #body>
+        <div v-if="pendingDelete" class="space-y-3 text-sm">
+          <p>
+            <strong>{{ pendingDelete.name }}</strong> will stop looking for:
+          </p>
+          <p class="text-muted">
+            {{ sentenceFor(pendingDelete) }}
+          </p>
+          <p>
+            Findings this rule has already produced stay on your recommendations
+            page. Only the rule itself is removed, and it will not run again.
+          </p>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="flex w-full justify-end gap-2">
+          <UButton color="neutral" variant="subtle" @click="deleteOpen = false">
+            Keep it
+          </UButton>
+          <UButton color="error" @click="removeRule">
+            Delete rule
+          </UButton>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>

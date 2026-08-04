@@ -74,6 +74,15 @@ function handlePublish(input: {
         </span>
       </div>
     </div>
-    <ShareButton @publish="handlePublish" />
+    <template #footer>
+      <div class="flex justify-end">
+        <ShareButton
+          :title="recommendation.title"
+          :metric-label="`${recommendation.metric} by ${recommendation.dimension}`"
+          :metric-value="recommendation.changePercent"
+          @publish="handlePublish"
+        />
+      </div>
+    </template>
   </UCard>
 </template>
