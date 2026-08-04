@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Rule } from '#shared/schemas'
+import type { Rule, RuleCreate } from '#shared/schemas'
 
 definePageMeta({
   middleware: 'auth',
@@ -19,8 +19,10 @@ const {
 
 const showForm = ref(false)
 const editingRule = ref<Rule | null>(null)
+const saving = ref(false)
 const deletingId = ref<string | null>(null)
 const serverError = ref<string | null>(null)
+const formError = ref<string | null>(null)
 
 const METRICS = [
   { label: 'revenue', value: 'revenue' },
@@ -52,21 +54,62 @@ function sentenceFor(rule: Rule): string {
 
 function openCreateForm() {
   editingRule.value = null
+  formError.value = null
   showForm.value = true
 }
 
 function openEditForm(rule: Rule) {
   editingRule.value = rule
+  formError.value = null
   showForm.value = true
 }
 
 function closeForm() {
   editingRule.value = null
+  formError.value = null
   showForm.value = false
 }
 
-function handleSave() {
-  closeForm()
+function messageFrom(error: unknown, fallback: string): string {
+  if (error && typeof error === 'object') {
+    const response = error as {
+      statusMessage?: string
+      data?: { statusMessage?: string }
+    }
+
+    return response.data?.statusMessage ?? response.statusMessage ?? fallback
+  }
+
+  return fallback
+}
+
+async function handleSave(input: RuleCreate) {
+  saving.value = true
+  formError.value = null
+
+  try {
+    if (editingRule.value) {
+      await $fetch(`/api/recommendations/rules/${editingRule.value.id}`, {
+        method: 'PUT',
+        body: input
+      })
+    } else {
+      await $fetch('/api/recommendations/rules', {
+        method: 'POST',
+        body: input
+      })
+    }
+
+    await refresh()
+    closeForm()
+  } catch (error) {
+    formError.value = messageFrom(
+      error,
+      'This rule could not be saved. Please try again.'
+    )
+  } finally {
+    saving.value = false
+  }
 }
 
 // A browser confirm cannot be styled, blocks the page, and says the same thing
@@ -94,8 +137,10 @@ async function removeRule() {
 
     await refresh()
   } catch (error) {
-    serverError.value = (error as { statusMessage?: string }).statusMessage
-      ?? 'The rule could not be deleted. Please try again.'
+    serverError.value = messageFrom(
+      error,
+      'The rule could not be deleted. Please try again.'
+    )
   } finally {
     deletingId.value = null
     pendingDelete.value = null
@@ -141,13 +186,15 @@ async function removeRule() {
     <RuleForm
       v-if="showForm"
       :rule="editingRule"
+      :loading="saving"
+      :server-error="formError"
       @save="handleSave"
       @cancel="closeForm"
     />
 
     <div
       v-if="status === 'pending'"
-      class="space-y-3"
+      class="space-y-4"
     >
       <USkeleton
         v-for="row in 4"
@@ -194,7 +241,7 @@ async function removeRule() {
 
     <section
       v-else
-      class="space-y-3"
+      class="space-y-4"
     >
       <h2 class="text-base font-semibold">
         Your rules
@@ -214,7 +261,6 @@ async function removeRule() {
               <UBadge
                 :color="rule.enabled ? 'success' : 'neutral'"
                 variant="subtle"
-                size="sm"
               >
                 {{ rule.enabled ? 'On' : 'Off' }}
               </UBadge>
@@ -255,9 +301,9 @@ async function removeRule() {
 
     <UModal v-model:open="deleteOpen" title="Delete this rule?">
       <template #body>
-        <div v-if="pendingDelete" class="space-y-3 text-sm">
+        <div v-if="pendingDelete" class="space-y-4 text-sm">
           <p>
-            <strong>{{ pendingDelete.name }}</strong> will stop looking for:
+            <span class="font-semibold">{{ pendingDelete.name }}</span> will stop looking for:
           </p>
           <p class="text-muted">
             {{ sentenceFor(pendingDelete) }}

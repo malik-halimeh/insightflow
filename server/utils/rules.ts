@@ -6,6 +6,7 @@ import type {
   SalesRow,
   Severity
 } from '#shared/schemas'
+import { formatCount, formatPercentChange } from '#shared/format'
 
 type Finding = Pick<
   Recommendation,
@@ -128,10 +129,7 @@ function buildComparisonFinding(
 
   return {
     title: `${group.label} is ${direction} average`,
-    // Interim: body and action are the same sentence, because the rule only
-    // carries one. Splitting them — body explains the finding, action says what
-    // to do — is M4's to do when the rule gains a separate explanation.
-    body: rule.advice,
+    body: `${group.label} is ${formatPercentChange(changePercent)} compared with the average for this measure.`,
     action: rule.advice,
     metric: rule.metric,
     dimension: rule.dimension,
@@ -205,7 +203,7 @@ function evaluateUnsoldRule(rows: SalesRow[], rule: Rule): Finding[] {
 
     return [{
       title: `${group.label} has not sold for ${unsoldDays} days`,
-      body: rule.advice,
+      body: `${group.label} has no recorded sales in the latest ${formatCount(unsoldDays)} days of this data set.`,
       action: rule.advice,
       metric: rule.metric,
       dimension: rule.dimension,

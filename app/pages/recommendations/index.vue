@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import type { Recommendation } from '#shared/schemas'
+import type {
+  PublishedInsight,
+  PublishedInsightCreate,
+  Recommendation
+} from '#shared/schemas'
 
 definePageMeta({
   middleware: 'auth',
@@ -12,10 +16,88 @@ const {
   data: recommendations,
   status,
   error,
-  refresh
+  refresh: refreshRecommendations
 } = await useFetch('/api/recommendations', {
   default: (): Recommendation[] => []
 })
+
+const {
+  data: publishedInsights,
+  status: publishStatus,
+  error: publishLoadError,
+  refresh: refreshPublishedInsights
+} = await useFetch('/api/publish', {
+  default: (): PublishedInsight[] => []
+})
+
+const publishingId = ref<string | null>(null)
+const unpublishingId = ref<string | null>(null)
+const actionErrors = ref<Record<string, string | null>>({})
+
+const publishedByRecommendation = computed(() => new Map(
+  publishedInsights.value.flatMap(insight =>
+    insight.recommendationId ? [[insight.recommendationId, insight] as const] : []
+  )
+))
+
+function messageFrom(error: unknown, fallback: string): string {
+  if (error && typeof error === 'object') {
+    const response = error as {
+      statusMessage?: string
+      data?: { statusMessage?: string }
+    }
+
+    return response.data?.statusMessage ?? response.statusMessage ?? fallback
+  }
+
+  return fallback
+}
+
+async function publish(input: PublishedInsightCreate) {
+  publishingId.value = input.recommendationId
+  actionErrors.value[input.recommendationId] = null
+
+  try {
+    const insight = await $fetch<PublishedInsight>('/api/publish', {
+      method: 'POST',
+      body: input
+    })
+
+    publishedInsights.value = [
+      insight,
+      ...publishedInsights.value.filter(item => item.id !== insight.id)
+    ]
+  } catch (error) {
+    actionErrors.value[input.recommendationId] = messageFrom(
+      error,
+      'This insight could not be published. Please try again.'
+    )
+  } finally {
+    publishingId.value = null
+  }
+}
+
+async function unpublish(recommendationId: string) {
+  unpublishingId.value = recommendationId
+  actionErrors.value[recommendationId] = null
+
+  try {
+    await $fetch(`/api/publish/${recommendationId}`, {
+      method: 'DELETE'
+    })
+
+    publishedInsights.value = publishedInsights.value.filter(
+      insight => insight.recommendationId !== recommendationId
+    )
+  } catch (error) {
+    actionErrors.value[recommendationId] = messageFrom(
+      error,
+      'This insight could not be unpublished. Please try again.'
+    )
+  } finally {
+    unpublishingId.value = null
+  }
+}
 </script>
 
 <template>
@@ -36,8 +118,28 @@ const {
       </template>
     </UiPageHeader>
 
+    <UAlert
+      v-if="publishLoadError"
+      color="error"
+      variant="subtle"
+      icon="i-lucide-circle-alert"
+      title="Published insights could not be checked"
+      description="Refresh the publish status before sharing or unpublishing a recommendation."
+    >
+      <template #actions>
+        <UButton
+          color="neutral"
+          variant="subtle"
+          icon="i-lucide-rotate-ccw"
+          @click="() => refreshPublishedInsights()"
+        >
+          Try again
+        </UButton>
+      </template>
+    </UAlert>
+
     <div
-      v-if="status === 'pending'"
+      v-if="status === 'pending' || publishStatus === 'pending'"
       class="space-y-4"
     >
       <USkeleton
@@ -60,7 +162,7 @@ const {
           color="neutral"
           variant="subtle"
           icon="i-lucide-rotate-ccw"
-          @click="() => refresh()"
+          @click="() => refreshRecommendations()"
         >
           Try again
         </UButton>
@@ -96,6 +198,12 @@ const {
           v-for="recommendation in recommendations"
           :key="recommendation.id"
           :recommendation="recommendation"
+          :published-insight="publishedByRecommendation.get(recommendation.id) ?? null"
+          :publishing="publishingId === recommendation.id"
+          :unpublishing="unpublishingId === recommendation.id"
+          :server-error="actionErrors[recommendation.id]"
+          @publish="publish"
+          @unpublish="unpublish"
         />
       </div>
     </section>

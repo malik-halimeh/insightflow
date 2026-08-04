@@ -15,61 +15,78 @@
   publishing their takings is telling their landlord and their competitors what
   they earn. The safe option is the default; turning it off is a deliberate act.
 
-  STILL TO DO
-  There is no publish endpoint yet. This emits the form upwards and the page must
-  send it once server/api/publish exists. Ask M1 for publishedInsightCreateSchema
-  and bind the form to it rather than checking the fields by hand.
+  The form and the endpoint both use publishedInsightCreateSchema. The page owns
+  the request so it can update every card from one persistent publish-state query.
 -->
 
 <script setup lang="ts">
+import type { FormSubmitEvent } from '@nuxt/ui'
+import {
+  publishedInsightCreateSchema,
+  type PublishedInsightCreate
+} from '#shared/schemas'
+
 const props = defineProps<{
+  recommendationId: string
   /** The finding being published. Prefills the caption and drives the preview. */
   title: string
   /** What the number measures, e.g. "revenue by day of week". */
   metricLabel: string
   /** The percentage change behind the finding. */
   metricValue: number
+  loading?: boolean
+  serverError?: string | null
 }>()
 
 const emit = defineEmits<{
-  publish: [{ displayName: string, caption: string, hideAbsoluteNumbers: boolean }]
+  publish: [PublishedInsightCreate]
 }>()
 
 const open = ref(false)
+const formId = useId()
 
-const form = reactive({
+const form = reactive<PublishedInsightCreate>({
   displayName: '',
   caption: '',
-  hideAbsoluteNumbers: true
+  hideAbsoluteNumbers: true,
+  recommendationId: props.recommendationId
 })
 
 const CAPTION_LIMIT = 280
-const CAPTION_MINIMUM = 10
 
 // Start from the finding so the owner edits rather than facing a blank box.
 watch(open, (isOpen) => {
   if (isOpen && !form.caption) form.caption = props.title
 })
 
-const canPublish = computed(() =>
-  form.displayName.trim().length >= 2 && form.caption.trim().length >= CAPTION_MINIMUM
-)
-
-function publish() {
-  emit('publish', { ...form })
-  open.value = false
+function publish(event: FormSubmitEvent<PublishedInsightCreate>) {
+  emit('publish', event.data)
 }
 </script>
 
 <template>
   <UModal v-model:open="open" title="Publish this insight">
     <!-- Quiet on purpose: the recommendation is what the owner came for. -->
-    <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-share-2">
+    <UButton color="neutral" variant="ghost" icon="i-lucide-share-2">
       Share
     </UButton>
 
     <template #body>
-      <div class="space-y-6">
+      <UForm
+        :id="formId"
+        :schema="publishedInsightCreateSchema"
+        :state="form"
+        class="space-y-8"
+        @submit="publish"
+      >
+        <UAlert
+          v-if="serverError"
+          color="error"
+          variant="subtle"
+          icon="i-lucide-circle-alert"
+          :description="serverError"
+        />
+
         <UAlert
           color="info"
           variant="subtle"
@@ -107,12 +124,12 @@ function publish() {
 
         <USeparator label="What people will see" />
 
-        <div class="rounded-md border border-default p-4">
-          <p class="font-semibold">
+        <div class="border border-default p-4">
+          <p class="text-sm font-semibold">
             {{ form.displayName || 'Your business name' }}
           </p>
 
-          <p class="mt-3 text-base">
+          <p class="mt-4 text-sm">
             {{ form.caption || 'Your caption appears here.' }}
           </p>
 
@@ -121,14 +138,14 @@ function publish() {
             <span class="text-sm text-muted">{{ metricLabel }}</span>
           </div>
 
-          <p v-if="form.hideAbsoluteNumbers" class="mt-3 text-xs text-muted">
+          <p v-if="form.hideAbsoluteNumbers" class="mt-4 text-xs text-muted">
             Your actual takings are hidden. Only the change is published.
           </p>
-          <p v-else class="mt-3 text-xs text-warning">
+          <p v-else class="mt-4 text-xs text-muted">
             Your actual takings will be published alongside this.
           </p>
         </div>
-      </div>
+      </UForm>
     </template>
 
     <template #footer>
@@ -136,7 +153,12 @@ function publish() {
         <UButton color="neutral" variant="subtle" @click="open = false">
           Cancel
         </UButton>
-        <UButton icon="i-lucide-globe" :disabled="!canPublish" @click="publish">
+        <UButton
+          type="submit"
+          :form="formId"
+          icon="i-lucide-globe"
+          :loading="loading"
+        >
           Publish
         </UButton>
       </div>
