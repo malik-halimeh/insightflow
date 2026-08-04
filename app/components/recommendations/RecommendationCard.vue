@@ -1,0 +1,79 @@
+<script setup lang="ts">
+import type { Recommendation } from '#shared/schemas'
+import ShareButton from './ShareButton.vue'
+
+const props = defineProps<{
+  recommendation: Recommendation
+}>()
+const emit = defineEmits<{
+  publish: [{
+    recommendation: Recommendation
+    displayName: string
+    caption: string
+    hideAbsoluteNumbers: boolean
+  }]
+}>()
+
+function handlePublish(input: {
+  displayName: string
+  caption: string
+  hideAbsoluteNumbers: boolean
+}) {
+  emit('publish', {
+    recommendation: props.recommendation,
+    ...input
+  })
+}
+
+</script>
+
+<template>
+  <UCard>
+    <template #header>
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-semibold">
+            {{ recommendation.title }}
+          </h2>
+
+          <p class="mt-2 text-xs text-muted">
+            {{ recommendation.metric }} by {{ recommendation.dimension }}
+          </p>
+        </div>
+
+        <UBadge
+          :color="
+            recommendation.severity === 'opportunity'
+              ? 'success'
+              : recommendation.severity === 'warning'
+                ? 'warning'
+                : 'info'
+          "
+        >
+          {{
+            recommendation.severity === 'opportunity'
+              ? 'Opportunity'
+              : recommendation.severity === 'warning'
+                ? 'Warning'
+                : 'Info'
+          }}
+        </UBadge>
+      </div>
+    </template>
+
+    <div class="space-y-4">
+      <p class="text-sm">
+        {{ recommendation.body }}
+      </p>
+
+      <div class="flex items-center gap-2">
+        <UiChangeIndicator :value="recommendation.changePercent" />
+
+        <span class="text-xs text-muted">
+          against the average
+        </span>
+      </div>
+    </div>
+    <ShareButton @publish="handlePublish" />
+  </UCard>
+</template>
