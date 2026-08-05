@@ -10,7 +10,9 @@ export default defineEventHandler(async (): Promise<PublishedInsight[]> => {
   return documents.map(({ _id, ...publishedInsight }) =>
     publishedInsightSchema.parse({
       id: _id.toHexString(),
-      ...publishedInsight
+      ...publishedInsight,
+      recommendationId: publishedInsight.recommendationId ?? null,
+      datasetId: publishedInsight.datasetId ?? null
     })
   )
 })
