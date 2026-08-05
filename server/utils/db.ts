@@ -18,7 +18,12 @@ import type {
  */
 export type DocOf<T> = Omit<T, 'id'> & { _id: ObjectId }
 
-export type UserDoc = DocOf<User>
+/**
+ * The password hash lives on the document only, never on the `User` contract in
+ * `shared/`. Keeping it out of the shared schema means it cannot be returned by
+ * accident: a route that serialises a `User` has nothing to leak.
+ */
+export type UserDoc = DocOf<User> & { passwordHash: string }
 export type DatasetDoc = DocOf<Dataset>
 export type SalesRowDoc = DocOf<SalesRow>
 export type RecommendationDoc = DocOf<Recommendation>

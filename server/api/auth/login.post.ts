@@ -1,15 +1,29 @@
-import { SESSION_COOKIE, loginSchema } from '#shared/schemas'
+import { SESSION_COOKIE, loginSchema, type UserRole } from '#shared/schemas'
 import { SESSION_TTL_SECONDS, createSessionToken, credentialsMatch } from '../../utils/session'
+import { verifyPassword } from '../../utils/password'
+import { usersCollection } from '../../utils/db'
 
-// One message for every failure. Saying which half was wrong would let someone
-// confirm a valid username by trying it against a wrong password.
-const GENERIC_FAILURE = 'That username and password did not match. Please try again.'
+// One message for every credential failure. Saying which half was wrong would let
+// someone confirm a valid username by trying it against a wrong password.
+const GENERIC_FAILURE = 'That username/email and password did not match. Please try again.'
+
+const STATUS_MESSAGE: Record<'pending' | 'deactivated' | 'rejected', string> = {
+  pending: 'Your account is still waiting for an admin to approve it. Please check back soon.',
+  deactivated: 'This account has been deactivated. Please contact an administrator.',
+  rejected: 'This account was not approved. Please contact an administrator.'
+}
+
+// Where to send someone after sign-in, decided entirely by the role on the
+// matched account — never by anything the client sent.
+const REDIRECT_BY_ROLE: Record<UserRole, string> = {
+  admin: '/admin',
+  business_owner: '/dashboard'
+}
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
 
-  if (!config.authUsername || !config.authPassword || !config.sessionSecret) {
-    // Without this, an unset AUTH_PASSWORD would make an empty password valid.
+  if (!config.sessionSecret) {
     throw createError({
       statusCode: 500,
       statusMessage: 'Sign in is not configured on this server.'
@@ -24,23 +38,61 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const matches = credentialsMatch(parsed.data, {
-    username: config.authUsername,
-    password: config.authPassword
-  })
+  const identifier = parsed.data.identifier.trim().toLowerCase()
+  const { password } = parsed.data
 
-  if (!matches) {
+  let username: string | null = null
+  let displayName: string | null = null
+  let role: UserRole | null = null
+
+  // Registered accounts first: a username or an email, checked against the hash
+  // stored in Mongo. Whatever role is on the matched row is the role used from
+  // here on — the client never gets a say in it.
+  const users = await usersCollection()
+  const account = await users.findOne({ $or: [{ username: identifier }, { email: identifier }] })
+
+  if (account && await verifyPassword(password, account.passwordHash)) {
+    // The account exists and the password is right, so from here on a failure can
+    // be specific — it can no longer help a stranger guess a valid login.
+    if (account.role === 'business_owner' && account.status !== 'approved') {
+      throw createError({ statusCode: 403, statusMessage: STATUS_MESSAGE[account.status] })
+    }
+
+    username = account.username
+    displayName = account.displayName
+    role = account.role
+  } else if (!account && config.authUsername && config.authPassword) {
+    // Falls back to the single owner account from the environment, for a machine
+    // that has not been seeded yet. Only reached when no account matched at all,
+    // so it can never override a real one. This fallback is always a business owner.
+    const matches = credentialsMatch(
+      { username: identifier, password },
+      { username: config.authUsername.toLowerCase(), password: config.authPassword }
+    )
+    if (matches) {
+      username = config.authUsername
+      displayName = config.authUsername
+      role = 'business_owner'
+    }
+  }
+
+  if (!username || !displayName || !role) {
     throw createError({ statusCode: 401, statusMessage: GENERIC_FAILURE })
   }
 
-  setCookie(event, SESSION_COOKIE, createSessionToken(parsed.data.username, config.sessionSecret), {
-    httpOnly: true,
-    sameSite: 'lax',
-    // Off in dev so the cookie survives plain http on localhost.
-    secure: !import.meta.dev,
-    path: '/',
-    maxAge: SESSION_TTL_SECONDS
-  })
+  setCookie(
+    event,
+    SESSION_COOKIE,
+    createSessionToken(username, displayName, role, config.sessionSecret),
+    {
+      httpOnly: true,
+      sameSite: 'lax',
+      // Off in dev so the cookie survives plain http on localhost.
+      secure: !import.meta.dev,
+      path: '/',
+      maxAge: SESSION_TTL_SECONDS
+    }
+  )
 
-  return { username: parsed.data.username }
+  return { username, displayName, role, redirect: REDIRECT_BY_ROLE[role] }
 })

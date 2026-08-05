@@ -1,6 +1,7 @@
 export * from './common'
 export * from './auth'
 export * from './user'
+export * from './admin'
 export * from './dataset'
 export * from './salesRow'
 export * from './recommendation'

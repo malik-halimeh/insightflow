@@ -12,6 +12,7 @@ import {
   type SalesRowDoc,
   type UserDoc
 } from '../server/utils/db'
+import { hashPassword } from '../server/utils/password'
 import {
   datasetSchema,
   publishedInsightSchema,
@@ -299,6 +300,82 @@ async function confirmWipe(counts: Record<string, number>): Promise<void> {
   }
 }
 
+/**
+ * The accounts the team signs in with. Passwords are hashed here exactly as the
+ * register endpoint hashes them, so a seeded account and a self-registered one
+ * are indistinguishable to sign-in.
+ *
+ * One shared password for every seeded account, overridable with SEED_PASSWORD.
+ * These are demo credentials for a shared development database and they are
+ * printed at the end of the run — never seed an account whose password should
+ * stay secret, and never point this script at anything holding real data.
+ *
+ * The admin exists only because it is seeded. There is no public endpoint that
+ * can create one, which is the whole reason the sign-up form cannot be used to
+ * grant administrative access.
+ */
+async function buildUsers(now: string): Promise<UserDoc[]> {
+  const password = process.env.SEED_PASSWORD || 'insightflow123'
+  const passwordHash = await hashPassword(password)
+
+  const accounts = [
+    {
+      username: 'admin',
+      email: 'admin@insightflow.local',
+      displayName: 'InsightFlow Admin',
+      role: 'admin',
+      status: 'approved'
+    },
+    {
+      // The owner of the demo data set below, so signing in as this account shows
+      // a dashboard with eight weeks of sales rather than an empty state.
+      username: (process.env.AUTH_USERNAME || 'owner').toLowerCase(),
+      email: 'owner@bellapizza.example',
+      displayName: 'Bella Pizza',
+      role: 'business_owner',
+      status: 'approved',
+      businessSize: 'small',
+      phone: '+44 20 7946 0100',
+      location: 'London, United Kingdom',
+      estimatedCustomersPerMonth: 1800
+    },
+    // Two accounts left pending so /admin opens with a queue to work through
+    // rather than an empty state that cannot be told apart from a broken page.
+    {
+      username: 'thegreenkettle',
+      email: 'hello@greenkettle.example',
+      displayName: 'The Green Kettle',
+      role: 'business_owner',
+      status: 'pending',
+      businessSize: 'small',
+      phone: '+44 161 496 0200',
+      location: 'Manchester, United Kingdom',
+      estimatedCustomersPerMonth: 950
+    },
+    {
+      username: 'northroadcycles',
+      email: 'shop@northroadcycles.example',
+      displayName: 'North Road Cycles',
+      role: 'business_owner',
+      status: 'pending',
+      businessSize: 'medium',
+      phone: '+44 131 496 0300',
+      location: 'Edinburgh, United Kingdom',
+      estimatedCustomersPerMonth: 400
+    }
+  ]
+
+  return accounts.map((account) => {
+    const { id, ...rest } = userSchema.parse({
+      id: new ObjectId().toHexString(),
+      ...account,
+      createdAt: now
+    })
+
+    return { _id: new ObjectId(id), ...rest, passwordHash } satisfies UserDoc
+  })
+}
+
 async function seed(): Promise<void> {
   const now = new Date().toISOString()
   const datasetId = new ObjectId()
@@ -306,12 +383,7 @@ async function seed(): Promise<void> {
 
   const { docs: salesRowDocs, periodStart, periodEnd } = buildSalesRows(datasetIdHex)
 
-  const user = userSchema.parse({
-    id: new ObjectId().toHexString(),
-    username: process.env.AUTH_USERNAME || 'owner',
-    displayName: 'Bella Pizza',
-    createdAt: now
-  })
+  const userDocs = await buildUsers(now)
 
   const dataset = datasetSchema.parse({
     id: datasetIdHex,
@@ -358,10 +430,9 @@ async function seed(): Promise<void> {
   ])
   const removedCount = removed.reduce((sum, result) => sum + result.deletedCount, 0)
 
-  const { id: userId, ...userRest } = user
   const { id: dsId, ...datasetRest } = dataset
 
-  await users.insertOne({ _id: new ObjectId(userId), ...userRest } satisfies UserDoc)
+  await users.insertMany(userDocs)
   await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest } satisfies DatasetDoc)
   await salesRows.insertMany(salesRowDocs)
   await insights.insertMany(insightDocs)
@@ -375,7 +446,7 @@ async function seed(): Promise<void> {
   console.log(`  Removed          ${removedCount} existing document(s)`)
   console.log(`  Database         ${process.env.MONGODB_DB}`)
   console.log('')
-  console.log(`  Users            1  (${user.username})`)
+  console.log(`  Users            ${userDocs.length}`)
   console.log(`  Data sets        1  (${dataset.name})`)
   console.log(`  Sales rows       ${salesRowDocs.length}`)
   console.log(`  Insights         ${insightDocs.length}`)
@@ -392,6 +463,14 @@ async function seed(): Promise<void> {
   console.log('')
   console.log(`    Best seller     ${patterns.busiest}`)
   console.log(`    Worst seller    ${patterns.quietest}`)
+  console.log('')
+  console.log('  Sign in with')
+  for (const account of userDocs) {
+    const label = account.role === 'admin' ? 'admin' : account.status
+    console.log(`    ${account.username.padEnd(16)} ${(process.env.SEED_PASSWORD || 'insightflow123').padEnd(16)} ${label}`)
+  }
+  console.log('')
+  console.log('  The two pending accounts cannot sign in until the admin approves them at /admin.')
   console.log('')
 }
 

@@ -30,6 +30,9 @@ export default defineNuxtConfig({
     '/dashboard/**': { ssr: false },
     '/datasets/**': { ssr: false },
     '/recommendations/**': { ssr: false },
+    // Private like the rest of the workspace, and never worth rendering on the
+    // server: nothing here should ever reach a cache or a search engine.
+    '/admin/**': { ssr: false },
     '/api/**': { cors: true }
   },
 
