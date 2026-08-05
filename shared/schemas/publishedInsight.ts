@@ -36,8 +36,12 @@ export const publishedInsightSchema = z.object({
    *
    * Nullable because insights published before this field existed have nothing to
    * point at, and because a finding can be deleted while its public page stays up.
+   *
+   * It defaults to null rather than merely allowing null, so a record written
+   * before the field existed still parses. Without the default, one older row
+   * fails validation and takes the whole public feed down with it.
    */
-  recommendationId: idSchema.nullable(),
+  recommendationId: idSchema.nullable().default(null),
 
   /**
    * The data set the finding came from, stored directly rather than followed
@@ -45,7 +49,7 @@ export const publishedInsightSchema = z.object({
    * published from it, and that promise has to hold even for an insight whose
    * recommendation has already gone.
    */
-  datasetId: idSchema.nullable(),
+  datasetId: idSchema.nullable().default(null),
 
   publishedAt: isoDateTimeSchema
 })
