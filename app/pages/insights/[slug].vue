@@ -69,8 +69,12 @@ useSeoMeta({
         {{ formatPercentChange(publishedInsight.metricValue) }}
       </p>
 
-      <p class="mt-2 text-sm text-muted">
-        Shared as a change, not a figure.
+      <p v-if="publishedInsight.hideAbsoluteNumbers" class="mt-2 text-sm text-muted">
+        Actual figures are hidden. Only the percentage change is shared.
+      </p>
+
+      <p v-else class="mt-2 text-sm text-muted">
+        This published insight includes a percentage change only.
       </p>
 
       <p class="mt-4 text-lg text-muted">
