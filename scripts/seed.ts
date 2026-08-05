@@ -255,6 +255,50 @@ function buildPublishedInsights(now: string, datasetId: string): PublishedInsigh
   })
 }
 
+/**
+ * Refuses to wipe the database unless a human agrees to it.
+ *
+ * The team shares one Atlas database, so `npm run seed` deletes everyone's work,
+ * not just the runner's. It has already happened once. The script now lists what
+ * will go and asks for the database name back, which is slow enough to think
+ * about and impossible to do by muscle memory.
+ *
+ * Pass --force to skip the prompt. That is for a machine with no keyboard, and
+ * anyone typing it has chosen to accept the consequences.
+ */
+async function confirmWipe(counts: Record<string, number>): Promise<void> {
+  const total = Object.values(counts).reduce((sum, count) => sum + count, 0)
+  const database = process.env.MONGODB_DB ?? 'unknown'
+
+  if (total === 0) return
+  if (process.argv.includes('--force')) return
+
+  console.log('')
+  console.log(`  This deletes everything below from the "${database}" database.`)
+  console.log('  Everyone on the project shares it.')
+  console.log('')
+  for (const [name, count] of Object.entries(counts)) {
+    if (count > 0) console.log(`    ${name.padEnd(20)} ${count}`)
+  }
+  console.log('')
+
+  if (!process.stdin.isTTY) {
+    console.error(`  Refusing to wipe ${total} records without a confirmation.`)
+    console.error('  Run it again from a terminal, or pass --force if you are certain.')
+    process.exit(1)
+  }
+
+  const { createInterface } = await import('node:readline/promises')
+  const rl = createInterface({ input: process.stdin, output: process.stdout })
+  const answer = await rl.question(`  Type the database name to continue: `)
+  rl.close()
+
+  if (answer.trim() !== database) {
+    console.log('  Nothing was deleted.')
+    process.exit(0)
+  }
+}
+
 async function seed(): Promise<void> {
   const now = new Date().toISOString()
   const datasetId = new ObjectId()
@@ -291,6 +335,17 @@ async function seed(): Promise<void> {
     publishedInsightsCollection(),
     recommendationsCollection()
   ])
+
+  // Everyone on this project shares one database, so this wipe takes the team's
+  // work with it, not just yours. Say what is about to disappear and make someone
+  // agree to it out loud.
+  await confirmWipe({
+    users: await users.countDocuments(),
+    datasets: await datasets.countDocuments(),
+    salesRows: await salesRows.countDocuments(),
+    publishedInsights: await insights.countDocuments(),
+    recommendations: await recommendations.countDocuments()
+  })
 
   // Wiping first is what makes a second run replace the demo rather than double it.
   // `rules` is left untouched: rules are configuration, not part of this demo.
