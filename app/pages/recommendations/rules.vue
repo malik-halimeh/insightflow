@@ -183,7 +183,7 @@ async function removeRule() {
       :description="serverError"
     />
 
-    <RuleForm
+    <RecommendationsRuleForm
       v-if="showForm"
       :rule="editingRule"
       :loading="saving"

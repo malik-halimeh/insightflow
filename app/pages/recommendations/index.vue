@@ -194,7 +194,7 @@ async function unpublish(recommendationId: string) {
       </h2>
 
       <div class="grid gap-4 lg:grid-cols-2">
-        <RecommendationCard
+        <RecommendationsRecommendationCard
           v-for="recommendation in recommendations"
           :key="recommendation.id"
           :recommendation="recommendation"
