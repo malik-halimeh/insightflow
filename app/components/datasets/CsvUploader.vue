@@ -10,12 +10,17 @@
 -->
 
 <script setup lang="ts">
-const emit = defineEmits<{ upload: [file: File] }>()
+import { parseAndValidateCsv, type CsvParseResult } from '~/utils/csvParser'
+
+const emit = defineEmits<{
+  parsed: [result: CsvParseResult, file: File]
+}>()
 
 const error = ref<string | null>(null)
 const fileName = ref<string | null>(null)
+const isParsing = ref(false)
 
-function handleUpload(event: Event) {
+async function handleUpload(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
 
@@ -31,7 +36,16 @@ function handleUpload(event: Event) {
   }
 
   fileName.value = file.name
-  emit('upload', file)
+  isParsing.value = true
+
+  try {
+    const parseResult = await parseAndValidateCsv(file)
+    emit('parsed', parseResult, file)
+  } catch {
+    error.value = 'Could not read file. Ensure it is a valid UTF-8 encoded CSV.'
+  } finally {
+    isParsing.value = false
+  }
 }
 </script>
 
