@@ -11,5 +11,11 @@ export default defineEventHandler((event) => {
 
   if (!payload) return { authenticated: false as const }
 
-  return { authenticated: true as const, username: payload.username, expiresAt: payload.exp }
+  return {
+    authenticated: true as const,
+    username: payload.username,
+    displayName: payload.displayName,
+    role: payload.role,
+    expiresAt: payload.exp
+  }
 })

@@ -13,6 +13,13 @@
  * after hydration, for whoever is actually holding the browser.
  */
 const { data: session } = await useFetch('/api/auth/session', { server: false })
+
+// An admin has no /dashboard to go back to — the middleware would bounce them to
+// /admin anyway, so the link may as well say where it actually goes.
+const isAdmin = computed(() => session.value?.authenticated && session.value.role === 'admin')
+const workspace = computed(() =>
+  isAdmin.value ? { to: '/admin', label: 'Admin' } : { to: '/dashboard', label: 'Dashboard' }
+)
 </script>
 
 <template>
@@ -30,10 +37,10 @@ const { data: session } = await useFetch('/api/auth/session', { server: false })
           </NuxtLink>
           <NuxtLink
             v-if="session?.authenticated"
-            to="/dashboard"
+            :to="workspace.to"
             class="text-muted hover:text-default"
           >
-            Dashboard
+            {{ workspace.label }}
           </NuxtLink>
           <NuxtLink v-else to="/login" class="text-muted hover:text-default">
             Sign in

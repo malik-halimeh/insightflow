@@ -36,6 +36,25 @@ export async function ensureIndexes(db: Db): Promise<void> {
     db.collection(COLLECTIONS.publishedInsights).createIndex(
       { publishedAt: -1 },
       { name: 'publishedInsights_publishedAt_desc' }
+    ),
+
+    // Sign in looks a user up by either field, and two accounts must never be able
+    // to share one. Usernames and emails are stored lower-cased, so this is a plain
+    // equality index rather than a case-insensitive collation.
+    db.collection(COLLECTIONS.users).createIndex(
+      { username: 1 },
+      { unique: true, name: 'users_username_unique' }
+    ),
+    db.collection(COLLECTIONS.users).createIndex(
+      { email: 1 },
+      { unique: true, name: 'users_email_unique' }
+    ),
+
+    // The admin dashboard lists business-owner accounts filtered by status
+    // (pending approvals first), so this is read on every load of /admin.
+    db.collection(COLLECTIONS.users).createIndex(
+      { role: 1, status: 1, createdAt: -1 },
+      { name: 'users_role_status_createdAt' }
     )
   ])
 }

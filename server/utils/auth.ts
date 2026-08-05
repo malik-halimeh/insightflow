@@ -24,3 +24,22 @@ export function requireSession(event: H3Event): SessionPayload {
 
   return payload
 }
+
+/**
+ * Same as requireSession, but also refuses a valid business-owner session. Every
+ * route under /api/admin calls this — the route middleware keeps a signed-in
+ * owner out of /admin in the browser, but only this actually stops the API call
+ * a forged or replayed request would make directly.
+ */
+export function requireAdmin(event: H3Event): SessionPayload {
+  const session = requireSession(event)
+
+  if (session.role !== 'admin') {
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'This area is only available to administrators.'
+    })
+  }
+
+  return session
+}

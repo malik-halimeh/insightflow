@@ -46,8 +46,27 @@ Start the dev server:
 npm run dev
 ```
 
-Open http://localhost:3000. Sign in with the `AUTH_USERNAME` and `AUTH_PASSWORD` in
-your `.env`.
+Open http://localhost:3000 and sign in.
+
+`npm run seed` creates the accounts below. The password for all of them is
+`insightflow123`, or whatever you set `SEED_PASSWORD` to before running the seed.
+
+| Sign in as | Role | Lands on | What you see |
+| --- | --- | --- | --- |
+| `admin` | admin | `/admin` | Sign-ups waiting for approval |
+| `owner` (or your `AUTH_USERNAME`) | business owner | `/dashboard` | The demo data set |
+| `thegreenkettle`, `northroadcycles` | business owner | — | **Cannot sign in — pending approval** |
+
+The last two exist so `/admin` has a real queue to work through. Approve one there
+and it can sign in immediately.
+
+You can also sign in with an account's **email** instead of its username, and the
+`AUTH_USERNAME` / `AUTH_PASSWORD` pair in `.env` still works on a machine whose
+database has not been seeded yet.
+
+**There is no way to create an admin from the browser.** The sign-up form always
+creates a business owner, waiting for approval. Admin accounts come only from the
+seed, which is what stops anyone from granting themselves access.
 
 Before you open a pull request:
 

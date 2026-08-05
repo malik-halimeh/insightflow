@@ -144,10 +144,30 @@ becomes invisible to everyone else.
 | Route | File | State |
 | --- | --- | --- |
 | `/` | `app/pages/index.vue` | Finished — prerendered |
-| `/login` | `app/pages/login.vue` | Live |
+| `/login` | `app/pages/login.vue` | Live — sign in **and** sign up |
+| `/admin` | `app/pages/admin/index.vue` | **Live** — admin only |
 | — | `app/layouts/default.vue` | Live — public shell |
 | — | `app/layouts/app.vue` | Live — signed-in shell |
+| — | `app/layouts/admin.vue` | Live — admin shell |
 | — | `app/components/ui/*` | Finished — shared pieces |
+
+### Accounts and roles
+
+Two roles, and they see different halves of the product.
+
+- **`business_owner`** — the workspace: `/dashboard`, `/datasets`, `/recommendations`.
+- **`admin`** — only `/admin`, where business-owner sign-ups are approved.
+
+`app/middleware/auth.ts` keeps them apart in the browser, but that is only about
+which page someone sees. The real protection is `requireAdmin()` in
+`server/utils/auth.ts`, which every route under `server/api/admin/` calls. **If you
+add an admin route, call it** — a middleware redirect does nothing to a direct
+API request.
+
+A new sign-up is created `pending` and **cannot sign in until an admin approves it**.
+The sign-up form always creates a `business_owner`; there is deliberately no public
+way to create an `admin`, so the only admin accounts are the ones `npm run seed`
+writes.
 
 ---
 
