@@ -77,7 +77,9 @@ function readConfig(): { uri: string, dbName: string } {
 
 export async function getMongoClient(): Promise<MongoClient> {
   const state = cache()
+   console.log("MongoDB is connected successfully!");
   if (state.client) return state.client
+       
 
   // Store the in-flight promise so parallel callers during a cold start share
   // one connection attempt rather than racing to open several. A *failed* attempt
