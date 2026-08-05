@@ -314,11 +314,64 @@ async function confirmWipe(counts: Record<string, number>): Promise<void> {
  * can create one, which is the whole reason the sign-up form cannot be used to
  * grant administrative access.
  */
-async function buildUsers(now: string): Promise<UserDoc[]> {
-  const password = process.env.SEED_PASSWORD || 'insightflow123'
-  const passwordHash = await hashPassword(password)
+/**
+ * The five of us. Each member gets one account per role, so anybody can see both
+ * sides of the product without borrowing someone else's login: sign in as
+ * `<name>-admin` to review sign-ups, or `<name>-owner` to use the workspace.
+ *
+ * The business attached to each owner account is invented. It exists so the
+ * admin dashboard has something to show in every column.
+ */
+const TEAM = [
+  { slug: 'malik', name: 'Malik', business: 'Malik Coffee House', size: 'small', location: 'Beirut, Lebanon', phone: '+961 1 555 101', customers: 1200 },
+  { slug: 'sumayya', name: 'Sumayya', business: 'Sumayya Bakery', size: 'small', location: 'Tripoli, Lebanon', phone: '+961 6 555 102', customers: 900 },
+  { slug: 'yasser', name: 'Yasser', business: 'Yasser Electronics', size: 'medium', location: 'Sidon, Lebanon', phone: '+961 7 555 103', customers: 450 },
+  { slug: 'dalaa', name: 'Dalaa', business: 'Dalaa Flowers', size: 'small', location: 'Byblos, Lebanon', phone: '+961 9 555 104', customers: 600 },
+  { slug: 'mohammad', name: 'Mohammad', business: 'Mohammad Sports', size: 'medium', location: 'Zahle, Lebanon', phone: '+961 8 555 105', customers: 750 }
+]
 
-  const accounts = [
+/**
+ * Every account this script creates, each with its own password so one can be
+ * forwarded to one person without handing over everybody else's login.
+ *
+ * All of these are development credentials for a shared database, and the script
+ * prints them when it finishes. Never reuse one anywhere real.
+ */
+export function seedAccounts(): { password: string, account: Record<string, unknown> }[] {
+  const demoPassword = process.env.SEED_PASSWORD || 'insightflow123'
+
+  const team = TEAM.flatMap(member => [
+    {
+      password: `${member.slug}-admin-2026`,
+      account: {
+        username: `${member.slug}-admin`,
+        email: `${member.slug}-admin@insightflow.local`,
+        displayName: `${member.name} (admin)`,
+        role: 'admin',
+        status: 'approved'
+      }
+    },
+    {
+      password: `${member.slug}-owner-2026`,
+      account: {
+        username: `${member.slug}-owner`,
+        email: `${member.slug}@insightflow.local`,
+        displayName: member.business,
+        role: 'business_owner',
+        status: 'approved',
+        businessSize: member.size,
+        phone: member.phone,
+        location: member.location,
+        estimatedCustomersPerMonth: member.customers
+      }
+    }
+  ])
+
+  return [...demoAccounts(demoPassword), ...team]
+}
+
+function demoAccounts(password: string): { password: string, account: Record<string, unknown> }[] {
+  return [
     {
       username: 'admin',
       email: 'admin@insightflow.local',
@@ -363,17 +416,23 @@ async function buildUsers(now: string): Promise<UserDoc[]> {
       location: 'Edinburgh, United Kingdom',
       estimatedCustomersPerMonth: 400
     }
-  ]
+  ].map(account => ({ password, account }))
+}
 
-  return accounts.map((account) => {
+async function buildUsers(now: string): Promise<UserDoc[]> {
+  return Promise.all(seedAccounts().map(async ({ password, account }) => {
     const { id, ...rest } = userSchema.parse({
       id: new ObjectId().toHexString(),
       ...account,
       createdAt: now
     })
 
-    return { _id: new ObjectId(id), ...rest, passwordHash } satisfies UserDoc
-  })
+    return {
+      _id: new ObjectId(id),
+      ...rest,
+      passwordHash: await hashPassword(password)
+    } satisfies UserDoc
+  }))
 }
 
 async function seed(): Promise<void> {
@@ -465,12 +524,14 @@ async function seed(): Promise<void> {
   console.log(`    Worst seller    ${patterns.quietest}`)
   console.log('')
   console.log('  Sign in with')
-  for (const account of userDocs) {
-    const label = account.role === 'admin' ? 'admin' : account.status
-    console.log(`    ${account.username.padEnd(16)} ${(process.env.SEED_PASSWORD || 'insightflow123').padEnd(16)} ${label}`)
+  console.log(`    ${'USERNAME'.padEnd(18)} ${'PASSWORD'.padEnd(20)} ROLE`)
+  for (const { password, account } of seedAccounts()) {
+    const username = String(account.username)
+    const label = account.role === 'admin' ? 'admin' : `business owner (${account.status})`
+    console.log(`    ${username.padEnd(18)} ${password.padEnd(20)} ${label}`)
   }
   console.log('')
-  console.log('  The two pending accounts cannot sign in until the admin approves them at /admin.')
+  console.log('  The two pending accounts cannot sign in until an admin approves them at /admin.')
   console.log('')
 }
 

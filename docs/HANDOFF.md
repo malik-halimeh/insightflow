@@ -48,17 +48,34 @@ npm run dev
 
 Open http://localhost:3000 and sign in.
 
-`npm run seed` creates the accounts below. The password for all of them is
-`insightflow123`, or whatever you set `SEED_PASSWORD` to before running the seed.
+`npm run seed` creates every account below and prints the passwords when it finishes.
 
-| Sign in as | Role | Lands on | What you see |
+**Each of us has two accounts**, so you can see both sides of the product without
+borrowing anybody's login. Replace `<name>` with `malik`, `sumayya`, `yasser`,
+`dalaa` or `mohammad`:
+
+| Sign in as | Password | Role | Lands on |
 | --- | --- | --- | --- |
-| `admin` | admin | `/admin` | Sign-ups waiting for approval |
-| `owner` (or your `AUTH_USERNAME`) | business owner | `/dashboard` | The demo data set |
-| `thegreenkettle`, `northroadcycles` | business owner | — | **Cannot sign in — pending approval** |
+| `<name>-admin` | `<name>-admin-2026` | admin | `/admin` |
+| `<name>-owner` | `<name>-owner-2026` | business owner | `/dashboard` |
+
+So Yasser signs in as `yasser-admin` / `yasser-admin-2026` to review sign-ups, or
+`yasser-owner` / `yasser-owner-2026` to use the workspace.
+
+There are also four demo accounts, all with the password `insightflow123` (or
+whatever `SEED_PASSWORD` is set to):
+
+| Sign in as | Role | What it is for |
+| --- | --- | --- |
+| `admin` | admin | The generic admin |
+| `owner` (or your `AUTH_USERNAME`) | business owner | Owns the demo data set |
+| `thegreenkettle`, `northroadcycles` | business owner | **Cannot sign in — pending approval** |
 
 The last two exist so `/admin` has a real queue to work through. Approve one there
 and it can sign in immediately.
+
+**These are development credentials for a shared database and the seed prints them
+to the terminal. Never reuse one for anything real.**
 
 You can also sign in with an account's **email** instead of its username, and the
 `AUTH_USERNAME` / `AUTH_PASSWORD` pair in `.env` still works on a machine whose
