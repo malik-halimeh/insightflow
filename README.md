@@ -17,8 +17,20 @@ npm run seed            # loads 8 weeks of demo sales
 npm run dev
 ```
 
-Open http://localhost:3000 and sign in with the `AUTH_USERNAME` and `AUTH_PASSWORD`
-from your `.env`.
+Open http://localhost:3000 and sign in. `npm run seed` creates an account for each
+of us in both roles and prints the passwords when it finishes:
+
+| Sign in as | Password | You get |
+| --- | --- | --- |
+| `<name>-owner` | `<name>-owner-2026` | The workspace: upload, dashboard, recommendations |
+| `<name>-admin` | `<name>-admin-2026` | `/admin`, where sign-ups are approved |
+
+Replace `<name>` with `malik`, `sumayya`, `yasser`, `dalaa` or `mohammad`. The full
+list, including the demo accounts, is in `docs/HANDOFF.md`.
+
+Anyone can sign up from `/login`, but a new account is created **pending** and
+cannot sign in until an admin approves it. There is no way to create an admin from
+the browser — admin accounts come only from the seed.
 
 ## Is the database actually connected?
 
@@ -45,7 +57,7 @@ every page that needs data is failing. Check `/api/health` before anything else.
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Development server |
-| `npm run seed` | Wipes and reloads the demo data. Safe to run repeatedly. |
+| `npm run seed` | **Wipes** the shared database and reloads demo data and accounts. It names what it is about to delete and asks you to confirm; `--force` skips the prompt. |
 | `npm run typecheck` | Must pass before any pull request |
 | `npm run build` | Production build |
 
