@@ -79,6 +79,14 @@ Read these before writing code:
 | `docs/DEPLOY.md` | Deploying to Render, and what breaks without each variable |
 | `CHALLENGES.md` | The daily log. Append to it the day it happens. |
 
+Reference, once you are building:
+
+| File | What it covers |
+| --- | --- |
+| `docs/M4_IMPLEMENTATION_GUIDE.md` | How rules become recommendations, and how publishing works. Describes shipped behaviour, not a plan. |
+| `docs/M1-PHASE-2.md` | M1's Phase 2 brief: the forecast engine, versioning and the shared chart |
+| `docs/MembersPlan/*.html` | The phase plans, one file per phase |
+
 ## Working on this with other people
 
 One owner per folder — the table is in `CLAUDE.md`. Import from anywhere, edit only

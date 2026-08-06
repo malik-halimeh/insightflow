@@ -3,17 +3,19 @@
 Every page in InsightFlow, who owns it, and what state it is in. Find your row,
 read the "replace" column, and leave everything in the "do not change" column alone.
 
-## The three states
+## The two states
 
 | State | Meaning |
 | --- | --- |
-| **Scaffold** | Fully designed and styled, filled with fake data written into the file. Your job is to swap the fake data for real data **without changing the layout**. |
-| **Live** | Already loading real data. Do not rebuild it. |
+| **Live** | Loading real data. Do not rebuild it. |
 | **Finished** | Needs no data at all. Leave it alone. |
 
-Every scaffold page has a dashed **"Preview state"** dropdown at the top. That is how
-you see the loading and empty states while building. **Delete it, and the `demoState`
-ref behind it, when you wire real data.**
+**Every Phase 1 page is now one or the other.** Each was originally a *scaffold* —
+designed and styled with fake constants written into the file — and all of them have
+since been wired to real endpoints. If you find a `demoState` ref or a `DEMO_` constant
+anywhere, it is a leftover and should go.
+
+The Phase 2 pages at the bottom of this file do not exist yet.
 
 ---
 
@@ -52,24 +54,30 @@ reading.
 
 | Route | File | State |
 | --- | --- | --- |
-| `/dashboard` | `app/pages/dashboard/index.vue` | Scaffold |
+| `/dashboard` | `app/pages/dashboard/index.vue` | **Live** |
+| — | `app/components/dashboard/DatasetSelector.vue` | **Live** |
+| — | `app/components/dashboard/RevenueTrendChart.vue` | **Live** |
+| — | `app/components/dashboard/DayOfWeekChart.vue` | **Live** |
+| — | `app/components/dashboard/CategoryBreakdown.vue` | **Live** |
+| — | `app/components/dashboard/TopItemsTable.vue` | **Live** |
 
-**Replace:** `DEMO_TOTALS` and `DEMO_ITEMS`, the `demoState` ref and its dashed box,
-and the two dashed chart boxes — **keep the box, put your chart inside it**.
+Reading real figures. `GET /api/analytics/datasets` lists the data sets and
+`GET /api/analytics/:datasetId/summary` returns the whole page in one response —
+KPIs, daily trend, weekday performance, top items and category mix. The response
+shape is `AnalyticsSummary` in `shared/types/analytics.ts`.
 
-**You need to build:** `server/api/analytics/**`. Nothing exists there yet.
+**Nothing to replace.** The demo constants and the preview-state switcher are gone.
 
 **Do not change:**
-- The **not-enough-data** state. Eight days of sales cannot show a weekly pattern, so
-  the page keeps the totals and drops every comparison. Drawing a confident trend over
-  eight days would be a lie told with a chart.
+- The **not-enough-data** state, at 28 active days. Eight days of sales cannot show a
+  weekly pattern, so the page keeps the totals and drops every comparison. Drawing a
+  confident trend over eight days would be a lie told with a chart.
 - Best seller and worst seller carry no percentage. A single name has nothing to be
   compared against.
-
-**Before you add a chart library:** wrap the chart in a `ClientOnly` component with a
-`USkeleton` fallback. Chart libraries touch `window`, which does not exist during
-server rendering. This is CLAUDE.md rule 5 and it breaks the build in a confusing way
-if you skip it.
+- The charts are **hand-drawn SVG**, drawn with the shared colour tokens so they follow
+  dark mode. There is no chart library in this project and adding one is a stack-rule
+  violation. Because they touch neither a library nor `window`, they are deliberately
+  **not** wrapped in `<ClientOnly>` — see the note in the Phase 2 section below.
 
 ---
 
@@ -77,23 +85,24 @@ if you skip it.
 
 | Route | File | State |
 | --- | --- | --- |
-| `/recommendations` | `app/pages/recommendations/index.vue` | Scaffold |
-| `/recommendations/rules` | `app/pages/recommendations/rules.vue` | Scaffold |
-| — | `app/components/recommendations/ShareDialog.vue` | Scaffold |
+| `/recommendations` | `app/pages/recommendations/index.vue` | **Live** |
+| `/recommendations/rules` | `app/pages/recommendations/rules.vue` | **Live** |
+| — | `app/components/recommendations/RecommendationCard.vue` | **Live** |
+| — | `app/components/recommendations/RuleForm.vue` | **Live** |
+| — | `app/components/recommendations/ShareButton.vue` | **Live** |
 | any error | `app/error.vue` | **Finished** |
 
-**Replace:** `DEMO_RECOMMENDATIONS` and `DEMO_RULES`, the `demoState` refs and their
-dashed boxes, and the empty `onSaveRule`, `onToggle` and `onPublish` functions.
+Reading real data. The full API exists: `GET /api/recommendations`, rules CRUD under
+`server/api/recommendations/rules*`, and publishing under `server/api/publish/` —
+`POST` to publish, `GET` to list what is already published, and
+`DELETE /api/publish/:recommendationId` to take a public page down. The rule engine
+itself is `server/utils/rules.ts`.
 
-**You need to build:** `server/api/recommendations/**` and `server/api/publish/**`.
-Nothing exists there yet.
+**Nothing to replace.** The demo constants and the preview-state switcher are gone.
 
-**Two things are blocked on M1 — ask before you start:**
-1. There is no `publishedInsightCreateSchema`. The share form cannot bind to
-   `publishedInsightSchema`, because that is the stored record and includes the id and
-   the slug. A form bound to it cannot submit.
-2. `recommendationSchema` has no field for the suggested action, but the design shows
-   one on every card. The field needs adding to the contract.
+**Both Phase 1 blockers are closed.** `publishedInsightCreateSchema` exists, and
+`recommendationSchema` now carries a required `action` — the plain-language sentence
+shown on every card.
 
 **Do not change:**
 - Severity shows an **icon and a word**, not just a colour. Roughly one man in twelve
@@ -107,7 +116,7 @@ Nothing exists there yet.
   comparisons, days for "unsold for". A rule reading "unsold for 14%" is nonsense.
 - The "matches nothing" badge. A dead rule looks identical to a working one otherwise,
   and an owner will wait forever for a finding that cannot arrive.
-- In the share dialog: **"hide my actual figures" stays on by default**, and the live
+- In `ShareButton.vue`: **"hide my actual figures" stays on by default**, and the live
   preview stays visible while typing rather than hiding behind a button. Nobody should
   discover what they published by looking at it afterwards.
 - In `error.vue`: no status codes on screen, no apologising, and keep the line telling
@@ -191,9 +200,14 @@ show all three states. If either seems to need a change under `server/` or `shar
 that is the signal to ask rather than to edit.
 
 **The shared chart.** `<UiForecastBandChart>` is the only chart component in Phase 2.
-It arrives already wrapped in `<ClientOnly>` with a skeleton fallback. Pass it points and
-a band. **Do not add a chart library** — that is CLAUDE.md rule 5 and it breaks the server
-build in a confusing way.
+Pass it points and a band; do not open it. **Do not add a chart library** — there is none
+in this project, and adding one is a stack-rule violation.
+
+> **On `<ClientOnly>`.** CLAUDE.md rule 5 requires it for any component touching a chart
+> library or `window`. Hand-drawn SVG touches neither, which is why the four existing
+> dashboard charts are **not** wrapped and render correctly. Do not add the wrapper by
+> reflex — it costs a loading flash for no benefit. The moment a component measures the
+> DOM, reads `window`, or gains a library, the wrapper becomes mandatory.
 
 **Rules that carry over to every new page:**
 
