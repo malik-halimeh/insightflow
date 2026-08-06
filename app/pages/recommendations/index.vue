@@ -1,174 +1,101 @@
+<!--
+  OWNER: M4 (recommendations and publishing)
+
+  WHAT THIS IS
+  The findings InsightFlow produces, loaded from `/api/recommendations` (which
+  reads the `recommendations` collection in MongoDB). Each card carries four
+  things, in this order: what we found, what to do about it, the number behind
+  it, and how important it is.
+
+  WHAT NOT TO CHANGE
+  - The severity badge shows an icon AND a word, not just a colour. Roughly one man
+    in twelve cannot separate red from green, and this product is nothing but
+    numbers going up and down. Never reduce it to a coloured dot.
+  - Share is a quiet button on purpose. The recommendation is what the owner came
+    for; publishing is a decision they make afterwards.
+  - The suggested action is a full sentence an owner could act on today. "Optimise
+    Tuesday" is not an action. "Move one member of staff off Tuesday" is.
+  - The class names. They come from docs/DESIGN-SYSTEM.md.
+-->
+
 <script setup lang="ts">
-import type {
-  PublishedInsight,
-  PublishedInsightCreate,
-  Recommendation
-} from '#shared/schemas'
+import type { Recommendation, Severity } from '#shared/schemas'
+import { formatPercentChange } from '#shared/format'
 
-definePageMeta({
-  middleware: 'auth',
-  layout: 'app'
-})
-
+definePageMeta({ middleware: 'auth', layout: 'app' })
 useSeoMeta({ title: 'Recommendations — InsightFlow' })
 
 const {
   data: recommendations,
   status,
   error,
-  refresh: refreshRecommendations
+  refresh
 } = await useFetch('/api/recommendations', {
   default: (): Recommendation[] => []
 })
 
-const {
-  data: publishedInsights,
-  status: publishStatus,
-  error: publishLoadError,
-  refresh: refreshPublishedInsights
-} = await useFetch('/api/publish', {
-  default: (): PublishedInsight[] => []
-})
-
-const publishingId = ref<string | null>(null)
-const unpublishingId = ref<string | null>(null)
-const actionErrors = ref<Record<string, string | null>>({})
-
-const publishedByRecommendation = computed(() => new Map(
-  publishedInsights.value.flatMap(insight =>
-    insight.recommendationId ? [[insight.recommendationId, insight] as const] : []
-  )
-))
-
-function messageFrom(error: unknown, fallback: string): string {
-  if (error && typeof error === 'object') {
-    const response = error as {
-      statusMessage?: string
-      data?: { statusMessage?: string }
-    }
-
-    return response.data?.statusMessage ?? response.statusMessage ?? fallback
-  }
-
-  return fallback
+// Icon and word travel with the colour, so the meaning survives without it.
+const SEVERITY: Record<Severity, { label: string, icon: string, color: 'info' | 'success' | 'warning' }> = {
+  info: { label: 'Information', icon: 'i-lucide-info', color: 'info' },
+  opportunity: { label: 'Opportunity', icon: 'i-lucide-lightbulb', color: 'success' },
+  warning: { label: 'Worth watching', icon: 'i-lucide-triangle-alert', color: 'warning' }
 }
 
-async function publish(input: PublishedInsightCreate) {
-  publishingId.value = input.recommendationId
-  actionErrors.value[input.recommendationId] = null
+const shareOpen = ref(false)
+const sharing = ref<Recommendation | null>(null)
 
-  try {
-    const insight = await $fetch<PublishedInsight>('/api/publish', {
-      method: 'POST',
-      body: input
-    })
-
-    publishedInsights.value = [
-      insight,
-      ...publishedInsights.value.filter(item => item.id !== insight.id)
-    ]
-  } catch (error) {
-    actionErrors.value[input.recommendationId] = messageFrom(
-      error,
-      'This insight could not be published. Please try again.'
-    )
-  } finally {
-    publishingId.value = null
-  }
+function openShare(finding: Recommendation) {
+  sharing.value = finding
+  shareOpen.value = true
 }
 
-async function unpublish(recommendationId: string) {
-  unpublishingId.value = recommendationId
-  actionErrors.value[recommendationId] = null
+const deleting = ref<string | null>(null)
+const toast = useToast()
 
+async function onDelete(finding: Recommendation) {
+  deleting.value = finding.id
   try {
-    await $fetch(`/api/publish/${recommendationId}`, {
-      method: 'DELETE'
+    await $fetch(`/api/recommendations/${finding.id}`, { method: 'DELETE' })
+    toast.add({ title: 'Recommendation removed', color: 'success' })
+    await refresh()
+  } catch (err) {
+    toast.add({
+      title: 'Could not remove this recommendation',
+      description: (err as { statusMessage?: string }).statusMessage ?? 'Please try again.',
+      color: 'error'
     })
-
-    publishedInsights.value = publishedInsights.value.filter(
-      insight => insight.recommendationId !== recommendationId
-    )
-  } catch (error) {
-    actionErrors.value[recommendationId] = messageFrom(
-      error,
-      'This insight could not be unpublished. Please try again.'
-    )
   } finally {
-    unpublishingId.value = null
+    deleting.value = null
   }
 }
 </script>
 
 <template>
-  <div class="space-y-8">
-    <UiPageHeader
-      title="Recommendations"
-      description="What your sales data is telling you."
-    >
+  <div>
+    <UiPageHeader title="Recommendations" description="What your sales data is telling you.">
       <template #actions>
-        <UButton
-          to="/recommendations/rules"
-          color="neutral"
-          variant="subtle"
-          icon="i-lucide-sliders-horizontal"
-        >
+        <UButton to="/recommendations/rules" color="neutral" variant="subtle" icon="i-lucide-sliders-horizontal">
           Rules
         </UButton>
       </template>
     </UiPageHeader>
 
-    <UAlert
-      v-if="publishLoadError"
-      color="error"
-      variant="subtle"
-      icon="i-lucide-circle-alert"
-      title="Published insights could not be checked"
-      description="Refresh the publish status before sharing or unpublishing a recommendation."
-    >
-      <template #actions>
-        <UButton
-          color="neutral"
-          variant="subtle"
-          icon="i-lucide-rotate-ccw"
-          @click="() => refreshPublishedInsights()"
-        >
-          Try again
-        </UButton>
-      </template>
-    </UAlert>
-
-    <div
-      v-if="status === 'pending' || publishStatus === 'pending'"
-      class="space-y-4"
-    >
-      <USkeleton
-        v-for="card in 3"
-        :key="card"
-        class="h-40 w-full"
-      />
+    <!-- Loading -->
+    <div v-if="status === 'pending'" class="space-y-4">
+      <USkeleton v-for="card in 3" :key="card" class="h-40 w-full" />
     </div>
 
+    <!-- Error -->
     <UAlert
       v-else-if="error"
       color="error"
       variant="subtle"
-      icon="i-lucide-circle-alert"
-      title="Recommendations could not be loaded"
-      description="Check your connection and try again."
-    >
-      <template #actions>
-        <UButton
-          color="neutral"
-          variant="subtle"
-          icon="i-lucide-rotate-ccw"
-          @click="() => refreshRecommendations()"
-        >
-          Try again
-        </UButton>
-      </template>
-    </UAlert>
+      icon="i-lucide-triangle-alert"
+      title="We could not load your recommendations"
+      description="Please refresh the page and try again."
+    />
 
+    <!-- Empty -->
     <UiEmptyState
       v-else-if="recommendations.length === 0"
       icon="i-lucide-lightbulb"
@@ -176,36 +103,87 @@ async function unpublish(recommendationId: string) {
       description="InsightFlow looks for patterns using rules you control. Set up a rule and any matching findings appear here."
     >
       <template #action>
-        <UButton
-          to="/recommendations/rules"
-          icon="i-lucide-sliders-horizontal"
-        >
+        <UButton to="/recommendations/rules" icon="i-lucide-sliders-horizontal">
           Set up a rule
         </UButton>
       </template>
     </UiEmptyState>
 
-    <section
-      v-else
-      class="space-y-4"
-    >
-      <h2 class="text-base font-semibold">
-        Advice for your business
-      </h2>
+    <!-- Ready -->
+    <div v-else class="space-y-4">
+      <UCard v-for="finding in recommendations" :key="finding.id">
+        <div class="space-y-4">
+          <!-- Severity first: it tells the owner whether to read on. -->
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <UBadge
+              :color="SEVERITY[finding.severity].color"
+              :icon="SEVERITY[finding.severity].icon"
+              variant="subtle"
+            >
+              {{ SEVERITY[finding.severity].label }}
+            </UBadge>
 
-      <div class="grid gap-4 lg:grid-cols-2">
-        <RecommendationsRecommendationCard
-          v-for="recommendation in recommendations"
-          :key="recommendation.id"
-          :recommendation="recommendation"
-          :published-insight="publishedByRecommendation.get(recommendation.id) ?? null"
-          :publishing="publishingId === recommendation.id"
-          :unpublishing="unpublishingId === recommendation.id"
-          :server-error="actionErrors[recommendation.id]"
-          @publish="publish"
-          @unpublish="unpublish"
-        />
-      </div>
-    </section>
+            <UiChangeIndicator :value="finding.changePercent" />
+          </div>
+
+          <div>
+            <h2 class="text-lg font-semibold">
+              {{ finding.title }}
+            </h2>
+            <p class="mt-2 text-sm text-muted">
+              {{ finding.body }}
+            </p>
+          </div>
+
+          <!-- The action is the point of the whole product. -->
+          <div class="flex gap-3 rounded-md bg-elevated p-3">
+            <UIcon name="i-lucide-arrow-right" class="mt-0.5 size-4 shrink-0 text-muted" />
+            <p class="text-sm font-medium">
+              {{ finding.action }}
+            </p>
+          </div>
+        </div>
+
+        <template #footer>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs text-muted">
+              Based on {{ finding.metric }} by {{ finding.dimension }},
+              {{ formatPercentChange(finding.changePercent) }}
+            </span>
+
+            <div class="flex items-center gap-1">
+              <!-- Quiet on purpose. It must not compete with the finding. -->
+              <UButton
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                icon="i-lucide-share-2"
+                @click="openShare(finding)"
+              >
+                Share
+              </UButton>
+              <UButton
+                color="error"
+                variant="ghost"
+                size="xs"
+                icon="i-lucide-trash-2"
+                :loading="deleting === finding.id"
+                @click="onDelete(finding)"
+              >
+                Remove
+              </UButton>
+            </div>
+          </div>
+        </template>
+      </UCard>
+    </div>
+
+    <RecommendationsShareDialog
+      v-model:open="shareOpen"
+      :title="sharing?.title ?? ''"
+      :metric-label="sharing ? `${sharing.metric} by ${sharing.dimension}` : ''"
+      :metric-value="sharing?.changePercent ?? 0"
+      business-type="restaurant"
+    />
   </div>
 </template>

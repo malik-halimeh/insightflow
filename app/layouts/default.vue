@@ -14,20 +14,23 @@
  */
 const { data: session } = await useFetch('/api/auth/session', { server: false })
 
-// An admin has no /dashboard to go back to — the middleware would bounce them to
-// /admin anyway, so the link may as well say where it actually goes.
-const isAdmin = computed(() => session.value?.authenticated && session.value.role === 'admin')
-const workspace = computed(() =>
-  isAdmin.value ? { to: '/admin', label: 'Admin' } : { to: '/dashboard', label: 'Dashboard' }
+const workspaceLink = computed(() =>
+  session.value?.authenticated && session.value.role === 'admin' ? '/admin' : '/dashboard'
+)
+const workspaceLabel = computed(() =>
+  session.value?.authenticated && session.value.role === 'admin' ? 'Admin dashboard' : 'Dashboard'
 )
 </script>
 
 <template>
   <div class="min-h-screen flex flex-col">
-    <header class="border-b border-default">
-      <!-- Wraps rather than collapsing to a menu: two links do not need one. -->
-      <div class="mx-auto w-full max-w-4xl px-4 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <NuxtLink to="/" class="font-semibold tracking-tight">
+    <header class="sticky top-0 z-50 border-b border-default bg-default/80 backdrop-blur">
+      <!-- Wraps rather than collapsing to a menu: three links do not need one. -->
+      <div class="mx-auto w-full max-w-6xl px-4 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <NuxtLink to="/" class="flex items-center gap-2 font-semibold tracking-tight">
+          <span class="flex size-7 items-center justify-center rounded-md bg-primary text-inverted">
+            <UIcon name="i-lucide-chart-column" class="size-4" />
+          </span>
           InsightFlow
         </NuxtLink>
 
@@ -35,16 +38,20 @@ const workspace = computed(() =>
           <NuxtLink to="/insights" class="text-muted hover:text-default">
             Insight feed
           </NuxtLink>
-          <NuxtLink
-            v-if="session?.authenticated"
-            :to="workspace.to"
-            class="text-muted hover:text-default"
-          >
-            {{ workspace.label }}
-          </NuxtLink>
-          <NuxtLink v-else to="/login" class="text-muted hover:text-default">
-            Sign in
-          </NuxtLink>
+
+          <template v-if="session?.authenticated">
+            <NuxtLink :to="workspaceLink" class="text-muted hover:text-default">
+              {{ workspaceLabel }}
+            </NuxtLink>
+          </template>
+          <template v-else>
+            <NuxtLink to="/login" class="text-muted hover:text-default">
+              Sign in
+            </NuxtLink>
+            <UButton to="/login?mode=signup" size="sm">
+              Get started
+            </UButton>
+          </template>
         </nav>
       </div>
     </header>
@@ -56,8 +63,51 @@ const workspace = computed(() =>
     </main>
 
     <footer class="border-t border-default">
-      <div class="mx-auto w-full max-w-4xl px-4 py-4 text-sm text-muted">
-        InsightFlow — sales insights for small businesses.
+      <div class="mx-auto w-full max-w-6xl px-4 py-10">
+        <div class="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
+          <div class="max-w-sm">
+            <div class="flex items-center gap-2 font-semibold tracking-tight">
+              <span class="flex size-6 items-center justify-center rounded-md bg-primary text-inverted">
+                <UIcon name="i-lucide-chart-column" class="size-3.5" />
+              </span>
+              InsightFlow
+            </div>
+            <p class="mt-2 text-sm text-muted">
+              Plain-language sales insights for small businesses. Upload your data,
+              see what matters, act the same day.
+            </p>
+          </div>
+
+          <div class="flex gap-12 text-sm">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+                Product
+              </p>
+              <ul class="mt-3 space-y-2">
+                <li>
+                  <NuxtLink to="/insights" class="text-muted hover:text-default">
+                    Insight feed
+                  </NuxtLink>
+                </li>
+                <li>
+                  <NuxtLink to="/login" class="text-muted hover:text-default">
+                    Sign in
+                  </NuxtLink>
+                </li>
+                <li>
+                  <NuxtLink to="/login?mode=signup" class="text-muted hover:text-default">
+                    Create an account
+                  </NuxtLink>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8 flex flex-col gap-2 border-t border-default pt-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+          <p>InsightFlow — a business intelligence tool for small businesses.</p>
+          <p>© {{ new Date().getFullYear() }} InsightFlow</p>
+        </div>
       </div>
     </footer>
   </div>

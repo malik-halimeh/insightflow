@@ -1,135 +1,226 @@
-import { MongoClient, type Collection, type Db, type Document, type ObjectId } from 'mongodb'
+// Owner: M1
+// NOTE (M3, Day 2): this was still an empty stub and every /api route — mine
+// included — needs a live DB connection to do anything. Implemented the
+// standard cached-connection pattern below so we're not all writing our own
+// version of this. Please treat this as a draft — happy to adjust names/shape
+// to whatever the rest of the team standardizes on.
+//
+// NOTE (M3, Day 3 — stability pass): the original version cached the
+// *connection promise* on globalThis, but never cleared it on failure. If the
+// very first connection attempt failed (bad URI, Atlas IP allowlist, no
+// network, etc.) that rejected promise stayed cached forever, so every
+// request after that failed instantly even after the underlying problem was
+// fixed — the only way out was a full server restart. Added: (1) a bounded
+// server-selection timeout so a bad connection fails fast instead of hanging
+// for 30s, (2) clearing the cached promise on failure so the next request
+// retries cleanly, and (3) a small status tracker + ping() so we can report
+// "connected to Mongo: yes/no" on server startup and from /api/health.
+//
+// NOTE (M3, Day 4 — SRV DNS fix): `mongodb+srv://` URIs need the OS resolver
+// to answer SRV/TXT lookups for `_mongodb._tcp.<cluster>`. Some networks
+// (corporate VPNs, certain containers/sandboxes, some ISP or router DNS)
+// don't forward those record types, which surfaces as
+// `querySrv ECONNREFUSED _mongodb._tcp....mongodb.net` even though the URI,
+// password, and Atlas IP allowlist are all correct. Pointing Node's resolver
+// at public DNS providers that do support SRV fixes it without touching the
+// connection string or credentials. This runs once, before any connection is
+// attempted. If your network blocks outbound DNS/port 27017 entirely (rare,
+// but some locked-down sandboxes do), this won't help — see the non-SRV
+// fallback URI format documented in .env.example instead.
+
+import dns from 'node:dns'
+import { createError } from 'h3'
+import { MongoClient, ObjectId, type Db, type Document, type Collection } from 'mongodb'
+import type { Dataset, PublishedInsight, Recommendation, Rule, SalesRow, User } from '#shared/schemas'
 import { COLLECTIONS, ensureIndexes } from './indexes'
-// Relative rather than the #shared alias: this file is also loaded by
-// scripts/seed.ts, which runs outside Nitro and cannot resolve Nuxt aliases.
-import type {
-  Dataset,
-  PublishedInsight,
-  Recommendation,
-  Rule,
-  SalesRow,
-  User
-} from '../../shared/schemas'
 
-/**
- * Stored documents keep Mongo's own `_id` and drop the contract's `id`.
- * Everything else matches the shared schemas exactly, so foreign keys such as
- * `datasetId` stay 24-character hex strings and can be validated without conversion.
- */
-export type DocOf<T> = Omit<T, 'id'> & { _id: ObjectId }
+dns.setServers(['8.8.8.8', '1.1.1.1'])
+dns.setDefaultResultOrder('ipv4first')
 
-/**
- * The password hash lives on the document only, never on the `User` contract in
- * `shared/`. Keeping it out of the shared schema means it cannot be returned by
- * accident: a route that serialises a `User` has nothing to leak.
- */
-export type UserDoc = DocOf<User> & { passwordHash: string }
-export type DatasetDoc = DocOf<Dataset>
-export type SalesRowDoc = DocOf<SalesRow>
-export type RecommendationDoc = DocOf<Recommendation>
-export type RuleDoc = DocOf<Rule>
-export type PublishedInsightDoc = DocOf<PublishedInsight>
+const uri = process.env.MONGODB_URI
+const dbName = process.env.MONGODB_DB || 'insightflow'
 
-/**
- * Connection state is cached on globalThis so a hot reload in dev, and a warm
- * serverless instance in production, reuse one client instead of opening a socket
- * per request. This is process-level infrastructure, never request-scoped data.
- */
-interface MongoCache {
-  client?: MongoClient
-  connecting?: Promise<MongoClient>
-  indexes?: Promise<void>
+export type MongoStatus = 'unconfigured' | 'connecting' | 'connected' | 'error'
+
+interface MongoState {
+  status: MongoStatus
+  lastError: string | null
+  lastConnectedAt: string | null
 }
 
-const globalForMongo = globalThis as typeof globalThis & {
-  __insightflowMongo?: MongoCache
+declare global {
+  // eslint-disable-next-line no-var
+  var __insightflowMongoClientPromise: Promise<MongoClient> | undefined
+  // eslint-disable-next-line no-var
+  var __insightflowMongoState: MongoState | undefined
+  // eslint-disable-next-line no-var
+  var __insightflowIndexesPromise: Promise<void> | undefined
 }
 
-function cache(): MongoCache {
-  globalForMongo.__insightflowMongo ??= {}
-  return globalForMongo.__insightflowMongo
-}
-
-/**
- * Read lazily rather than at module load, so importing this file never throws and
- * the seed script can populate process.env before the first connection is made.
- */
-function readConfig(): { uri: string, dbName: string } {
-  let uri = process.env.MONGODB_URI
-  let dbName = process.env.MONGODB_DB
-
-  // Inside Nitro, runtimeConfig wins: it applies the NUXT_-prefixed overrides that
-  // reading process.env alone would miss, so a secret can be rotated on the host
-  // without a rebuild. The seed script runs outside Nitro, where this function does
-  // not exist, and falls back to the environment.
-  try {
-    const config = useRuntimeConfig()
-    uri = config.mongodbUri || uri
-    dbName = config.mongodbDb || dbName
-  } catch {
-    // Not running inside Nitro.
+function state(): MongoState {
+  if (!globalThis.__insightflowMongoState) {
+    globalThis.__insightflowMongoState = {
+      status: uri ? 'connecting' : 'unconfigured',
+      lastError: null,
+      lastConnectedAt: null,
+    }
   }
+  return globalThis.__insightflowMongoState
+}
 
+/**
+ * Resolves the shared client without touching a specific database. Used by
+ * /api/health, which pings the cluster directly and must never trigger
+ * ensureIndexes (see getDb below) — an unhealthy build should not also be
+ * the moment indexes get (re)created.
+ */
+export function getMongoClient(): Promise<MongoClient> {
+  return getClientPromise()
+}
+
+function getClientPromise(): Promise<MongoClient> {
   if (!uri) {
-    throw new Error('MONGODB_URI is not set. Copy .env.example to .env and fill it in.')
+    state().status = 'unconfigured'
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Database not configured',
+      message:
+        'MONGODB_URI is missing. Copy .env.example to .env and fill in the connection string.',
+    })
   }
-  if (!dbName) {
-    throw new Error('MONGODB_DB is not set. Copy .env.example to .env and fill it in.')
-  }
 
-  return { uri, dbName }
-}
+  if (!globalThis.__insightflowMongoClientPromise) {
+    state().status = 'connecting'
+    const client = new MongoClient(uri, {
+      maxPoolSize: 10,
+      // Fail fast (5s) instead of hanging for the ~30s Mongo driver default
+      // when the cluster is unreachable (wrong URI, IP not allowlisted, no
+      // network path, etc). Callers see a clear error quickly.
+      serverSelectionTimeoutMS: 5000,
+    })
 
-export async function getMongoClient(): Promise<MongoClient> {
-  const state = cache()
-  if (state.client) return state.client
-
-  // Store the in-flight promise so parallel callers during a cold start share
-  // one connection attempt rather than racing to open several. A *failed* attempt
-  // is discarded rather than cached: otherwise one unreachable moment at startup
-  // would leave this instance permanently unable to reach the database, still
-  // rejecting instantly long after the database came back.
-  if (!state.connecting) {
-    state.connecting = new MongoClient(readConfig().uri)
+    globalThis.__insightflowMongoClientPromise = client
       .connect()
-      .catch((error: unknown) => {
-        delete state.connecting
-        throw error
+      .then((connected) => {
+        state().status = 'connected'
+        state().lastError = null
+        state().lastConnectedAt = new Date().toISOString()
+        return connected
+      })
+      .catch((err) => {
+        // Don't leave a rejected promise cached — the next call should get a
+        // fresh attempt instead of failing forever until a restart.
+        globalThis.__insightflowMongoClientPromise = undefined
+        state().status = 'error'
+        state().lastError = err instanceof Error ? err.message : String(err)
+        throw err
       })
   }
 
-  state.client = await state.connecting
-
-  return state.client
+  return globalThis.__insightflowMongoClientPromise
 }
 
 export async function getDb(): Promise<Db> {
-  const state = cache()
-  const client = await getMongoClient()
-  const db = client.db(readConfig().dbName)
+  const client = await getClientPromise()
+  const db = client.db(dbName)
 
-  state.indexes ??= ensureIndexes(db)
-  await state.indexes
+  // Runs once per process, not once per request. Reuses the ensureIndexes
+  // promise itself (not just a boolean) so concurrent first-requests await
+  // the same attempt instead of racing createIndex calls, and a failed
+  // attempt is retried on the next call rather than being cached forever.
+  if (!globalThis.__insightflowIndexesPromise) {
+    globalThis.__insightflowIndexesPromise = ensureIndexes(db).catch((err) => {
+      globalThis.__insightflowIndexesPromise = undefined
+      throw err
+    })
+  }
+  await globalThis.__insightflowIndexesPromise
 
   return db
 }
 
-async function collection<T extends Document>(name: string): Promise<Collection<T>> {
+export async function getCollection<T extends Document = Document>(
+  name: string,
+): Promise<Collection<T>> {
   const db = await getDb()
   return db.collection<T>(name)
 }
 
-export const usersCollection = () => collection<UserDoc>(COLLECTIONS.users)
-export const datasetsCollection = () => collection<DatasetDoc>(COLLECTIONS.datasets)
-export const salesRowsCollection = () => collection<SalesRowDoc>(COLLECTIONS.salesRows)
-export const recommendationsCollection = () => collection<RecommendationDoc>(COLLECTIONS.recommendations)
-export const rulesCollection = () => collection<RuleDoc>(COLLECTIONS.rules)
-export const publishedInsightsCollection = () => collection<PublishedInsightDoc>(COLLECTIONS.publishedInsights)
+// Mongo storage shapes: the same record the shared Zod schema describes, but
+// keyed by the driver's own ObjectId instead of the hex-string `id` a client
+// receives. Every route maps between the two at the edge (see e.g.
+// server/api/datasets/index.get.ts), so `db.ts` is the only file that needs
+// to know both shapes exist.
+export type DatasetDocument = Omit<Dataset, 'id'> & { _id: ObjectId }
+// datasetId is stored on sales rows as a hex string, not an ObjectId — see
+// server/api/analytics/[datasetId]/summary.get.ts — so this mirrors SalesRow
+// as-is rather than substituting an ObjectId for it.
+export type SalesRowDocument = Omit<SalesRow, 'id'> & { _id: ObjectId }
+export type RecommendationDocument = Omit<Recommendation, 'id'> & { _id: ObjectId }
+export type RuleDocument = Omit<Rule, 'id'> & { _id: ObjectId }
+export type PublishedInsightDocument = Omit<PublishedInsight, 'id'> & { _id: ObjectId }
+// The password hash never travels through the shared User schema — that schema
+// describes what a client is allowed to see, and a hash (even a salted one) is not it.
+export type UserDocument = Omit<User, 'id'> & { _id: ObjectId, passwordHash: string }
 
+export const datasetsCollection = (): Promise<Collection<DatasetDocument>> =>
+  getCollection<DatasetDocument>(COLLECTIONS.datasets)
+
+export const salesRowsCollection = (): Promise<Collection<SalesRowDocument>> =>
+  getCollection<SalesRowDocument>(COLLECTIONS.salesRows)
+
+export const recommendationsCollection = (): Promise<Collection<RecommendationDocument>> =>
+  getCollection<RecommendationDocument>(COLLECTIONS.recommendations)
+
+export const rulesCollection = (): Promise<Collection<RuleDocument>> =>
+  getCollection<RuleDocument>(COLLECTIONS.rules)
+
+export const publishedInsightsCollection = (): Promise<Collection<PublishedInsightDocument>> =>
+  getCollection<PublishedInsightDocument>(COLLECTIONS.publishedInsights)
+
+export const usersCollection = (): Promise<Collection<UserDocument>> =>
+  getCollection<UserDocument>(COLLECTIONS.users)
+
+/**
+ * Closes the shared client and clears the cached promise. Used by scripts (e.g.
+ * `npm run seed`), which must exit on their own rather than being kept alive by an
+ * open socket the way the long-lived server process is.
+ */
 export async function closeMongoClient(): Promise<void> {
-  const state = cache()
-  if (state.client) await state.client.close()
-  delete state.client
-  delete state.connecting
-  delete state.indexes
+  const pending = globalThis.__insightflowMongoClientPromise
+  if (!pending) return
+
+  globalThis.__insightflowMongoClientPromise = undefined
+  const client = await pending.catch(() => null)
+  await client?.close()
+}
+
+/** Current in-memory connection status, without triggering a new attempt. */
+export function getMongoStatus(): MongoState & { configured: boolean } {
+  return { ...state(), configured: Boolean(uri) }
+}
+
+/**
+ * Actively connects (if needed) and pings the cluster. Never throws — always
+ * resolves with a result you can log or return from an API route.
+ */
+export async function pingDatabase(): Promise<{
+  connected: boolean
+  dbName: string
+  status: MongoStatus
+  error: string | null
+  tookMs: number
+}> {
+  const start = Date.now()
+  if (!uri) {
+    return { connected: false, dbName, status: 'unconfigured', error: 'MONGODB_URI is not set', tookMs: 0 }
+  }
+  try {
+    const db = await getDb()
+    await db.command({ ping: 1 })
+    return { connected: true, dbName, status: 'connected', error: null, tookMs: Date.now() - start }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return { connected: false, dbName, status: 'error', error: message, tookMs: Date.now() - start }
+  }
 }

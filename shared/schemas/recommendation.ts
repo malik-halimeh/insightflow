@@ -15,17 +15,12 @@ export const recommendationSchema = z.object({
   ruleId: idSchema.nullable(),
   title: z.string().min(1, 'Please enter a short headline for this finding.'),
   body: z.string().min(1, 'Please explain what this finding means.'),
-
-  /**
-   * What the owner should actually do about it, as a sentence they could act on
-   * today. "Move one member of staff off Tuesday" is an action. "Optimise
-   * Tuesday" is not.
-   *
-   * Separate from `body` on purpose: the body explains what was found, the action
-   * says what to do. Plain-language advice is the point of the product, so every
-   * finding carries one and this is not optional.
-   */
-  action: z.string().min(1, 'Please say what the owner should do about this.'),
+  // A full sentence an owner could act on today — "Optimise Tuesday" is not an
+  // action, "Move one member of staff off Tuesday" is. Was previously missing
+  // from this schema (recommendations/index.vue was built against demo data
+  // only); added so the recommendation is fully persisted and round-trips
+  // through the API rather than being invented client-side.
+  action: z.string().min(1, 'Please write a concrete next step for this finding.'),
   // Reuses the rule vocabulary: every finding is produced against one of these.
   metric: metricSchema,
   dimension: dimensionSchema,

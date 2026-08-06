@@ -27,14 +27,6 @@ defineProps<{
       {{ insight.caption }}
     </p>
 
-    <p v-if="insight.hideAbsoluteNumbers" class="mt-4 text-xs text-muted">
-      Actual figures are hidden. Only the percentage change is shared.
-    </p>
-
-    <p v-else class="mt-4 text-xs text-muted">
-      This published insight includes a percentage change only.
-    </p>
-
     <template #footer>
       <NuxtLink :to="`/insights/${insight.slug}`" class="text-sm text-primary">
         Read insight
