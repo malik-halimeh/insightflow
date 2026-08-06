@@ -161,7 +161,17 @@ export type RuleDocument = Omit<Rule, 'id'> & { _id: ObjectId }
 export type PublishedInsightDocument = Omit<PublishedInsight, 'id'> & { _id: ObjectId }
 // The password hash never travels through the shared User schema — that schema
 // describes what a client is allowed to see, and a hash (even a salted one) is not it.
-export type UserDocument = Omit<User, 'id'> & { _id: ObjectId, passwordHash: string }
+// The three passwordReset* fields only exist on a document while a forgot-password
+// link is outstanding — server/api/auth/reset-password.post.ts clears all three
+// the moment the link is used, and the hash is a SHA-256 of the token that was
+// actually emailed, never the token itself.
+export type UserDocument = Omit<User, 'id'> & {
+  _id: ObjectId
+  passwordHash: string
+  passwordResetTokenHash?: string
+  passwordResetExpiresAt?: string
+  passwordResetRequestedAt?: string
+}
 
 export const datasetsCollection = (): Promise<Collection<DatasetDocument>> =>
   getCollection<DatasetDocument>(COLLECTIONS.datasets)

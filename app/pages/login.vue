@@ -221,6 +221,11 @@ const features = [
               autocomplete="current-password"
               class="w-full"
             />
+            <template #hint>
+              <NuxtLink to="/forgot-password" class="text-primary hover:underline">
+                Forgot password?
+              </NuxtLink>
+            </template>
           </UFormField>
 
           <UButton type="submit" :loading="pending" block>
