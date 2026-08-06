@@ -26,3 +26,15 @@ export interface AdminUserCounts {
   deactivated: number
   rejected: number
 }
+
+/**
+ * The signed-in admin's own account, as shown on /admin/settings.
+ * `persisted` is false when the session's username has no row in `users` — the
+ * page says so rather than showing an empty email as if it were genuinely blank.
+ */
+export interface AdminProfile {
+  username: string
+  email: string
+  displayName: string
+  persisted: boolean
+}
