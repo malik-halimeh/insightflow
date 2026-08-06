@@ -13,24 +13,20 @@ You need **Node 22 or newer**.
 ```bash
 npm install
 cp .env.example .env    # then fill in MONGODB_URI and MONGODB_DB
-npm run seed -- --add   # safely adds 8 weeks of demo sales
+npm run seed            # loads 8 weeks of demo sales
 npm run dev
 ```
 
-Open http://localhost:3000 and sign in. The seed creates an account for each
-of us in both roles and prints the passwords when it finishes:
+Open http://localhost:3000 and sign in with the credentials printed at the end of
+`npm run seed` (also visible any time in `AUTH_USERNAME`/`AUTH_PASSWORD` and
+`ADMIN_USERNAME`/`ADMIN_PASSWORD` in your `.env`) — or use the "Create account"
+tab to register a new owner. New sign-ups start as `pending` and need an admin
+to approve them from `/admin` before they can sign in.
 
-| Sign in as | Password | You get |
-| --- | --- | --- |
-| `<name>-owner` | `<name>-owner-2026` | The workspace: upload, dashboard, recommendations |
-| `<name>-admin` | `<name>-admin-2026` | `/admin`, where sign-ups are approved |
-
-Replace `<name>` with `malik`, `sumayya`, `yasser`, `dalaa` or `mohammad`. The full
-list, including the demo accounts, is in `docs/HANDOFF.md`.
-
-Anyone can sign up from `/login`, but a new account is created **pending** and
-cannot sign in until an admin approves it. There is no way to create an admin from
-the browser — admin accounts come only from the seed.
+`.env.example` ships with strong random values already filled in for
+`AUTH_PASSWORD`, `ADMIN_PASSWORD` and `SESSION_SECRET`, so `npm run dev` works
+immediately after `cp .env.example .env` — replace all three with your own
+values before deploying anywhere reachable by anyone else.
 
 ## Is the database actually connected?
 
@@ -57,8 +53,7 @@ every page that needs data is failing. Check `/api/health` before anything else.
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Development server |
-| `npm run seed -- --add` | Safely adds a new demo data set, sales rows and insights without deleting anything. Seeded users are updated or added by username. |
-| `npm run seed` | **Wipes the shared database**, including teammates' uploads, then reloads demo data and accounts. It names what it is about to delete and asks you to confirm; `--force` skips the prompt. |
+| `npm run seed` | Wipes and reloads the demo data. Safe to run repeatedly. |
 | `npm run typecheck` | Must pass before any pull request |
 | `npm run build` | Production build |
 

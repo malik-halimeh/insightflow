@@ -15,9 +15,7 @@
  * This also keeps the two workspaces apart. `/admin/**` is its own portal: a
  * business owner who lands there is sent back to their dashboard, and an admin
  * who opens `/dashboard`, `/datasets` or `/recommendations` is sent to `/admin`
- * instead of a workspace that holds no data for them. Neither redirect is the
- * actual protection — `requireAdmin` on the server is. This only decides which
- * page someone sees.
+ * instead of seeing a workspace that holds no data for them.
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   // The login page can never be gated, whatever a page happens to declare.

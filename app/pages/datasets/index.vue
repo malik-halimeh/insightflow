@@ -1,11 +1,3 @@
-<!--
-  OWNER: M2 (data sets)
-
-  Wired to /api/datasets. The delete confirmation names what actually disappears,
-  and the endpoint behind it removes the sales rows, the recommendations and any
-  published insight in one go, so the wording is a promise the server keeps.
--->
-
 <script setup lang="ts">
 import type { Dataset } from '#shared/schemas'
 import { formatCount } from '#shared/format'
@@ -13,12 +5,11 @@ import { formatCount } from '#shared/format'
 definePageMeta({ middleware: 'auth', layout: 'app' })
 useSeoMeta({ title: 'Data sets — InsightFlow' })
 
-const {
-  data: datasets,
-  status,
-  error,
-  refresh
-} = await useFetch('/api/datasets', { default: (): Dataset[] => [] })
+const { data, status, refresh } = await useFetch<Dataset[]>('/api/datasets', {
+  default: (): Dataset[] => []
+})
+
+const datasets = computed(() => data.value ?? [])
 
 const columns = [
   { accessorKey: 'name', header: 'Name' },
@@ -31,30 +22,30 @@ const columns = [
 const deleteOpen = ref(false)
 const pendingDelete = ref<Dataset | null>(null)
 const deleting = ref(false)
-const serverError = ref<string | null>(null)
+const deleteError = ref<string | null>(null)
+const toast = useToast()
 
 function askToDelete(dataset: Dataset) {
   pendingDelete.value = dataset
+  deleteError.value = null
   deleteOpen.value = true
 }
 
 async function onDelete() {
-  const dataset = pendingDelete.value
-  if (!dataset) return
-
-  deleteOpen.value = false
+  if (!pendingDelete.value || deleting.value) return
   deleting.value = true
-  serverError.value = null
+  deleteError.value = null
 
   try {
-    await $fetch(`/api/datasets/${dataset.id}`, { method: 'DELETE' })
+    await $fetch(`/api/datasets/${pendingDelete.value.id}`, { method: 'DELETE' })
+    deleteOpen.value = false
+    pendingDelete.value = null
+    toast.add({ title: 'Data set deleted', icon: 'i-lucide-trash-2', color: 'neutral' })
     await refresh()
-  } catch (requestError) {
-    serverError.value = (requestError as { statusMessage?: string }).statusMessage
-      ?? 'This data set could not be deleted. Please try again.'
+  } catch (err: any) {
+    deleteError.value = err?.data?.statusMessage ?? err?.message ?? 'Could not delete. Please try again.'
   } finally {
     deleting.value = false
-    pendingDelete.value = null
   }
 }
 
@@ -73,28 +64,12 @@ function shortDate(iso: string): string {
       </template>
     </UiPageHeader>
 
-    <UAlert
-      v-if="serverError"
-      color="error"
-      variant="subtle"
-      icon="i-lucide-circle-alert"
-      :description="serverError"
-      class="mb-4"
-    />
-
+    <!-- Loading -->
     <div v-if="status === 'pending'" class="space-y-2">
       <USkeleton v-for="row in 4" :key="row" class="h-12 w-full" />
     </div>
 
-    <UAlert
-      v-else-if="error"
-      color="error"
-      variant="subtle"
-      icon="i-lucide-circle-alert"
-      title="Your data sets could not be loaded"
-      description="Your data is safe. Refresh the page to try again."
-    />
-
+    <!-- Empty -->
     <UiEmptyState
       v-else-if="datasets.length === 0"
       icon="i-lucide-table"
@@ -108,6 +83,7 @@ function shortDate(iso: string): string {
       </template>
     </UiEmptyState>
 
+    <!-- List -->
     <UTable v-else :data="datasets" :columns="columns">
       <template #name-cell="{ row }">
         <ULink :to="`/datasets/${row.original.id}`" class="font-medium">
@@ -145,7 +121,6 @@ function shortDate(iso: string): string {
             variant="ghost"
             size="xs"
             icon="i-lucide-trash-2"
-            :loading="deleting && pendingDelete?.id === row.original.id"
             aria-label="Delete data set"
             @click="askToDelete(row.original)"
           />
@@ -153,9 +128,18 @@ function shortDate(iso: string): string {
       </template>
     </UTable>
 
+    <!-- Delete confirmation modal -->
     <UModal v-model:open="deleteOpen" title="Delete this data set?">
       <template #body>
         <div v-if="pendingDelete" class="space-y-3 text-sm">
+          <UAlert
+            v-if="deleteError"
+            color="error"
+            variant="subtle"
+            icon="i-lucide-circle-alert"
+            :title="deleteError"
+            class="mb-2"
+          />
           <p>
             Deleting <strong>{{ pendingDelete.name }}</strong> also deletes:
           </p>
@@ -172,11 +156,11 @@ function shortDate(iso: string): string {
       </template>
 
       <template #footer>
-        <div class="flex w-full justify-end gap-2">
-          <UButton color="neutral" variant="subtle" @click="deleteOpen = false">
+        <div class="flex justify-end gap-2">
+          <UButton color="neutral" variant="subtle" :disabled="deleting" @click="deleteOpen = false">
             Keep it
           </UButton>
-          <UButton color="error" @click="onDelete">
+          <UButton color="error" :loading="deleting" @click="onDelete">
             Delete data set
           </UButton>
         </div>

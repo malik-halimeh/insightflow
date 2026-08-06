@@ -1,33 +1,50 @@
 import { pathToFileURL } from 'node:url'
-import { ObjectId } from 'mongodb'
-import {
-  closeMongoClient,
-  datasetsCollection,
-  publishedInsightsCollection,
-  recommendationsCollection,
-  salesRowsCollection,
-  usersCollection,
-  type DatasetDoc,
-  type PublishedInsightDoc,
-  type SalesRowDoc,
-  type UserDoc
+// Type-only imports are erased at compile time (they produce no runtime
+// `require`/`import`), so they're safe to keep as static imports — only the
+// value imports below need to be dynamic to preserve load order (see note above them).
+import type {
+  DatasetDocument,
+  PublishedInsightDocument,
+  RecommendationDocument,
+  RuleDocument,
+  SalesRowDocument,
+  UserDocument
 } from '../server/utils/db'
-import { hashPassword } from '../server/utils/password'
-import {
-  datasetSchema,
-  publishedInsightSchema,
-  salesRowSchema,
-  userSchema
-} from '../shared/schemas'
 
 // Nitro loads .env by itself; a standalone script does not. A missing file is not
 // an error: on a deployed machine the variables come from the environment instead,
 // and readConfig() reports clearly if they are absent altogether.
+//
+// This MUST run before anything that reads process.env at import time (e.g.
+// server/utils/db.ts reads MONGODB_URI at module scope). Static `import`
+// statements are hoisted and evaluate before any other code in this file, so
+// those imports have to be dynamic and come after loadEnvFile() runs below —
+// otherwise db.ts sees an empty MONGODB_URI even when .env has it.
 try {
   process.loadEnvFile()
 } catch {
   // No .env present; fall back to whatever is already in the environment.
 }
+
+const { ObjectId } = await import('mongodb')
+const {
+  closeMongoClient,
+  datasetsCollection,
+  publishedInsightsCollection,
+  recommendationsCollection,
+  rulesCollection,
+  salesRowsCollection,
+  usersCollection,
+} = await import('../server/utils/db')
+const { hashPassword } = await import('../server/utils/password')
+const {
+  datasetSchema,
+  publishedInsightSchema,
+  recommendationSchema,
+  ruleSchema,
+  salesRowSchema,
+  userSchema
+} = await import('../shared/schemas')
 
 const WEEKS = 8
 const DAYS = WEEKS * 7
@@ -114,7 +131,7 @@ function addDays(date: Date, days: number): Date {
 }
 
 interface BuiltRows {
-  docs: SalesRowDoc[]
+  docs: SalesRowDocument[]
   periodStart: string
   periodEnd: string
 }
@@ -122,7 +139,7 @@ interface BuiltRows {
 export function buildSalesRows(datasetId: string): BuiltRows {
   const lastDay = yesterdayUtc()
   const firstDay = addDays(lastDay, -(DAYS - 1))
-  const docs: SalesRowDoc[] = []
+  const docs: SalesRowDocument[] = []
 
   for (let offset = 0; offset < DAYS; offset++) {
     const day = addDays(firstDay, offset)
@@ -167,7 +184,7 @@ export function buildSalesRows(datasetId: string): BuiltRows {
 }
 
 /** Confirms the patterns really are in the generated numbers, not just intended. */
-export function describePatterns(docs: SalesRowDoc[]): {
+export function describePatterns(docs: SalesRowDocument[]): {
   byWeekday: { label: string, deltaPercent: number }[]
   quietest: string
   busiest: string
@@ -209,11 +226,7 @@ export function describePatterns(docs: SalesRowDoc[]): {
   }
 }
 
-function buildPublishedInsights(
-  now: string,
-  datasetId: string,
-  slugSuffix?: string
-): PublishedInsightDoc[] {
+function buildPublishedInsights(now: string): PublishedInsightDocument[] {
   const drafts = [
     {
       slug: 'friday-night-is-our-busiest',
@@ -241,14 +254,8 @@ function buildPublishedInsights(
       displayName: 'Bella Pizza',
       hideAbsoluteNumbers: true,
       businessType: 'restaurant',
-      // These demo insights were written by hand rather than published from a
-      // finding, so there is no recommendation to point at. The data set is real,
-      // so deleting it still takes these down with it.
-      recommendationId: null,
-      datasetId,
       publishedAt: now,
-      ...draft,
-      slug: slugSuffix ? `${draft.slug}-${slugSuffix}` : draft.slug
+      ...draft
     }
 
     const parsed = publishedInsightSchema.safeParse(insight)
@@ -261,187 +268,256 @@ function buildPublishedInsights(
   })
 }
 
-/**
- * Refuses to wipe the database unless a human agrees to it.
- *
- * The team shares one Atlas database, so `npm run seed` deletes everyone's work,
- * not just the runner's. It has already happened once. The script now lists what
- * will go and asks for the database name back, which is slow enough to think
- * about and impossible to do by muscle memory.
- *
- * Pass --force to skip the prompt. That is for a machine with no keyboard, and
- * anyone typing it has chosen to accept the consequences.
- */
-async function confirmWipe(counts: Record<string, number>): Promise<void> {
-  const total = Object.values(counts).reduce((sum, count) => sum + count, 0)
-  const database = process.env.MONGODB_DB ?? 'unknown'
-
-  if (total === 0) return
-  if (process.argv.includes('--force')) return
-
-  console.log('')
-  console.log(`  This deletes everything below from the "${database}" database.`)
-  console.log('  Everyone on the project shares it.')
-  console.log('')
-  for (const [name, count] of Object.entries(counts)) {
-    if (count > 0) console.log(`    ${name.padEnd(20)} ${count}`)
-  }
-  console.log('')
-
-  if (!process.stdin.isTTY) {
-    console.error(`  Refusing to wipe ${total} records without a confirmation.`)
-    console.error('  Run it again from a terminal, or pass --force if you are certain.')
-    process.exit(1)
-  }
-
-  const { createInterface } = await import('node:readline/promises')
-  const rl = createInterface({ input: process.stdin, output: process.stdout })
-  const answer = await rl.question(`  Type the database name to continue: `)
-  rl.close()
-
-  if (answer.trim() !== database) {
-    console.log('  Nothing was deleted.')
-    process.exit(0)
-  }
-}
-
-/**
- * The accounts the team signs in with. Passwords are hashed here exactly as the
- * register endpoint hashes them, so a seeded account and a self-registered one
- * are indistinguishable to sign-in.
- *
- * One shared password for every seeded account, overridable with SEED_PASSWORD.
- * These are demo credentials for a shared development database and they are
- * printed at the end of the run — never seed an account whose password should
- * stay secret, and never point this script at anything holding real data.
- *
- * The admin exists only because it is seeded. There is no public endpoint that
- * can create one, which is the whole reason the sign-up form cannot be used to
- * grant administrative access.
- */
-/**
- * The five of us. Each member gets one account per role, so anybody can see both
- * sides of the product without borrowing someone else's login: sign in as
- * `<name>-admin` to review sign-ups, or `<name>-owner` to use the workspace.
- *
- * The business attached to each owner account is invented. It exists so the
- * admin dashboard has something to show in every column.
- */
-const TEAM = [
-  { slug: 'malik', name: 'Malik', business: 'Malik Coffee House', size: 'small', location: 'Beirut, Lebanon', phone: '+961 1 555 101', customers: 1200 },
-  { slug: 'sumayya', name: 'Sumayya', business: 'Sumayya Bakery', size: 'small', location: 'Tripoli, Lebanon', phone: '+961 6 555 102', customers: 900 },
-  { slug: 'yasser', name: 'Yasser', business: 'Yasser Electronics', size: 'medium', location: 'Sidon, Lebanon', phone: '+961 7 555 103', customers: 450 },
-  { slug: 'dalaa', name: 'Dalaa', business: 'Dalaa Flowers', size: 'small', location: 'Byblos, Lebanon', phone: '+961 9 555 104', customers: 600 },
-  { slug: 'mohammad', name: 'Mohammad', business: 'Mohammad Sports', size: 'medium', location: 'Zahle, Lebanon', phone: '+961 8 555 105', customers: 750 }
-]
-
-/**
- * Every account this script creates, each with its own password so one can be
- * forwarded to one person without handing over everybody else's login.
- *
- * All of these are development credentials for a shared database, and the script
- * prints them when it finishes. Never reuse one anywhere real.
- */
-export function seedAccounts(): { password: string, account: Record<string, unknown> }[] {
-  const demoPassword = process.env.SEED_PASSWORD || 'insightflow123'
-
-  const team = TEAM.flatMap(member => [
+/** Rules matching the same patterns the generated sales data is tuned to contain. */
+function buildRules(): RuleDocument[] {
+  const drafts = [
     {
-      password: `${member.slug}-admin-2026`,
-      account: {
-        username: `${member.slug}-admin`,
-        email: `${member.slug}-admin@insightflow.local`,
-        displayName: `${member.name} (admin)`,
-        role: 'admin',
-        status: 'approved'
-      }
+      name: 'Quiet nights',
+      metric: 'revenue' as const,
+      dimension: 'dayOfWeek' as const,
+      operator: 'below_average_by' as const,
+      threshold: 15,
+      advice: 'Try a set menu on this night and keep one fewer person on.',
+      enabled: true
     },
     {
-      password: `${member.slug}-owner-2026`,
-      account: {
-        username: `${member.slug}-owner`,
-        email: `${member.slug}@insightflow.local`,
-        displayName: member.business,
-        role: 'business_owner',
-        status: 'approved',
-        businessSize: member.size,
-        phone: member.phone,
-        location: member.location,
-        estimatedCustomersPerMonth: member.customers
-      }
+      name: 'Busy nights',
+      metric: 'revenue' as const,
+      dimension: 'dayOfWeek' as const,
+      operator: 'above_average_by' as const,
+      threshold: 25,
+      advice: 'Order stock the day before so this night never runs short.',
+      enabled: true
+    },
+    {
+      name: 'Dead stock',
+      metric: 'quantity' as const,
+      dimension: 'item' as const,
+      operator: 'unsold_for_days' as const,
+      threshold: 14,
+      advice: 'Drop this item from the menu or replace it with something similar.',
+      enabled: true
+    },
+    {
+      name: 'Slow hours',
+      metric: 'orders' as const,
+      dimension: 'hour' as const,
+      operator: 'below_average_by' as const,
+      threshold: 40,
+      advice: 'Consider opening an hour later on weekdays.',
+      enabled: false
     }
-  ])
+  ]
 
-  return [...demoAccounts(demoPassword), ...team]
+  return drafts.map((draft) => {
+    const rule = { id: new ObjectId().toHexString(), ...draft }
+    const parsed = ruleSchema.safeParse(rule)
+    if (!parsed.success) {
+      throw new Error(`Generated an invalid rule: ${parsed.error.issues[0]?.message}`)
+    }
+    const { id, ...rest } = parsed.data
+    return { _id: new ObjectId(id), ...rest }
+  })
 }
 
-function demoAccounts(password: string): { password: string, account: Record<string, unknown> }[] {
-  return [
+/**
+ * Findings that plausibly came from the rules above being run against the
+ * generated sales data — so the /recommendations page has something real to
+ * show on a fresh database, not an empty state.
+ */
+function buildRecommendations(datasetId: string, ruleDocs: RuleDocument[], now: string): RecommendationDocument[] {
+  const quietRuleId = ruleDocs.find(r => r.name === 'Quiet nights')!._id.toHexString()
+  const busyRuleId = ruleDocs.find(r => r.name === 'Busy nights')!._id.toHexString()
+
+  const drafts = [
     {
-      username: 'admin',
-      email: 'admin@insightflow.local',
+      ruleId: busyRuleId,
+      title: 'Fridays are your busiest night by a wide margin',
+      body: 'Friday takings run well above every other night, and Saturday is close behind. Thursday is the last chance to order stock before that rush.',
+      action: 'Move your stock order to Thursday morning so Friday never runs short.',
+      metric: 'revenue' as const,
+      dimension: 'dayOfWeek' as const,
+      changePercent: 32.7,
+      severity: 'opportunity' as const
+    },
+    {
+      ruleId: quietRuleId,
+      title: 'Tuesday is reliably your quietest night',
+      body: 'Tuesday takings sit below the weekly average every single week in this period. It is the safest night to try something without risking a busy service.',
+      action: 'Try a set menu on Tuesdays for a month, and keep one fewer person on.',
+      metric: 'revenue' as const,
+      dimension: 'dayOfWeek' as const,
+      changePercent: -18.5,
+      severity: 'opportunity' as const
+    },
+    {
+      ruleId: null,
+      title: 'Beetroot & Feta Salad has almost stopped selling',
+      body: 'Fifteen sold in eight weeks, on fifteen separate days. It still takes up space on the menu and stock in the fridge.',
+      action: 'Drop it from the menu, or replace it with a side that shares ingredients you already hold.',
+      metric: 'quantity' as const,
+      dimension: 'item' as const,
+      changePercent: -41.2,
+      severity: 'warning' as const
+    },
+    {
+      ruleId: null,
+      title: 'House Fries outsell every main course',
+      body: 'Your cheapest side sells more units than anything else on the menu, week after week. It is doing a lot of work at a low price.',
+      action: 'Check the margin on fries before your next price review — a small rise reaches more customers than a rise anywhere else.',
+      metric: 'quantity' as const,
+      dimension: 'item' as const,
+      changePercent: 14.2,
+      severity: 'info' as const
+    }
+  ]
+
+  return drafts.map((draft) => {
+    const recommendation = {
+      id: new ObjectId().toHexString(),
+      datasetId,
+      createdAt: now,
+      ...draft
+    }
+    const parsed = recommendationSchema.safeParse(recommendation)
+    if (!parsed.success) {
+      throw new Error(`Generated an invalid recommendation: ${parsed.error.issues[0]?.message}`)
+    }
+    const { id, ...rest } = parsed.data
+    return { _id: new ObjectId(id), ...rest }
+  })
+}
+
+interface SeedUserInput {
+  username: string
+  email: string
+  displayName: string
+  role: 'business_owner' | 'admin'
+  status: 'pending' | 'approved' | 'deactivated' | 'rejected'
+  password: string
+  businessSize?: 'small' | 'medium' | 'large'
+  phone?: string
+  location?: string
+  estimatedCustomersPerMonth?: number
+}
+
+/**
+ * Plaintext username/password pairs for every account this run created, kept
+ * only in memory so the seed summary at the end can print them once. Never
+ * written to the database (only the scrypt hash is stored) and never logged
+ * anywhere except this script's own stdout.
+ */
+const SEED_USER_LOG: { role: string, username: string, password: string, status: string }[] = []
+
+/**
+ * Builds every seeded account. One admin (so `/admin` has someone who can sign
+ * in) and four business owners spread across every status the workflow
+ * supports, so the admin dashboard has something real to demonstrate rather
+ * than an empty queue on a fresh database.
+ */
+// Shared password for the demo accounts that only exist to show off the admin
+// approval workflow (pending / deactivated). They cannot sign in until an
+// admin approves them, so this does not need to be unique per account — but
+// it is still 16 random characters, not a guessable word, in case one gets
+// approved later.
+const DEMO_ACCOUNT_PASSWORD = 'Demo-8f3kQz2vLp9x'
+
+async function buildUsers(now: string): Promise<UserDocument[]> {
+  const seedUsername = (process.env.AUTH_USERNAME || 'owner').toLowerCase()
+  const seedPassword = process.env.AUTH_PASSWORD || 'change-me-before-deploying'
+  const adminUsername = (process.env.ADMIN_USERNAME || 'admin').toLowerCase()
+  const adminPassword = process.env.ADMIN_PASSWORD || 'change-me-before-deploying'
+
+  const inputs: SeedUserInput[] = [
+    {
+      username: adminUsername,
+      email: `${adminUsername}@example.com`,
       displayName: 'InsightFlow Admin',
       role: 'admin',
-      status: 'approved'
+      status: 'approved',
+      password: adminPassword
     },
     {
-      // The owner of the demo data set below, so signing in as this account shows
-      // a dashboard with eight weeks of sales rather than an empty state.
-      username: (process.env.AUTH_USERNAME || 'owner').toLowerCase(),
-      email: 'owner@bellapizza.example',
+      username: seedUsername,
+      email: `${seedUsername}@example.com`,
       displayName: 'Bella Pizza',
       role: 'business_owner',
       status: 'approved',
-      businessSize: 'small',
-      phone: '+44 20 7946 0100',
-      location: 'London, United Kingdom',
+      password: seedPassword,
+      businessSize: 'medium',
+      phone: '+1 555 010 1234',
+      location: 'Brooklyn, NY',
       estimatedCustomersPerMonth: 1800
     },
-    // Two accounts left pending so /admin opens with a queue to work through
-    // rather than an empty state that cannot be told apart from a broken page.
     {
-      username: 'thegreenkettle',
-      email: 'hello@greenkettle.example',
-      displayName: 'The Green Kettle',
+      username: 'thecornercafe',
+      email: 'owner@thecornercafe.example.com',
+      displayName: 'The Corner Café',
       role: 'business_owner',
       status: 'pending',
+      password: DEMO_ACCOUNT_PASSWORD,
       businessSize: 'small',
-      phone: '+44 161 496 0200',
-      location: 'Manchester, United Kingdom',
-      estimatedCustomersPerMonth: 950
+      phone: '+1 555 010 5678',
+      location: 'Austin, TX',
+      estimatedCustomersPerMonth: 450
     },
     {
-      username: 'northroadcycles',
-      email: 'shop@northroadcycles.example',
-      displayName: 'North Road Cycles',
+      username: 'luigisdeli',
+      email: 'owner@luigisdeli.example.com',
+      displayName: "Luigi's Deli",
       role: 'business_owner',
       status: 'pending',
-      businessSize: 'medium',
-      phone: '+44 131 496 0300',
-      location: 'Edinburgh, United Kingdom',
-      estimatedCustomersPerMonth: 400
+      password: DEMO_ACCOUNT_PASSWORD,
+      businessSize: 'small',
+      phone: '+1 555 010 9012',
+      location: 'Chicago, IL',
+      estimatedCustomersPerMonth: 620
+    },
+    {
+      username: 'sunsetgym',
+      email: 'owner@sunsetgym.example.com',
+      displayName: 'Sunset Gym',
+      role: 'business_owner',
+      status: 'deactivated',
+      password: DEMO_ACCOUNT_PASSWORD,
+      businessSize: 'large',
+      phone: '+1 555 010 3456',
+      location: 'San Diego, CA',
+      estimatedCustomersPerMonth: 5200
     }
-  ].map(account => ({ password, account }))
-}
+  ]
 
-async function buildUsers(now: string): Promise<UserDoc[]> {
-  return Promise.all(seedAccounts().map(async ({ password, account }) => {
-    const { id, ...rest } = userSchema.parse({
+  SEED_USER_LOG.length = 0
+  for (const input of inputs) {
+    SEED_USER_LOG.push({
+      role: input.role,
+      username: input.username,
+      password: input.password,
+      status: input.status
+    })
+  }
+
+  return Promise.all(inputs.map(async (input) => {
+    const record = userSchema.parse({
       id: new ObjectId().toHexString(),
-      ...account,
+      username: input.username,
+      email: input.email,
+      displayName: input.displayName,
+      role: input.role,
+      status: input.status,
+      businessSize: input.businessSize,
+      phone: input.phone,
+      location: input.location,
+      estimatedCustomersPerMonth: input.estimatedCustomersPerMonth,
       createdAt: now
     })
-
-    return {
-      _id: new ObjectId(id),
-      ...rest,
-      passwordHash: await hashPassword(password)
-    } satisfies UserDoc
+    const { id, ...rest } = record
+    const passwordHash = await hashPassword(input.password)
+    return { _id: new ObjectId(id), ...rest, passwordHash } satisfies UserDocument
   }))
 }
 
 async function seed(): Promise<void> {
-  const additive = process.argv.includes('--add')
   const now = new Date().toISOString()
   const datasetId = new ObjectId()
   const datasetIdHex = datasetId.toHexString()
@@ -449,6 +525,9 @@ async function seed(): Promise<void> {
   const { docs: salesRowDocs, periodStart, periodEnd } = buildSalesRows(datasetIdHex)
 
   const userDocs = await buildUsers(now)
+  // The approved business owner (Bella Pizza) is the one the seeded dataset and
+  // insights belong to — it is the only account with data to look at.
+  const primaryOwner = userDocs.find(doc => doc.role === 'business_owner' && doc.status === 'approved')!
 
   const dataset = datasetSchema.parse({
     id: datasetIdHex,
@@ -463,82 +542,46 @@ async function seed(): Promise<void> {
     updatedAt: now
   })
 
-  const insightDocs = buildPublishedInsights(
-    now,
-    datasetIdHex,
-    additive ? datasetIdHex : undefined
-  )
+  const insightDocs = buildPublishedInsights(now)
+  const ruleDocs = buildRules()
+  const recommendationDocs = buildRecommendations(datasetIdHex, ruleDocs, now)
 
-  const [users, datasets, salesRows, insights, recommendations] = await Promise.all([
+  const [users, datasets, salesRows, insights, recommendations, rules] = await Promise.all([
     usersCollection(),
     datasetsCollection(),
     salesRowsCollection(),
     publishedInsightsCollection(),
-    recommendationsCollection()
+    recommendationsCollection(),
+    rulesCollection()
   ])
 
-  const { id: dsId, ...datasetRest } = dataset
-
-  if (additive) {
-    const userWrites = await users.bulkWrite(userDocs.map((user) => {
-      const { _id, createdAt, username, ...updates } = user
-
-      return {
-        updateOne: {
-          filter: { username },
-          update: {
-            $set: { username, ...updates },
-            $setOnInsert: { _id, createdAt }
-          },
-          upsert: true
-        }
-      }
-    }))
-
-    await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest } satisfies DatasetDoc)
-    await salesRows.insertMany(salesRowDocs)
-    await insights.insertMany(insightDocs)
-
-    console.log('')
-    console.log('  Additive seed complete — nothing was deleted')
-    console.log('  ──────────────────────────────────────────────')
-    console.log(`  Database         ${process.env.MONGODB_DB}`)
-    console.log(`  Users added      ${userWrites.upsertedCount}`)
-    console.log(`  Users updated    ${userWrites.matchedCount}`)
-    console.log(`  Data set added   1  (${dataset.name})`)
-    console.log(`  Data set id      ${datasetIdHex}`)
-    console.log(`  Sales rows added ${salesRowDocs.length}`)
-    console.log(`  Insights added   ${insightDocs.length}`)
-    printSeedDetails(salesRowDocs, periodStart, periodEnd)
-    return
-  }
-
-  // Everyone on this project shares one database, so this wipe takes the team's
-  // work with it, not just yours. Say what is about to disappear and make someone
-  // agree to it out loud.
-  await confirmWipe({
-    users: await users.countDocuments(),
-    datasets: await datasets.countDocuments(),
-    salesRows: await salesRows.countDocuments(),
-    publishedInsights: await insights.countDocuments(),
-    recommendations: await recommendations.countDocuments()
-  })
-
   // Wiping first is what makes a second run replace the demo rather than double it.
-  // `rules` is left untouched: rules are configuration, not part of this demo.
   const removed = await Promise.all([
     users.deleteMany({}),
     datasets.deleteMany({}),
     salesRows.deleteMany({}),
     insights.deleteMany({}),
-    recommendations.deleteMany({})
+    recommendations.deleteMany({}),
+    rules.deleteMany({})
   ])
   const removedCount = removed.reduce((sum, result) => sum + result.deletedCount, 0)
 
+  const { id: dsId, ...datasetRest } = dataset
+
   await users.insertMany(userDocs)
-  await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest } satisfies DatasetDoc)
+  await datasets.insertOne(
+    { _id: new ObjectId(dsId), ...datasetRest } satisfies DatasetDocument
+  )
   await salesRows.insertMany(salesRowDocs)
   await insights.insertMany(insightDocs)
+  await rules.insertMany(ruleDocs)
+  await recommendations.insertMany(recommendationDocs)
+
+  const revenue = salesRowDocs.reduce((sum, row) => sum + row.revenue, 0)
+  const patterns = describePatterns(salesRowDocs)
+
+  const usingDefaultAdminPassword = !process.env.ADMIN_PASSWORD
+  const usingDefaultOwnerPassword = !process.env.AUTH_PASSWORD
 
   console.log('')
   console.log('  Seed complete')
@@ -546,21 +589,13 @@ async function seed(): Promise<void> {
   console.log(`  Removed          ${removedCount} existing document(s)`)
   console.log(`  Database         ${process.env.MONGODB_DB}`)
   console.log('')
-  console.log(`  Users            ${userDocs.length}`)
+  console.log(`  Users            ${userDocs.length}  (1 admin, ${userDocs.length - 1} business owners)`)
+  console.log(`  Data set owner   ${primaryOwner.username} (${primaryOwner.status})`)
   console.log(`  Data sets        1  (${dataset.name})`)
   console.log(`  Sales rows       ${salesRowDocs.length}`)
   console.log(`  Insights         ${insightDocs.length}`)
-  printSeedDetails(salesRowDocs, periodStart, periodEnd)
-}
-
-function printSeedDetails(
-  salesRowDocs: SalesRowDoc[],
-  periodStart: string,
-  periodEnd: string
-): void {
-  const revenue = salesRowDocs.reduce((sum, row) => sum + row.revenue, 0)
-  const patterns = describePatterns(salesRowDocs)
-
+  console.log(`  Rules            ${ruleDocs.length}`)
+  console.log(`  Recommendations  ${recommendationDocs.length}`)
   console.log('')
   console.log(`  Period           ${periodStart} to ${periodEnd}  (${WEEKS} weeks)`)
   console.log(`  Menu             ${MENU.length} items across ${new Set(MENU.map(m => m.category)).size} categories`)
@@ -575,16 +610,20 @@ function printSeedDetails(
   console.log(`    Best seller     ${patterns.busiest}`)
   console.log(`    Worst seller    ${patterns.quietest}`)
   console.log('')
-  console.log('  Sign in with')
-  console.log(`    ${'USERNAME'.padEnd(18)} ${'PASSWORD'.padEnd(20)} ROLE`)
-  for (const { password, account } of seedAccounts()) {
-    const username = String(account.username)
-    const label = account.role === 'admin' ? 'admin' : `business owner (${account.status})`
-    console.log(`    ${username.padEnd(18)} ${password.padEnd(20)} ${label}`)
+  console.log('  Sign-in credentials for the accounts just created')
+  console.log('  ─────────────────────────────────────────────')
+  for (const input of SEED_USER_LOG) {
+    console.log(`    ${input.role.padEnd(14)} ${input.username.padEnd(16)} ${input.password}  (${input.status})`)
   }
   console.log('')
-  console.log('  The two pending accounts cannot sign in until an admin approves them at /admin.')
-  console.log('')
+  if (usingDefaultAdminPassword || usingDefaultOwnerPassword) {
+    console.log('  ⚠  ADMIN_PASSWORD and/or AUTH_PASSWORD were not set in your environment (no')
+    console.log('     .env file, or those lines are missing from it), so the literal fallback')
+    console.log('     "change-me-before-deploying" was used instead — copy .env.example to .env')
+    console.log('     (it already includes strong random values) and re-run `npm run seed`')
+    console.log('     before deploying anywhere reachable by anyone else.')
+    console.log('')
+  }
 }
 
 // Only connect when run as a command. Importing this file (to check the generated

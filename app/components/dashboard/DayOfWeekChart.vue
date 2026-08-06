@@ -10,7 +10,7 @@
 -->
 
 <script setup lang="ts">
-import { formatMoney } from '#shared/format'
+import { changeDirection, formatMoney } from '#shared/format'
 import type { DayOfWeekStat } from '#shared/types/analytics'
 
 const props = defineProps<{
@@ -25,6 +25,15 @@ function barWidth(value: number): string {
   if (value <= 0) return '0%'
   // A trading day always shows something, however quiet.
   return `${Math.max((value / busiest.value) * 100, 2)}%`
+}
+
+// Same up/down/flat tones as UiChangeIndicator, so a busy Saturday and a quiet
+// Tuesday read the same way here as they do everywhere else in the product.
+const BAR_TONE = { up: 'bg-success', down: 'bg-error', flat: 'bg-neutral' } as const
+
+function barTone(day: DayOfWeekStat): string {
+  if (!props.showComparison || day.totalRevenue <= 0) return 'bg-primary'
+  return BAR_TONE[changeDirection(day.changePercent)]
 }
 </script>
 
@@ -44,7 +53,7 @@ function barWidth(value: number): string {
         <span class="w-10 shrink-0 text-sm text-muted">{{ day.day.slice(0, 3) }}</span>
 
         <div class="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-elevated">
-          <div class="h-full rounded-full bg-primary" :style="{ width: barWidth(day.avgRevenue) }" />
+          <div class="h-full rounded-full" :class="barTone(day)" :style="{ width: barWidth(day.avgRevenue) }" />
         </div>
 
         <span class="w-20 shrink-0 text-right text-sm font-medium">

@@ -30,15 +30,3 @@ export const ruleSchema = z.object({
 })
 
 export type Rule = z.infer<typeof ruleSchema>
-
-/**
- * What the owner fills in when writing a rule. Only the id is missing: the server
- * assigns it, and a browser must never generate a database key.
- *
- * Bind the rule form to this, not to `ruleSchema`. A form bound to the record
- * schema cannot submit, because it has no field for the id and so nowhere to show
- * the error.
- */
-export const ruleCreateSchema = ruleSchema.omit({ id: true })
-
-export type RuleCreate = z.infer<typeof ruleCreateSchema>

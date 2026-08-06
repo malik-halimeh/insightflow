@@ -21,26 +21,22 @@ ref behind it, when you wire real data.**
 
 | Route | File | State |
 | --- | --- | --- |
-| `/datasets` | `app/pages/datasets/index.vue` | **Live** |
-| `/datasets/new` | `app/pages/datasets/new.vue` | **Live** |
-| `/datasets/:id` | `app/pages/datasets/[id].vue` | **Live** |
+| `/datasets` | `app/pages/datasets/index.vue` | Scaffold |
+| `/datasets/new` | `app/pages/datasets/new.vue` | Scaffold |
+| `/datasets/:id` | `app/pages/datasets/[id].vue` | Scaffold |
 
-All three read real data. The full API exists: list, create, read, update, delete,
-plus `POST /api/datasets/preview` to check a spreadsheet without saving anything
-and `POST /api/datasets/:id/rows` to import it. `server/utils/csv.ts` does the
-reading.
+**Replace:** the `DEMO_DATASETS`, `DEMO_ROWS`, `DEMO_TOTALS` and `DEMO_PROBLEMS`
+constants, the `demoState` ref and its dashed box, and the empty `onDelete`,
+`onSave`, `onCheckFile` and `onImport` functions.
 
-**Nothing to replace.** The dummy data and the preview-state switcher are gone.
+**Good news:** your API already exists. `GET /api/datasets` and `POST /api/datasets`
+are built, authenticated and working. The listing page is roughly one `useFetch` away.
+There is no upload endpoint yet — that one is yours to write.
 
 **Do not change:**
 - The order on the partial-upload screen. **What worked comes first, always.** An owner
   whose 200-row export had 6 bad lines needs to see the 194 that are fine before the 6
   that are not.
-- Re-importing **replaces** the rows of a data set rather than adding to them.
-  Appending would let an owner upload the same export twice and watch their
-  revenue double.
-- The period on a data set is taken from the rows actually imported, not from the
-  dates the owner typed, so the dashboard never reports a range with no sales in it.
 - The per-line error wording. "Line 47: quantity must be a whole number" tells someone
   where to look. "Validation failed" does not.
 - The delete confirmation. It names the row count, the recommendations and the public
@@ -143,31 +139,19 @@ becomes invisible to everyone else.
 
 | Route | File | State |
 | --- | --- | --- |
-| `/` | `app/pages/index.vue` | Finished — prerendered |
-| `/login` | `app/pages/login.vue` | Live — sign in **and** sign up |
-| `/admin` | `app/pages/admin/index.vue` | **Live** — admin only |
-| — | `app/layouts/default.vue` | Live — public shell |
-| — | `app/layouts/app.vue` | Live — signed-in shell |
+| `/` | `app/pages/index.vue` | Finished — prerendered, `layout: 'landing'` |
+| `/login` | `app/pages/login.vue` | Live — account-type tabs (business owner / admin) over sign-in / create-account tabs |
+| `/admin` | `app/pages/admin/index.vue` | Live — approve, reject, deactivate and reactivate business-owner accounts |
+| — | `app/layouts/default.vue` | Live — public shell used by `/insights/**` |
+| — | `app/layouts/landing.vue` | Live — public shell used only by `/`, full-width sections |
+| — | `app/layouts/app.vue` | Live — business-owner shell |
 | — | `app/layouts/admin.vue` | Live — admin shell |
 | — | `app/components/ui/*` | Finished — shared pieces |
 
-### Accounts and roles
-
-Two roles, and they see different halves of the product.
-
-- **`business_owner`** — the workspace: `/dashboard`, `/datasets`, `/recommendations`.
-- **`admin`** — only `/admin`, where business-owner sign-ups are approved.
-
-`app/middleware/auth.ts` keeps them apart in the browser, but that is only about
-which page someone sees. The real protection is `requireAdmin()` in
-`server/utils/auth.ts`, which every route under `server/api/admin/` calls. **If you
-add an admin route, call it** — a middleware redirect does nothing to a direct
-API request.
-
-A new sign-up is created `pending` and **cannot sign in until an admin approves it**.
-The sign-up form always creates a `business_owner`; there is deliberately no public
-way to create an `admin`, so the only admin accounts are the ones `npm run seed`
-writes.
+A business-owner account created at `/login` is `status: 'pending'` until an
+admin approves it from `/admin` — see `docs/DATA-MODEL.md` for the full status
+model. There is no public sign-up for admin accounts; one is only ever created
+by `npm run seed` or by hand in the database.
 
 ---
 
