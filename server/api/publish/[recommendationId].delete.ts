@@ -1,5 +1,22 @@
 import { idSchema } from '#shared/schemas'
 
+function routeCachePrefix(path: string): string {
+  return path.replace(/\W/g, '').slice(0, 16) || 'index'
+}
+
+async function invalidatePublicInsightCache(slug: string): Promise<void> {
+  const storage = useStorage('cache')
+  const keys = await storage.getKeys('nitro/routes')
+  const prefixes = [
+    routeCachePrefix('/insights'),
+    routeCachePrefix(`/insights/${slug}`)
+  ]
+
+  await Promise.all(keys
+    .filter(key => prefixes.some(prefix => key.includes(`_:${prefix}.`)))
+    .map(key => storage.removeItem(key)))
+}
+
 export default defineEventHandler(async (event): Promise<{ deleted: true }> => {
   requireSession(event)
 
@@ -12,7 +29,19 @@ export default defineEventHandler(async (event): Promise<{ deleted: true }> => {
     })
   }
 
-  const result = await (await publishedInsightsCollection()).deleteOne({
+  const insights = await publishedInsightsCollection()
+  const published = await insights.findOne({
+    recommendationId: parsedId.data
+  })
+
+  if (!published) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'This insight is not published.'
+    })
+  }
+
+  const result = await insights.deleteOne({
     recommendationId: parsedId.data
   })
 
@@ -22,6 +51,8 @@ export default defineEventHandler(async (event): Promise<{ deleted: true }> => {
       statusMessage: 'This insight is not published.'
     })
   }
+
+  await invalidatePublicInsightCache(published.slug)
 
   return { deleted: true }
 })

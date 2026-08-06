@@ -6,16 +6,11 @@ const route = useRoute()
 const config = useRuntimeConfig()
 const slug = String(route.params.slug)
 
-/**
- * The host this page was actually served from, preferred over the configured
- * site URL. NUXT_PUBLIC_SITE_URL is baked in at build time, so a wrong or stale
- * value silently publishes share links pointing at a host that does not exist —
- * and it can only be corrected by a full redeploy. Reading the request means the
- * canonical URL is right wherever this is deployed, with the configured value
- * kept as a fallback for prerendering.
- */
+// Render exposes its internal request origin as localhost. Prefer the configured
+// public host for metadata and keep the request origin as a local fallback.
 const requestOrigin = useRequestURL().origin
-const siteOrigin = computed(() => requestOrigin || config.public.siteUrl)
+const configuredOrigin = String(config.public.siteUrl).replace(/\/$/, '')
+const siteOrigin = computed(() => configuredOrigin || requestOrigin)
 
 const { data: insight, error } = await useFetch<PublishedInsight>(`/api/insights/${slug}`)
 
@@ -33,6 +28,13 @@ const pageTitle = computed(() =>
 const canonicalUrl = computed(() =>
   `${siteOrigin.value}/insights/${publishedInsight.slug}`
 )
+
+useHead({
+  link: [{
+    rel: 'canonical',
+    href: () => canonicalUrl.value
+  }]
+})
 
 useSeoMeta({
   title: () => pageTitle.value,
