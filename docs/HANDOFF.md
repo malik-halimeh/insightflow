@@ -276,12 +276,12 @@ anyone's upload feature to start building.**
 
 | Collection | What is there |
 | --- | --- |
-| `users` | 1 — the demo owner |
+| `users` | 14 — two accounts each for the five of us, plus four demo accounts (see the table in section 1) |
 | `datasets` | 1 — "Bella Pizza — last 8 weeks" |
-| `salesRows` | 631 — eight full weeks ending yesterday |
+| `salesRows` | ~630 — eight full weeks ending yesterday |
 | `publishedInsights` | 3 — with valid slugs, ready for the public feed |
-| `recommendations` | 0 — M4 generates these |
-| `rules` | 0 — M4 creates these |
+| `recommendations` | 0 — generated from your rules |
+| `rules` | 0 — create them at `/recommendations/rules` |
 
 The sales data has **deliberate patterns** so the recommendation engine has something
 real to find:
@@ -323,16 +323,22 @@ routeRules: {
   '/dashboard/**': { ssr: false },
   '/datasets/**': { ssr: false },
   '/recommendations/**': { ssr: false },
+  '/admin/**': { ssr: false },
+  '/api/home-stats': { swr: 300 },
   '/api/**': { cors: true }
 }
 ```
 
 | Route | Mode | What it means for the page you are building |
 | --- | --- | --- |
-| `/` | Built once at deploy | The landing page. No data fetching at all, ever. |
+| `/` | Built once at deploy | The landing page. It reads `/api/home-stats` for its figures, and nothing else. |
 | `/insights`, `/insights/**` | **Server-rendered**, cached | **M5.** Runs on the server first. Your data must load *before* the HTML is sent, so search engines and a visitor with no account see real content. |
-| `/dashboard/**`, `/datasets/**`, `/recommendations/**` | **Client-only** | **M2, M3, M4.** The server sends an empty page and your code runs in the browser. |
+| `/dashboard/**`, `/datasets/**`, `/recommendations/**`, `/admin/**` | **Client-only** | **M2, M3, M4, M1.** The server sends an empty page and your code runs in the browser. |
+| `/api/home-stats` | Cached 5 minutes | Public counts for the landing page. Nothing account-specific. |
 | `/api/**` | — | Can be called from another origin. |
+
+**Phase 2 adds one more.** `/forecast/**` is private and per-owner, so it belongs with
+the client-only group. That rule goes in when the page does.
 
 ### Why this matters
 
