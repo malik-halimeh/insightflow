@@ -47,6 +47,27 @@ One owner per folder. Never cross the line — if a task appears to require edit
 | **M4** | `app/pages/recommendations/**`, `app/components/recommendations/**`, `server/api/recommendations/**`, `server/api/publish/**`, `server/utils/rules.ts`, `app/error.vue` |
 | **M5** | `app/pages/insights/**`, `app/components/insights/**`, `server/api/insights/**` |
 
+### Phase 2 additions
+
+New paths only. Everything above still applies unchanged.
+
+| Owner | Also owns in Phase 2 |
+| --- | --- |
+| **M1** | `shared/schemas/forecast.ts`, `shared/schemas/datasetVersion.ts`, `server/utils/forecast.ts`, `server/api/forecast/**`, **`server/api/datasets/versions/**`**, `app/components/ui/ForecastBandChart.vue` |
+| **M2** | `app/pages/datasets/[id]/history.vue` |
+| **M3** | `app/pages/forecast/**` |
+| **M4** | `shared/schemas/outcome.ts`, `server/api/outcomes/**`, `app/pages/recommendations/[id]/outcome.vue` |
+| **M5** | `shared/schemas/benchmark.ts`, `server/api/benchmarks/**`, `app/pages/insights/benchmarks.vue` |
+
+**One exception to the table above.** `server/api/datasets/versions/**` sits inside M2's
+`server/api/datasets/**` but belongs to **M1**. It is the only carve-out; the rest of
+`server/api/datasets/` is still M2's. If you are M2, you call those endpoints, you do not
+edit them.
+
+**Schemas.** In Phase 1 every file in `shared/**` was M1's. In Phase 2, M4 and M5 each own
+one new schema file, listed above. Nothing else in `shared/` changes owner — and a schema is
+still announced to the team in writing before anything is built against it.
+
 ## VISUAL DESIGN
 
 `docs/DESIGN-SYSTEM.md` is the design contract. Read it before writing any markup.

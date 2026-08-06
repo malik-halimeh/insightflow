@@ -160,13 +160,36 @@ need it, stop and say so — do not edit and do not work around it.
 
 | Owner | Owns |
 | --- | --- |
-| **M1** (lead) | `nuxt.config.ts`, `app/app.config.ts`, `shared/**`, `server/utils/**`, `server/api/auth/**`, `app/app.vue`, `app/assets/**`, `app/layouts/**`, `app/middleware/**`, `app/components/ui/**`, `app/pages/index.vue`, `app/pages/login.vue`, `scripts/**`, `docs/**`, `README.md` |
+| **M1** (lead) | `nuxt.config.ts`, `app/app.config.ts`, `shared/**`, `server/utils/**`, `server/api/auth/**`, `server/api/admin/**`, `app/app.vue`, `app/assets/**`, `app/layouts/**`, `app/middleware/**`, `app/components/ui/**`, `app/pages/index.vue`, `app/pages/login.vue`, `app/pages/admin/**`, `scripts/**`, `docs/**`, `README.md` |
 | **M2** | `app/pages/datasets/**`, `app/components/datasets/**`, `server/api/datasets/**`, `server/utils/csv.ts` |
 | **M3** | `app/pages/dashboard/**`, `app/components/dashboard/**`, `server/api/analytics/**` |
 | **M4** | `app/pages/recommendations/**`, `app/components/recommendations/**`, `server/api/recommendations/**`, `server/api/publish/**`, `server/utils/rules.ts`, `app/error.vue` |
 | **M5** | `app/pages/insights/**`, `app/components/insights/**`, `server/api/insights/**` |
 
 You may **import from** any folder. You may only **edit** your own.
+
+### Phase 2 additions
+
+New paths only. Everything above still applies.
+
+| Owner | Also owns in Phase 2 |
+| --- | --- |
+| **M1** | `shared/schemas/forecast.ts`, `shared/schemas/datasetVersion.ts`, `server/utils/forecast.ts`, `server/api/forecast/**`, **`server/api/datasets/versions/**`**, `app/components/ui/ForecastBandChart.vue` |
+| **M2** | `app/pages/datasets/[id]/history.vue` |
+| **M3** | `app/pages/forecast/**` |
+| **M4** | `shared/schemas/outcome.ts`, `server/api/outcomes/**`, `app/pages/recommendations/[id]/outcome.vue` |
+| **M5** | `shared/schemas/benchmark.ts`, `server/api/benchmarks/**`, `app/pages/insights/benchmarks.vue` |
+
+> **The one carve-out.** `server/api/datasets/versions/**` sits inside M2's
+> `server/api/datasets/**` but belongs to **M1**. Everything else under
+> `server/api/datasets/` is still M2's. If you are M2 you call those endpoints; you
+> do not edit them.
+
+**Working against an endpoint that does not exist yet.** This is normal in Phase 2 and
+it is not a reason to wait. The owner posts the response shape with an example payload
+first. Build your page against that example, hard-coded, then swap in `useFetch` when
+the endpoint lands. If the shape turns out to be missing a field, ask for it — do not
+add it yourself in someone else's folder.
 
 ---
 

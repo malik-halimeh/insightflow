@@ -132,9 +132,11 @@ submit. If the create schema you need does not exist, ask M1 to add it.
 
 These are real and deliberate, not oversights to route around quietly.
 
-1. **`datasets.currentVersionId` points at nothing.** There is no versions
-   collection. The field exists because the contract anticipated data set
-   versioning; today it is always `null`. Do not build against it without asking M1.
+1. **`datasets.currentVersionId` points at nothing — until Phase 2.** The field
+   exists because the contract anticipated data set versioning, and it is always
+   `null` today. Phase 2 makes it real: M1 adds the `datasetVersions` collection and
+   this field becomes the pointer to the current version. Until that lands, do not
+   build against it.
 2. ~~**A published insight cannot be traced back to its source.**~~ **Closed.**
    `publishedInsights` now carries `recommendationId` and `datasetId`, both
    nullable. `recommendationId` is what makes "already published" survive a page
@@ -149,9 +151,9 @@ These are real and deliberate, not oversights to route around quietly.
 4. **Nothing enforces referential integrity.** MongoDB will not stop you deleting a
    data set and leaving its sales rows behind. Cascading deletes are the
    application's job, in the route that handles the delete.
-5. **`recommendations` has no field for the suggested action.** The scaffolded UI
-   shows a plain-language action sentence per finding, and the schema has `title`
-   and `body` but nothing for the action. M4 needs this added before wiring.
+5. ~~**`recommendations` has no field for the suggested action.**~~ **Closed.**
+   `recommendationSchema` now carries a required `action`, the plain-language
+   sentence an owner can act on today.
 
 ## Seeded data
 
@@ -159,3 +161,34 @@ These are real and deliberate, not oversights to route around quietly.
 set, ~630 sales rows across 8 weeks, and 3 published insights. `recommendations`
 and `rules` are left empty for M4 to fill. Ids change on every reseed, so never
 hardcode one.
+
+**`npm run seed` wipes the database the whole team shares.** Use
+`npm run seed -- --add` instead, which restores the demo data without deleting
+anything.
+
+## Phase 2 collections
+
+Two new collections, plus one new field on an existing record. Nothing already
+stored changes shape.
+
+| Collection | Holds | Owner |
+| --- | --- | --- |
+| `datasetVersions` | One record per upload: the rows it contained, how many were rejected, when it happened. A data set points at its current version. | **M1** |
+| `outcomes` | One record per recommendation an owner marked as followed: the date, the metric being watched, and a frozen snapshot of the "before" window. | **M4** |
+
+Benchmarks are **computed, never stored.** They are an aggregate read over
+`publishedInsights` at request time, so there is no collection to keep in sync and
+nothing extra to delete when an insight is unpublished.
+
+**Two rules that carry over, and matter more here than anywhere else:**
+
+1. **The before-snapshot must be frozen at follow time.** If the outcome comparison
+   recalculates "before" from live rows, a later upload silently rewrites history and
+   the verdict changes on its own. Store the numbers, not a query.
+2. **Deletes cascade in the route, not the database.** Mongo will happily leave
+   `datasetVersions` and `outcomes` behind when their data set or recommendation is
+   deleted. Whoever writes the delete handler removes them.
+
+**New indexes will be needed** — at least `datasetVersions` by `{ datasetId: 1,
+createdAt: -1 }` and `outcomes` by `{ recommendationId: 1 }`. They belong in
+`server/utils/indexes.ts`, which M1 owns.
