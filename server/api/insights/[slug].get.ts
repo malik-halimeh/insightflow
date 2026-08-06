@@ -24,6 +24,8 @@ export default defineEventHandler(async (event): Promise<PublishedInsight> => {
   const { _id, ...publishedInsight } = document
   return publishedInsightSchema.parse({
     id: _id.toHexString(),
-    ...publishedInsight
+    ...publishedInsight,
+    recommendationId: publishedInsight.recommendationId ?? null,
+    datasetId: publishedInsight.datasetId ?? null
   })
 })

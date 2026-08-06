@@ -34,10 +34,10 @@ cp .env.example .env
 Open `.env` and fill in `MONGODB_URI` and `MONGODB_DB` — ask M1 for the connection
 string. `.env` is gitignored. **Never commit it and never paste it into a chat.**
 
-Load the demo data into your database:
+Safely add the demo data without removing anyone else's work:
 
 ```bash
-npm run seed
+npm run seed -- --add
 ```
 
 Start the dev server:
@@ -46,8 +46,44 @@ Start the dev server:
 npm run dev
 ```
 
-Open http://localhost:3000. Sign in with the `AUTH_USERNAME` and `AUTH_PASSWORD` in
-your `.env`.
+Open http://localhost:3000 and sign in.
+
+The seed creates every account below and prints the passwords when it finishes.
+
+**Each of us has two accounts**, so you can see both sides of the product without
+borrowing anybody's login. Replace `<name>` with `malik`, `sumayya`, `yasser`,
+`dalaa` or `mohammad`:
+
+| Sign in as | Password | Role | Lands on |
+| --- | --- | --- | --- |
+| `<name>-admin` | `<name>-admin-2026` | admin | `/admin` |
+| `<name>-owner` | `<name>-owner-2026` | business owner | `/dashboard` |
+
+So Yasser signs in as `yasser-admin` / `yasser-admin-2026` to review sign-ups, or
+`yasser-owner` / `yasser-owner-2026` to use the workspace.
+
+There are also four demo accounts, all with the password `insightflow123` (or
+whatever `SEED_PASSWORD` is set to):
+
+| Sign in as | Role | What it is for |
+| --- | --- | --- |
+| `admin` | admin | The generic admin |
+| `owner` (or your `AUTH_USERNAME`) | business owner | Owns the demo data set |
+| `thegreenkettle`, `northroadcycles` | business owner | **Cannot sign in — pending approval** |
+
+The last two exist so `/admin` has a real queue to work through. Approve one there
+and it can sign in immediately.
+
+**These are development credentials for a shared database and the seed prints them
+to the terminal. Never reuse one for anything real.**
+
+You can also sign in with an account's **email** instead of its username, and the
+`AUTH_USERNAME` / `AUTH_PASSWORD` pair in `.env` still works on a machine whose
+database has not been seeded yet.
+
+**There is no way to create an admin from the browser.** The sign-up form always
+creates a business owner, waiting for approval. Admin accounts come only from the
+seed, which is what stops anyone from granting themselves access.
 
 Before you open a pull request:
 
@@ -125,9 +161,9 @@ need it, stop and say so — do not edit and do not work around it.
 | Owner | Owns |
 | --- | --- |
 | **M1** (lead) | `nuxt.config.ts`, `app/app.config.ts`, `shared/**`, `server/utils/**`, `server/api/auth/**`, `app/app.vue`, `app/assets/**`, `app/layouts/**`, `app/middleware/**`, `app/components/ui/**`, `app/pages/index.vue`, `app/pages/login.vue`, `scripts/**`, `docs/**`, `README.md` |
-| **M2** | `app/pages/datasets/**`, `app/components/datasets/**`, `server/api/datasets/**` |
+| **M2** | `app/pages/datasets/**`, `app/components/datasets/**`, `server/api/datasets/**`, `server/utils/csv.ts` |
 | **M3** | `app/pages/dashboard/**`, `app/components/dashboard/**`, `server/api/analytics/**` |
-| **M4** | `app/pages/recommendations/**`, `app/components/recommendations/**`, `server/api/recommendations/**`, `server/api/publish/**`, `app/error.vue` |
+| **M4** | `app/pages/recommendations/**`, `app/components/recommendations/**`, `server/api/recommendations/**`, `server/api/publish/**`, `server/utils/rules.ts`, `app/error.vue` |
 | **M5** | `app/pages/insights/**`, `app/components/insights/**`, `server/api/insights/**` |
 
 You may **import from** any folder. You may only **edit** your own.
@@ -163,6 +199,9 @@ import { datasetSchema, type Dataset } from '#shared/schemas'
 | Import | What it is |
 | --- | --- |
 | `datasetCreateSchema` / `DatasetCreate` | The five fields for creating a data set |
+| `ruleCreateSchema` / `RuleCreate` | A rule without its id |
+| `salesRowCreateSchema` / `SalesRowCreate` | One row as it arrives from a spreadsheet. The total is optional — the server works it out when the file omits it |
+| `publishedInsightCreateSchema` / `PublishedInsightCreate` | Publishing a finding: display name, caption, hide-figures, and the recommendation it came from |
 | `loginSchema` / `LoginInput` | Username and password |
 
 > **Bind forms to the create schema, never to the record schema.** A record schema
@@ -209,7 +248,7 @@ import { formatMoney, formatCount, formatPercentChange } from '#shared/format'
 
 ## 5. What is already in the database
 
-`npm run seed` gives you a complete, realistic demo. **You do not need to wait for
+`npm run seed -- --add` gives you a complete, realistic demo. **You do not need to wait for
 anyone's upload feature to start building.**
 
 | Collection | What is there |
@@ -230,15 +269,22 @@ real to find:
 - **Beetroot & Feta Salad** barely sells — 15 units in eight weeks
 - 12 menu items across 4 categories
 
-**To reseed** — do this whenever your data gets messy:
+**To restore the demo safely:**
 
 ```bash
-npm run seed
+npm run seed -- --add
 ```
 
-It **wipes and rebuilds**: users, datasets, salesRows, publishedInsights and
-recommendations. It leaves `rules` alone. Running it twice does not duplicate
-anything. The ids change every time you reseed, so never hardcode an id.
+Additive mode never calls `deleteMany` and does not ask for confirmation. It
+upserts seeded accounts by username, then creates the demo data set, sales rows
+and insights under a new data set id. Running it again adds another independent
+copy of the demo data but does not duplicate user accounts.
+
+**Warning:** the default `npm run seed` command is destructive. It **wipes the
+shared database**, deleting every user's records from `users`, `datasets`,
+`salesRows`, `publishedInsights` and `recommendations` before rebuilding the demo.
+It leaves `rules` alone and retains its confirmation guard. Never use the default
+command when teammates have work in the shared database.
 
 ---
 
@@ -361,8 +407,9 @@ That last one has already cost this team a working feature. The server assigns i
 
 | I want to… | Do this |
 | --- | --- |
-| Start working | `npm install`, `cp .env.example .env`, `npm run seed`, `npm run dev` |
-| Reset my data | `npm run seed` |
+| Start working | `npm install`, `cp .env.example .env`, `npm run seed -- --add`, `npm run dev` |
+| Restore demo data safely | `npm run seed -- --add` |
+| Wipe the shared database | `npm run seed` — destructive; deletes teammates' data after confirmation |
 | Check my work compiles | `npm run typecheck` |
 | Know how a page should look | `docs/DESIGN-SYSTEM.md` |
 | Know what a schema contains | Section 4, or open `shared/schemas/` and read it |

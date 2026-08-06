@@ -14,11 +14,7 @@
 import { formatMoney } from '#shared/format'
 import type { RevenuePoint } from '#shared/types/analytics'
 
-const props = defineProps<{
-  points: RevenuePoint[]
-  /** Second half of the period against the first. Omitted below four weeks of history. */
-  changePercent?: number
-}>()
+const props = defineProps<{ points: RevenuePoint[] }>()
 
 const WIDTH = 640
 const HEIGHT = 200
@@ -61,22 +57,12 @@ const lastDate = computed(() => props.points[props.points.length - 1]?.date ?? '
 <template>
   <UCard>
     <template #header>
-      <div class="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 class="text-base font-semibold">
-            Revenue over time
-          </h2>
-          <p class="mt-1 text-sm text-muted">
-            Every trading day in this period.
-          </p>
-        </div>
-
-        <UiChangeIndicator
-          v-if="changePercent !== undefined"
-          :value="changePercent"
-          label="vs first half of period"
-        />
-      </div>
+      <h2 class="text-base font-semibold">
+        Revenue over time
+      </h2>
+      <p class="mt-1 text-sm text-muted">
+        Every trading day in this period.
+      </p>
     </template>
 
     <svg

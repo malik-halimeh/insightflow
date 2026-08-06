@@ -26,16 +26,3 @@ export interface AdminUserCounts {
   deactivated: number
   rejected: number
 }
-
-/**
- * The signed-in admin's own account, as shown on /admin/settings.
- * `persisted` is false when this admin has only ever signed in through the
- * ADMIN_USERNAME/ADMIN_PASSWORD env fallback (see server/api/auth/login.post.ts)
- * and has no row in `users` yet — saving the settings form creates one.
- */
-export interface AdminProfile {
-  username: string
-  email: string
-  displayName: string
-  persisted: boolean
-}

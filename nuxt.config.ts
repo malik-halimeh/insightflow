@@ -22,7 +22,6 @@ export default defineNuxtConfig({
   // '/dashboard/**'        Rendered in the browser only. It is private, different for every owner, and must never sit in a shared cache.
   // '/datasets/**'         Same reasoning: private data behind a login, so there is nothing worth rendering on the server.
   // '/recommendations/**'  Same reasoning: private results that belong to one account.
-  // '/api/home-stats'      Public homepage stats; cached for 5 minutes so the page stays fast while reflecting live data.
   // '/api/**'              Allows the API to be called from another origin.
   routeRules: {
     '/': { prerender: true },
@@ -31,7 +30,9 @@ export default defineNuxtConfig({
     '/dashboard/**': { ssr: false },
     '/datasets/**': { ssr: false },
     '/recommendations/**': { ssr: false },
-    '/api/home-stats': { swr: 300 },
+    // Private like the rest of the workspace, and never worth rendering on the
+    // server: nothing here should ever reach a cache or a search engine.
+    '/admin/**': { ssr: false },
     '/api/**': { cors: true }
   },
 
@@ -43,8 +44,6 @@ export default defineNuxtConfig({
     mongodbDb: process.env.MONGODB_DB || '',
     authUsername: process.env.AUTH_USERNAME || '',
     authPassword: process.env.AUTH_PASSWORD || '',
-    adminUsername: process.env.ADMIN_USERNAME || '',
-    adminPassword: process.env.ADMIN_PASSWORD || '',
     sessionSecret: process.env.SESSION_SECRET || '',
     elasticEmailApiKey: process.env.ELASTIC_EMAIL_API_KEY || '',
     elasticEmailFromEmail: process.env.ELASTIC_EMAIL_FROM_EMAIL || '',

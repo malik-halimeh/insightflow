@@ -1,4 +1,4 @@
-import { loginSchema, SESSION_COOKIE, type UserRole } from '#shared/schemas'
+import { SESSION_COOKIE, loginSchema, type UserRole } from '#shared/schemas'
 import { SESSION_TTL_SECONDS, createSessionToken, credentialsMatch } from '../../utils/session'
 import { verifyPassword } from '../../utils/password'
 import { usersCollection } from '../../utils/db'
@@ -46,50 +46,33 @@ export default defineEventHandler(async (event) => {
   let role: UserRole | null = null
 
   // Registered accounts first: a username or an email, checked against the hash
-  // stored in Mongo. Whatever role is on the matched row is the role that gets
-  // used from here on — the client never gets a say in it.
+  // stored in Mongo. Whatever role is on the matched row is the role used from
+  // here on — the client never gets a say in it.
   const users = await usersCollection()
   const account = await users.findOne({ $or: [{ username: identifier }, { email: identifier }] })
 
   if (account && await verifyPassword(password, account.passwordHash)) {
-    // The account exists and the password is right, so from here on any failure
-    // can be specific — it can no longer help a stranger guess a valid login.
+    // The account exists and the password is right, so from here on a failure can
+    // be specific — it can no longer help a stranger guess a valid login.
     if (account.role === 'business_owner' && account.status !== 'approved') {
-      throw createError({ statusCode: 403, statusMessage: STATUS_MESSAGE[account.status as keyof typeof STATUS_MESSAGE] })
+      throw createError({ statusCode: 403, statusMessage: STATUS_MESSAGE[account.status] })
     }
 
     username = account.username
     displayName = account.displayName
     role = account.role
-  } else if (!account) {
-    // Falls back to env-var accounts for local dev / first-boot deployments.
-    // Two separate fallbacks: one for the business owner, one for admin.
-    // Neither can elevate access: the role is baked into this block, not read from the request.
-
-    // Business owner fallback
-    if (config.authUsername && config.authPassword) {
-      const matches = credentialsMatch(
-        { username: identifier, password },
-        { username: config.authUsername.toLowerCase(), password: config.authPassword }
-      )
-      if (matches) {
-        username = config.authUsername
-        displayName = config.authUsername
-        role = 'business_owner'
-      }
-    }
-
-    // Admin fallback — checked only if the owner fallback didn't match
-    if (!username && config.adminUsername && config.adminPassword) {
-      const matches = credentialsMatch(
-        { username: identifier, password },
-        { username: config.adminUsername.toLowerCase(), password: config.adminPassword }
-      )
-      if (matches) {
-        username = config.adminUsername
-        displayName = 'InsightFlow Admin'
-        role = 'admin'
-      }
+  } else if (!account && config.authUsername && config.authPassword) {
+    // Falls back to the single owner account from the environment, for a machine
+    // that has not been seeded yet. Only reached when no account matched at all,
+    // so it can never override a real one. This fallback is always a business owner.
+    const matches = credentialsMatch(
+      { username: identifier, password },
+      { username: config.authUsername.toLowerCase(), password: config.authPassword }
+    )
+    if (matches) {
+      username = config.authUsername
+      displayName = config.authUsername
+      role = 'business_owner'
     }
   }
 

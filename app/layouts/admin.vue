@@ -34,14 +34,6 @@ async function logout() {
             <UIcon name="i-lucide-shield-check" class="size-4 shrink-0" />
             <span>Business owners</span>
           </NuxtLink>
-          <NuxtLink
-            to="/admin/settings"
-            class="flex items-center gap-2 rounded-md px-3 py-2 text-sm whitespace-nowrap text-muted hover:text-default hover:bg-elevated"
-            active-class="text-default bg-elevated"
-          >
-            <UIcon name="i-lucide-settings" class="size-4 shrink-0" />
-            <span>Settings</span>
-          </NuxtLink>
         </nav>
 
         <div class="md:mt-auto flex items-center md:items-stretch md:flex-col gap-2 shrink-0">

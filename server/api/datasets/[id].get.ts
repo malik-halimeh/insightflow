@@ -1,42 +1,38 @@
 import { ObjectId } from 'mongodb'
-import type { Dataset, SalesRow } from '#shared/schemas'
+import { type Dataset } from '#shared/schemas'
 import { requireSession } from '../../utils/auth'
-import { datasetsCollection, salesRowsCollection } from '../../utils/db'
+import { datasetsCollection } from '../../utils/db'
 
-interface DatasetDetail {
-  dataset: Dataset
-  rows: SalesRow[]
-}
-
-export default defineEventHandler(async (event): Promise<DatasetDetail> => {
+export default defineEventHandler(async (event): Promise<Dataset> => {
+  // Use the shared helper rather than repeating the cookie check in every route.
+  // Written out by hand, a change to how sessions work has to be found in a dozen
+  // files, and the message an owner sees drifts from route to route.
   requireSession(event)
 
   const id = getRouterParam(event, 'id')
+
   if (!id || !ObjectId.isValid(id)) {
-    throw createError({ statusCode: 400, statusMessage: 'That data set could not be found.' })
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'That data set could not be found.'
+    })
   }
 
-  const col = await datasetsCollection()
-  const doc = await col.findOne({ _id: new ObjectId(id) })
+  const document = await (await datasetsCollection()).findOne({
+    _id: new ObjectId(id)
+  })
 
-  if (!doc) {
-    throw createError({ statusCode: 404, statusMessage: 'That data set could not be found.' })
+  if (!document) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'That data set could not be found.'
+    })
   }
 
-  const { _id, ...rest } = doc
-  const dataset: Dataset = { id: _id.toHexString(), ...rest }
+  const { _id, ...rest } = document
 
-  // First 20 rows newest-first for the preview table
-  const rowDocs = await (await salesRowsCollection())
-    .find({ datasetId: id })
-    .sort({ date: -1 })
-    .limit(20)
-    .toArray()
-
-  const rows: SalesRow[] = rowDocs.map(({ _id: rowId, ...rowRest }) => ({
-    id: rowId.toHexString(),
-    ...rowRest
-  }))
-
-  return { dataset, rows }
+  return {
+    id: _id.toHexString(),
+    ...rest
+  }
 })

@@ -4,6 +4,12 @@ import type { UserRole } from '#shared/schemas'
 export interface SessionPayload {
   username: string
   displayName: string
+  /**
+   * Carried in the signed token so a request never has to read the user record
+   * back to find out what the caller may do. The token is HMAC-signed, so this
+   * cannot be edited in the browser — but it is a snapshot: an account whose
+   * role or status changes keeps the old session until it expires.
+   */
   role: UserRole
   /** Unix seconds. */
   exp: number
@@ -69,6 +75,9 @@ export function verifySessionToken(token: string, secret: string): SessionPayloa
   }
 
   if (typeof payload.username !== 'string' || typeof payload.exp !== 'number') return null
+  // A token issued before roles existed carries neither field, so it is refused
+  // and the owner signs in again. Defaulting it to a role instead would be
+  // guessing at someone's access level from a token that never stated one.
   if (typeof payload.displayName !== 'string') return null
   if (payload.role !== 'business_owner' && payload.role !== 'admin') return null
   if (payload.exp <= Math.floor(Date.now() / 1000)) return null

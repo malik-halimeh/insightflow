@@ -9,12 +9,12 @@
   "Not enough history". Below four weeks of trading days, every comparison is
   hidden and the page says so. A weekday pattern drawn over eight days is not a
   small inaccuracy, it is a confident line through noise, and an owner would order
-  stock against it. The headline card and the publish section both depend on
-  `busiestDay`/`quietestDay`, so they are hidden along with every other comparison
-  when there is not enough history to trust them.
+  stock against it.
 
   WHAT NOT TO CHANGE
   - The four-week rule. Lower it and the product starts inventing patterns.
+  - Best seller and worst seller carry no comparison. A single name has nothing to
+    be compared against.
   - Money and counts go through #shared/format. Never format a figure by hand.
   - The class names come from docs/DESIGN-SYSTEM.md.
 -->
@@ -62,24 +62,8 @@ const loading = computed(() =>
 
 const enoughHistory = computed(() => (summary.value?.activeDays ?? 0) >= MINIMUM_DAYS_FOR_TRENDS)
 
-/**
- * The one finding a busy owner reads first: how much busier the best trading day
- * is than the quietest one. Both come straight out of the analytics summary, so
- * this never recomputes a comparison the server has already made.
- */
-const headline = computed(() => {
-  const busiestDay = summary.value?.busiestDay
-  const quietestDay = summary.value?.quietestDay
-  if (!busiestDay || !quietestDay) return null
-
-  const busiestShort = `${busiestDay.day.slice(0, 3)}s`
-  const quietestShort = `${quietestDay.day.slice(0, 3)}s`
-
-  return {
-    changePercent: busiestDay.changePercent,
-    sentence: `${busiestShort} are ${Math.round(busiestDay.changePercent)}% busier than ${quietestShort} here.`
-  }
-})
+const bestSeller = computed(() => summary.value?.topItems[0]?.itemName ?? '—')
+const worstSeller = computed(() => summary.value?.topItems.at(-1)?.itemName ?? '—')
 </script>
 
 <template>
@@ -123,9 +107,8 @@ const headline = computed(() => {
 
     <!-- Loading -->
     <div v-else-if="loading" class="space-y-8">
-      <USkeleton class="h-32 w-full" />
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <USkeleton v-for="card in 4" :key="card" class="h-28 w-full" />
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <USkeleton v-for="card in 5" :key="card" class="h-28 w-full" />
       </div>
       <div class="grid gap-4 lg:grid-cols-2">
         <USkeleton class="h-64 w-full" />
@@ -147,45 +130,27 @@ const headline = computed(() => {
         :description="`This data set covers ${summary.activeDays} trading ${summary.activeDays === 1 ? 'day' : 'days'}. Weekly patterns need at least four weeks before they mean anything, so the totals below are shown without comparisons. Add more history and the trends appear on their own.`"
       />
 
-      <DashboardHeadlineInsight
-        v-if="enoughHistory && headline"
-        :change-percent="headline.changePercent"
-        :sentence="headline.sentence"
-        :row-count="summary.dataset.rowCount"
-        :period-start="summary.dataset.periodStart"
-        :period-end="summary.dataset.periodEnd"
-      />
-
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <UiMetricCard
           label="Total revenue"
           :value="formatMoney(summary.kpis.totalRevenue)"
           :change="enoughHistory ? summary.kpis.revenueChangePercent : undefined"
-          change-label="2nd half vs 1st half"
+          change-label="second half against the first"
         />
-        <UiMetricCard label="Units sold" :value="formatCount(summary.kpis.totalUnits)" />
-        <UiMetricCard label="Avg. daily revenue" :value="formatMoney(summary.kpis.avgDailyRevenue)" />
-        <UiMetricCard label="Menu items tracked" :value="formatCount(summary.kpis.distinctItems)" />
+        <UiMetricCard label="Items sold" :value="formatCount(summary.kpis.totalUnits)" />
+        <UiMetricCard label="Average day" :value="formatMoney(summary.kpis.avgDailyRevenue)" />
+        <UiMetricCard label="Best seller" :value="bestSeller" />
+        <UiMetricCard label="Worst seller" :value="worstSeller" />
       </div>
-
-      <DashboardRevenueTrendChart
-        :points="summary.revenueTrend"
-        :change-percent="enoughHistory ? summary.kpis.revenueChangePercent : undefined"
-      />
 
       <div class="grid gap-4 lg:grid-cols-2">
+        <DashboardRevenueTrendChart :points="summary.revenueTrend" />
         <DashboardDayOfWeekChart :days="summary.dayOfWeek" :show-comparison="enoughHistory" />
-        <DashboardCategoryBreakdown :categories="summary.categories" />
       </div>
 
-      <DashboardTopItemsTable :items="summary.topItems" />
+      <DashboardCategoryBreakdown :categories="summary.categories" />
 
-      <DashboardPublishHeadline
-        v-if="enoughHistory && headline"
-        :headline="headline.sentence"
-        :change-percent="headline.changePercent"
-        :business-type="summary.dataset.businessType"
-      />
+      <DashboardTopItemsTable :items="summary.topItems" />
     </div>
   </div>
 </template>

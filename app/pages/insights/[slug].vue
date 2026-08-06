@@ -6,6 +6,12 @@ const route = useRoute()
 const config = useRuntimeConfig()
 const slug = String(route.params.slug)
 
+// Render exposes its internal request origin as localhost. Prefer the configured
+// public host for metadata and keep the request origin as a local fallback.
+const requestOrigin = useRequestURL().origin
+const configuredOrigin = String(config.public.siteUrl).replace(/\/$/, '')
+const siteOrigin = computed(() => configuredOrigin || requestOrigin)
+
 const { data: insight, error } = await useFetch<PublishedInsight>(`/api/insights/${slug}`)
 
 if (error.value || !insight.value) {
@@ -20,8 +26,15 @@ const pageTitle = computed(() =>
   `${publishedInsight.displayName}: ${publishedInsight.metricLabel} — InsightFlow`
 )
 const canonicalUrl = computed(() =>
-  `${config.public.siteUrl}/insights/${publishedInsight.slug}`
+  `${siteOrigin.value}/insights/${publishedInsight.slug}`
 )
+
+useHead({
+  link: [{
+    rel: 'canonical',
+    href: () => canonicalUrl.value
+  }]
+})
 
 useSeoMeta({
   title: () => pageTitle.value,
@@ -58,8 +71,12 @@ useSeoMeta({
         {{ formatPercentChange(publishedInsight.metricValue) }}
       </p>
 
-      <p class="mt-2 text-sm text-muted">
-        Shared as a change, not a figure.
+      <p v-if="publishedInsight.hideAbsoluteNumbers" class="mt-2 text-sm text-muted">
+        Actual figures are hidden. Only the percentage change is shared.
+      </p>
+
+      <p v-else class="mt-2 text-sm text-muted">
+        This published insight includes a percentage change only.
       </p>
 
       <p class="mt-4 text-lg text-muted">

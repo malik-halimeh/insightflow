@@ -2,22 +2,39 @@ import { MongoServerError, ObjectId } from 'mongodb'
 import {
   publishedInsightCreateSchema,
   publishedInsightSchema,
+  type Dimension,
+  type Metric,
   type PublishedInsight
 } from '#shared/schemas'
-import { requireSession } from '../../utils/auth'
-import { publishedInsightsCollection } from '../../utils/db'
-import { randomSuffix, slugify } from '../../utils/slug'
 
-const DUPLICATE_KEY = 11000
-const MAX_ATTEMPTS = 5
+const METRIC_LABELS: Record<Metric, string> = {
+  revenue: 'Revenue',
+  quantity: 'Units sold',
+  orders: 'Orders'
+}
 
-/**
- * Turns one finding into a row in `publishedInsights`. The slug is derived from
- * the shown name and the metric, and a collision (two owners publishing something
- * with the same words) is resolved by retrying with a short random suffix rather
- * than failing the request — see docs/DATA-MODEL.md for why uniqueness lives here
- * and not in Zod.
- */
+const DIMENSION_LABELS: Record<Dimension, string> = {
+  dayOfWeek: 'day of week',
+  item: 'item',
+  category: 'category',
+  hour: 'hour'
+}
+
+function buildSlug(displayName: string, title: string): string {
+  return `${displayName} ${title}`
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '') || 'insight'
+}
+
+function isDuplicateSlugError(error: unknown): boolean {
+  return error instanceof MongoServerError
+    && error.code === 11000
+    && error.message.includes('publishedInsights_slug_unique')
+}
+
 export default defineEventHandler(async (event): Promise<PublishedInsight> => {
   requireSession(event)
 
@@ -25,29 +42,83 @@ export default defineEventHandler(async (event): Promise<PublishedInsight> => {
   if (!parsed.success) {
     throw createError({
       statusCode: 400,
-      statusMessage: parsed.error.issues[0]?.message ?? 'Please check the details and try again.'
+      statusMessage: parsed.error.issues[0]?.message
+        ?? 'Please check the publish form and try again.'
     })
   }
 
   const insights = await publishedInsightsCollection()
-  const baseSlug = slugify(`${parsed.data.displayName}-${parsed.data.metricLabel}`)
-  const publishedAt = new Date().toISOString()
+  const existing = await insights.findOne({
+    recommendationId: parsed.data.recommendationId
+  })
 
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
-    const slug = attempt === 0 ? baseSlug : `${baseSlug}-${randomSuffix()}`
-    const _id = new ObjectId()
-
-    try {
-      await insights.insertOne({ _id, slug, publishedAt, ...parsed.data })
-      return publishedInsightSchema.parse({ id: _id.toHexString(), slug, publishedAt, ...parsed.data })
-    } catch (error) {
-      const isDuplicateSlug = error instanceof MongoServerError && error.code === DUPLICATE_KEY
-      if (!isDuplicateSlug) throw error
-    }
+  // Publishing is idempotent. If the browser retries after losing the response,
+  // return the public record instead of creating a duplicate page.
+  if (existing) {
+    const { _id, ...insight } = existing
+    return publishedInsightSchema.parse({
+      id: _id.toHexString(),
+      ...insight
+    })
   }
 
-  throw createError({
-    statusCode: 500,
-    statusMessage: 'We could not publish this right now. Please try again.'
+  const recommendation = await (await recommendationsCollection()).findOne({
+    _id: new ObjectId(parsed.data.recommendationId)
   })
+
+  if (!recommendation) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'This recommendation could not be found. Refresh the page and try again.'
+    })
+  }
+
+  const dataset = await (await datasetsCollection()).findOne({
+    _id: new ObjectId(recommendation.datasetId)
+  })
+
+  if (!dataset) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'The data set behind this recommendation could not be found.'
+    })
+  }
+
+  const id = new ObjectId()
+  const baseSlug = buildSlug(parsed.data.displayName, recommendation.title)
+  let attempt = 1
+
+  while (true) {
+    const insight = publishedInsightSchema.parse({
+      id: id.toHexString(),
+      slug: attempt === 1 ? baseSlug : `${baseSlug}-${attempt}`,
+      displayName: parsed.data.displayName,
+      caption: parsed.data.caption,
+      metricLabel: `${METRIC_LABELS[recommendation.metric]} by ${DIMENSION_LABELS[recommendation.dimension]}`,
+      metricValue: recommendation.changePercent,
+      hideAbsoluteNumbers: parsed.data.hideAbsoluteNumbers,
+      businessType: dataset.businessType,
+      recommendationId: parsed.data.recommendationId,
+      datasetId: recommendation.datasetId,
+      publishedAt: new Date().toISOString()
+    })
+
+    const { id: insightId, ...document } = insight
+
+    try {
+      await insights.insertOne({
+        _id: new ObjectId(insightId),
+        ...document
+      })
+
+      setResponseStatus(event, 201)
+      return insight
+    } catch (error) {
+      if (!isDuplicateSlugError(error)) {
+        throw error
+      }
+
+      attempt += 1
+    }
+  }
 })
