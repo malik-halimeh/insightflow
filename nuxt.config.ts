@@ -33,6 +33,9 @@ export default defineNuxtConfig({
     // Private like the rest of the workspace, and never worth rendering on the
     // server: nothing here should ever reach a cache or a search engine.
     '/admin/**': { ssr: false },
+    // Public homepage figures, cached so the landing page stays fast while still
+    // reflecting real data. Nothing here is account-specific.
+    '/api/home-stats': { swr: 300 },
     '/api/**': { cors: true }
   },
 

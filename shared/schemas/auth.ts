@@ -56,6 +56,27 @@ export const registerSchema = z
 
 export type RegisterInput = z.infer<typeof registerSchema>
 
+// What an admin can change about their own account from /admin/settings.
+// currentPassword is always required, even when only the name is changing —
+// it is the one thing on this form that proves the request is really from
+// the signed-in admin and not a hijacked session making a quiet change.
+// newPassword is optional: an empty string means "keep the existing password".
+export const adminProfileUpdateSchema = z
+  .object({
+    displayName: displayNameSchema,
+    username: usernameSchema,
+    email: emailSchema,
+    currentPassword: z.string().min(1, 'Please enter your current password to confirm this change.'),
+    newPassword: z.union([passwordSchema, z.literal('')]).optional(),
+    confirmNewPassword: z.string().optional()
+  })
+  .refine(value => !value.newPassword || value.newPassword === value.confirmNewPassword, {
+    error: 'New passwords do not match.',
+    path: ['confirmNewPassword']
+  })
+
+export type AdminProfileUpdateInput = z.infer<typeof adminProfileUpdateSchema>
+
 export const forgotPasswordSchema = z.object({
   email: emailSchema
 })
