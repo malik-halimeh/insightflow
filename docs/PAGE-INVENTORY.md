@@ -171,10 +171,45 @@ writes.
 
 ---
 
-## Delete this
+---
 
-`app/pages/_stack-check.vue` — a throwaway from day one that proved Nuxt UI and Zod
-work together. It has no purpose now and is reachable at `/_stack-check`.
+## Phase 2 — pages that do not exist yet
+
+Every page below is **new**. Nothing in the Phase 1 tables above is rewritten.
+
+| Route | File | Owner | Reads |
+| --- | --- | --- | --- |
+| `/forecast` | `app/pages/forecast/index.vue` | **M3** | `GET /api/forecast/:datasetId` |
+| `/datasets/:id/history` | `app/pages/datasets/[id]/history.vue` | **M2** | `GET /api/datasets/:id/versions` |
+| `/recommendations/:id/outcome` | `app/pages/recommendations/[id]/outcome.vue` | **M4** | `GET /api/outcomes/:id` |
+| `/insights/benchmarks` | `app/pages/insights/benchmarks.vue` | **M5** | `GET /api/benchmarks` — **public** |
+| — | `app/components/ui/ForecastBandChart.vue` | **M1** | shared component |
+
+**The two screens that only read.** `/forecast` and `/datasets/:id/history` build no
+schemas and write nothing to the database. They call an endpoint, render the result, and
+show all three states. If either seems to need a change under `server/` or `shared/`,
+that is the signal to ask rather than to edit.
+
+**The shared chart.** `<UiForecastBandChart>` is the only chart component in Phase 2.
+It arrives already wrapped in `<ClientOnly>` with a skeleton fallback. Pass it points and
+a band. **Do not add a chart library** — that is CLAUDE.md rule 5 and it breaks the server
+build in a confusing way.
+
+**Rules that carry over to every new page:**
+
+1. Private pages need both lines: `definePageMeta({ middleware: 'auth', layout: 'app' })`.
+   `/insights/benchmarks` is the exception — it is public and server rendered, like the
+   rest of the feed.
+2. Forms bind to a `…CreateSchema`, never to a record schema.
+3. `useFetch` at the top level, `$fetch` inside handlers. Never plain `fetch`.
+4. Keep loading, empty and ready states. A page that only works once data exists is half
+   finished.
+5. **Open the browser console before you push.** A component referenced without its folder
+   prefix renders nothing at all, silently, and `npm run typecheck` does not catch it. A
+   component in `app/components/dashboard/` is `<DashboardThing>`; one in
+   `app/components/ui/` is `<UiThing>`.
+
+---
 
 ---
 
