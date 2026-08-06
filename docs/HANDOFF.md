@@ -34,10 +34,10 @@ cp .env.example .env
 Open `.env` and fill in `MONGODB_URI` and `MONGODB_DB` — ask M1 for the connection
 string. `.env` is gitignored. **Never commit it and never paste it into a chat.**
 
-Load the demo data into your database:
+Safely add the demo data without removing anyone else's work:
 
 ```bash
-npm run seed
+npm run seed -- --add
 ```
 
 Start the dev server:
@@ -48,7 +48,7 @@ npm run dev
 
 Open http://localhost:3000 and sign in.
 
-`npm run seed` creates every account below and prints the passwords when it finishes.
+The seed creates every account below and prints the passwords when it finishes.
 
 **Each of us has two accounts**, so you can see both sides of the product without
 borrowing anybody's login. Replace `<name>` with `malik`, `sumayya`, `yasser`,
@@ -248,7 +248,7 @@ import { formatMoney, formatCount, formatPercentChange } from '#shared/format'
 
 ## 5. What is already in the database
 
-`npm run seed` gives you a complete, realistic demo. **You do not need to wait for
+`npm run seed -- --add` gives you a complete, realistic demo. **You do not need to wait for
 anyone's upload feature to start building.**
 
 | Collection | What is there |
@@ -269,15 +269,22 @@ real to find:
 - **Beetroot & Feta Salad** barely sells — 15 units in eight weeks
 - 12 menu items across 4 categories
 
-**To reseed** — do this whenever your data gets messy:
+**To restore the demo safely:**
 
 ```bash
-npm run seed
+npm run seed -- --add
 ```
 
-It **wipes and rebuilds**: users, datasets, salesRows, publishedInsights and
-recommendations. It leaves `rules` alone. Running it twice does not duplicate
-anything. The ids change every time you reseed, so never hardcode an id.
+Additive mode never calls `deleteMany` and does not ask for confirmation. It
+upserts seeded accounts by username, then creates the demo data set, sales rows
+and insights under a new data set id. Running it again adds another independent
+copy of the demo data but does not duplicate user accounts.
+
+**Warning:** the default `npm run seed` command is destructive. It **wipes the
+shared database**, deleting every user's records from `users`, `datasets`,
+`salesRows`, `publishedInsights` and `recommendations` before rebuilding the demo.
+It leaves `rules` alone and retains its confirmation guard. Never use the default
+command when teammates have work in the shared database.
 
 ---
 
@@ -400,8 +407,9 @@ That last one has already cost this team a working feature. The server assigns i
 
 | I want to… | Do this |
 | --- | --- |
-| Start working | `npm install`, `cp .env.example .env`, `npm run seed`, `npm run dev` |
-| Reset my data | `npm run seed` |
+| Start working | `npm install`, `cp .env.example .env`, `npm run seed -- --add`, `npm run dev` |
+| Restore demo data safely | `npm run seed -- --add` |
+| Wipe the shared database | `npm run seed` — destructive; deletes teammates' data after confirmation |
 | Check my work compiles | `npm run typecheck` |
 | Know how a page should look | `docs/DESIGN-SYSTEM.md` |
 | Know what a schema contains | Section 4, or open `shared/schemas/` and read it |

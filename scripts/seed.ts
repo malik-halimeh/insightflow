@@ -209,7 +209,11 @@ export function describePatterns(docs: SalesRowDoc[]): {
   }
 }
 
-function buildPublishedInsights(now: string, datasetId: string): PublishedInsightDoc[] {
+function buildPublishedInsights(
+  now: string,
+  datasetId: string,
+  slugSuffix?: string
+): PublishedInsightDoc[] {
   const drafts = [
     {
       slug: 'friday-night-is-our-busiest',
@@ -243,7 +247,8 @@ function buildPublishedInsights(now: string, datasetId: string): PublishedInsigh
       recommendationId: null,
       datasetId,
       publishedAt: now,
-      ...draft
+      ...draft,
+      slug: slugSuffix ? `${draft.slug}-${slugSuffix}` : draft.slug
     }
 
     const parsed = publishedInsightSchema.safeParse(insight)
@@ -436,6 +441,7 @@ async function buildUsers(now: string): Promise<UserDoc[]> {
 }
 
 async function seed(): Promise<void> {
+  const additive = process.argv.includes('--add')
   const now = new Date().toISOString()
   const datasetId = new ObjectId()
   const datasetIdHex = datasetId.toHexString()
@@ -457,7 +463,11 @@ async function seed(): Promise<void> {
     updatedAt: now
   })
 
-  const insightDocs = buildPublishedInsights(now, datasetIdHex)
+  const insightDocs = buildPublishedInsights(
+    now,
+    datasetIdHex,
+    additive ? datasetIdHex : undefined
+  )
 
   const [users, datasets, salesRows, insights, recommendations] = await Promise.all([
     usersCollection(),
@@ -466,6 +476,42 @@ async function seed(): Promise<void> {
     publishedInsightsCollection(),
     recommendationsCollection()
   ])
+
+  const { id: dsId, ...datasetRest } = dataset
+
+  if (additive) {
+    const userWrites = await users.bulkWrite(userDocs.map((user) => {
+      const { _id, createdAt, username, ...updates } = user
+
+      return {
+        updateOne: {
+          filter: { username },
+          update: {
+            $set: { username, ...updates },
+            $setOnInsert: { _id, createdAt }
+          },
+          upsert: true
+        }
+      }
+    }))
+
+    await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest } satisfies DatasetDoc)
+    await salesRows.insertMany(salesRowDocs)
+    await insights.insertMany(insightDocs)
+
+    console.log('')
+    console.log('  Additive seed complete — nothing was deleted')
+    console.log('  ──────────────────────────────────────────────')
+    console.log(`  Database         ${process.env.MONGODB_DB}`)
+    console.log(`  Users added      ${userWrites.upsertedCount}`)
+    console.log(`  Users updated    ${userWrites.matchedCount}`)
+    console.log(`  Data set added   1  (${dataset.name})`)
+    console.log(`  Data set id      ${datasetIdHex}`)
+    console.log(`  Sales rows added ${salesRowDocs.length}`)
+    console.log(`  Insights added   ${insightDocs.length}`)
+    printSeedDetails(salesRowDocs, periodStart, periodEnd)
+    return
+  }
 
   // Everyone on this project shares one database, so this wipe takes the team's
   // work with it, not just yours. Say what is about to disappear and make someone
@@ -489,15 +535,10 @@ async function seed(): Promise<void> {
   ])
   const removedCount = removed.reduce((sum, result) => sum + result.deletedCount, 0)
 
-  const { id: dsId, ...datasetRest } = dataset
-
   await users.insertMany(userDocs)
   await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest } satisfies DatasetDoc)
   await salesRows.insertMany(salesRowDocs)
   await insights.insertMany(insightDocs)
-
-  const revenue = salesRowDocs.reduce((sum, row) => sum + row.revenue, 0)
-  const patterns = describePatterns(salesRowDocs)
 
   console.log('')
   console.log('  Seed complete')
@@ -509,6 +550,17 @@ async function seed(): Promise<void> {
   console.log(`  Data sets        1  (${dataset.name})`)
   console.log(`  Sales rows       ${salesRowDocs.length}`)
   console.log(`  Insights         ${insightDocs.length}`)
+  printSeedDetails(salesRowDocs, periodStart, periodEnd)
+}
+
+function printSeedDetails(
+  salesRowDocs: SalesRowDoc[],
+  periodStart: string,
+  periodEnd: string
+): void {
+  const revenue = salesRowDocs.reduce((sum, row) => sum + row.revenue, 0)
+  const patterns = describePatterns(salesRowDocs)
+
   console.log('')
   console.log(`  Period           ${periodStart} to ${periodEnd}  (${WEEKS} weeks)`)
   console.log(`  Menu             ${MENU.length} items across ${new Set(MENU.map(m => m.category)).size} categories`)

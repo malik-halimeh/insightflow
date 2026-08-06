@@ -13,11 +13,11 @@ You need **Node 22 or newer**.
 ```bash
 npm install
 cp .env.example .env    # then fill in MONGODB_URI and MONGODB_DB
-npm run seed            # loads 8 weeks of demo sales
+npm run seed -- --add   # safely adds 8 weeks of demo sales
 npm run dev
 ```
 
-Open http://localhost:3000 and sign in. `npm run seed` creates an account for each
+Open http://localhost:3000 and sign in. The seed creates an account for each
 of us in both roles and prints the passwords when it finishes:
 
 | Sign in as | Password | You get |
@@ -57,7 +57,8 @@ every page that needs data is failing. Check `/api/health` before anything else.
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Development server |
-| `npm run seed` | **Wipes** the shared database and reloads demo data and accounts. It names what it is about to delete and asks you to confirm; `--force` skips the prompt. |
+| `npm run seed -- --add` | Safely adds a new demo data set, sales rows and insights without deleting anything. Seeded users are updated or added by username. |
+| `npm run seed` | **Wipes the shared database**, including teammates' uploads, then reloads demo data and accounts. It names what it is about to delete and asks you to confirm; `--force` skips the prompt. |
 | `npm run typecheck` | Must pass before any pull request |
 | `npm run build` | Production build |
 
