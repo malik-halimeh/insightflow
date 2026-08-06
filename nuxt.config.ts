@@ -46,6 +46,9 @@ export default defineNuxtConfig({
     adminUsername: process.env.ADMIN_USERNAME || '',
     adminPassword: process.env.ADMIN_PASSWORD || '',
     sessionSecret: process.env.SESSION_SECRET || '',
+    elasticEmailApiKey: process.env.ELASTIC_EMAIL_API_KEY || '',
+    elasticEmailFromEmail: process.env.ELASTIC_EMAIL_FROM_EMAIL || '',
+    elasticEmailFromName: process.env.ELASTIC_EMAIL_FROM_NAME || 'InsightFlow',
 
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || ''

@@ -76,3 +76,24 @@ export const adminProfileUpdateSchema = z
   })
 
 export type AdminProfileUpdateInput = z.infer<typeof adminProfileUpdateSchema>
+
+export const forgotPasswordSchema = z.object({
+  email: emailSchema
+})
+
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
+
+// token is opaque to the client — it only ever round-trips the value from the
+// query string of the emailed link, so it gets no format rule of its own here.
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1, 'This reset link is missing its token.'),
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, 'Please confirm your new password.')
+  })
+  .refine(value => value.password === value.confirmPassword, {
+    error: 'Passwords do not match.',
+    path: ['confirmPassword']
+  })
+
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
