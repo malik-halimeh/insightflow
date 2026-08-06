@@ -1,0 +1,42 @@
+# Runs on every pull request into main, and on main itself.
+#
+# This exists because a pull request once merged with ten type errors in it.
+# `nuxt build` does not type check, so the build passed, the deploy would have
+# gone out, and nothing would have complained. Asking people to remember
+# `npm run typecheck` did not work; this makes the repository check instead.
+#
+# The job name below ("Typecheck") is what appears in the branch ruleset as a
+# required status check. Renaming the job renames the check, and the ruleset
+# then waits forever for a check that no longer reports — so if you rename it,
+# update the ruleset in the same change.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # `npm ci` installs exactly what package-lock.json pins, and fails if the
+      # lockfile and package.json disagree — which is itself worth catching.
+      # The postinstall hook runs `nuxt prepare`, which generates the types in
+      # .nuxt that the type check needs.
+      - run: npm ci
+
+      # No database and no secrets are needed: type checking never opens a
+      # connection. If this step ever starts needing them, something that should
+      # run at request time has moved to module load.
+      - run: npm run typecheck
