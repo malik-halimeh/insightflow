@@ -186,13 +186,26 @@ writes.
 
 Every page below is **new**. Nothing in the Phase 1 tables above is rewritten.
 
-| Route | File | Owner | Reads |
-| --- | --- | --- | --- |
-| `/forecast` | `app/pages/forecast/index.vue` | **M3** | `GET /api/forecast/:datasetId` |
-| `/datasets/:id/history` | `app/pages/datasets/[id]/history.vue` | **M2** | `GET /api/datasets/:id/versions` |
-| `/recommendations/:id/outcome` | `app/pages/recommendations/[id]/outcome.vue` | **M4** | `GET /api/outcomes/:id` |
-| `/insights/benchmarks` | `app/pages/insights/benchmarks.vue` | **M5** | `GET /api/benchmarks` — **public** |
-| — | `app/components/ui/ForecastBandChart.vue` | **M1** | shared component |
+| Route | File | Owner | Reads | Endpoint ready? |
+| --- | --- | --- | --- | --- |
+| `/forecast` | `app/pages/forecast/index.vue` | **M3** | `GET /api/forecast/:datasetId` | ✅ **live** |
+| `/datasets/:id/history` | `app/pages/datasets/[id]/history.vue` | **M2** | `GET /api/datasets/:id/versions`<br>`POST …/versions/:vid/restore` | ✅ **live** |
+| `/recommendations/:id/outcome` | `app/pages/recommendations/[id]/outcome.vue` | **M4** | `GET /api/outcomes/:id` | M4 builds it |
+| `/insights/benchmarks` | `app/pages/insights/benchmarks.vue` | **M5** | `GET /api/benchmarks` — **public** | M5 builds it |
+| — | `app/components/ui/ForecastBandChart.vue` | **M1** | shared component | ✅ **built** |
+
+**M2 and M3 are not waiting on anything.** Both endpoints are live and both response
+shapes are in `shared/` — `datasetVersionSchema` in `#shared/schemas`, and
+`ForecastSummary` in `#shared/types/forecast` (explicit path; `shared/types` is not
+barrelled).
+
+**Turn your feature flag on first.** Every Phase 2 endpoint answers 404 until the
+matching flag is set in your `.env` — see `docs/HANDOFF.md` §6. A 404 saying the
+feature is off is the flag working.
+
+**`<UiForecastBandChart>`** takes `actuals` and `points` and draws the band. It is not
+wrapped in `<ClientOnly>`, and does not need to be — it is hand-drawn SVG that touches
+neither a chart library nor `window`, the same as `RevenueTrendChart.vue`.
 
 **The two screens that only read.** `/forecast` and `/datasets/:id/history` build no
 schemas and write nothing to the database. They call an endpoint, render the result, and

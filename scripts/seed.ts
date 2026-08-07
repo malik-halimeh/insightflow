@@ -2,6 +2,8 @@ import { pathToFileURL } from 'node:url'
 import { ObjectId } from 'mongodb'
 import {
   closeMongoClient,
+  datasetVersionRowsCollection,
+  datasetVersionsCollection,
   datasetsCollection,
   publishedInsightsCollection,
   recommendationsCollection,
@@ -13,6 +15,7 @@ import {
   type UserDoc
 } from '../server/utils/db'
 import { hashPassword } from '../server/utils/password'
+import { writeVersion } from '../server/utils/versioning'
 import {
   datasetSchema,
   publishedInsightSchema,
@@ -440,6 +443,27 @@ async function buildUsers(now: string): Promise<UserDoc[]> {
   }))
 }
 
+/**
+ * Gives the demo data set an upload history, so the history page has something to
+ * show on a fresh checkout rather than an empty state that cannot be told apart
+ * from a broken page.
+ *
+ * Two versions: an earlier, smaller upload and the full one. The second is the
+ * current one, which makes restore something a person can actually try — with a
+ * single version there is nothing to go back to.
+ */
+async function seedVersions(datasetId: string, rows: SalesRowDoc[]): Promise<string | null> {
+  // The first four weeks, as though the owner had uploaded partway through.
+  const dates = [...new Set(rows.map(row => row.date))].sort((a, b) => a.localeCompare(b))
+  const earlyCutoff = dates[Math.floor(dates.length / 2)]!
+  const early = rows.filter(row => row.date < earlyCutoff)
+
+  await writeVersion(datasetId, early, 0)
+  const current = await writeVersion(datasetId, rows, 6)
+
+  return current?.id ?? null
+}
+
 async function seed(): Promise<void> {
   const additive = process.argv.includes('--add')
   const now = new Date().toISOString()
@@ -499,6 +523,9 @@ async function seed(): Promise<void> {
     await salesRows.insertMany(salesRowDocs)
     await insights.insertMany(insightDocs)
 
+    const currentVersionId = await seedVersions(datasetIdHex, salesRowDocs)
+    await datasets.updateOne({ _id: new ObjectId(dsId) }, { $set: { currentVersionId } })
+
     console.log('')
     console.log('  Additive seed complete — nothing was deleted')
     console.log('  ──────────────────────────────────────────────')
@@ -509,6 +536,7 @@ async function seed(): Promise<void> {
     console.log(`  Data set id      ${datasetIdHex}`)
     console.log(`  Sales rows added ${salesRowDocs.length}`)
     console.log(`  Insights added   ${insightDocs.length}`)
+    console.log(`  Upload history   2 versions`)
     printSeedDetails(salesRowDocs, periodStart, periodEnd)
     return
   }
@@ -516,12 +544,19 @@ async function seed(): Promise<void> {
   // Everyone on this project shares one database, so this wipe takes the team's
   // work with it, not just yours. Say what is about to disappear and make someone
   // agree to it out loud.
+  const [versions, versionRows] = await Promise.all([
+    datasetVersionsCollection(),
+    datasetVersionRowsCollection()
+  ])
+
   await confirmWipe({
     users: await users.countDocuments(),
     datasets: await datasets.countDocuments(),
     salesRows: await salesRows.countDocuments(),
     publishedInsights: await insights.countDocuments(),
-    recommendations: await recommendations.countDocuments()
+    recommendations: await recommendations.countDocuments(),
+    datasetVersions: await versions.countDocuments(),
+    datasetVersionRows: await versionRows.countDocuments()
   })
 
   // Wiping first is what makes a second run replace the demo rather than double it.
@@ -531,7 +566,11 @@ async function seed(): Promise<void> {
     datasets.deleteMany({}),
     salesRows.deleteMany({}),
     insights.deleteMany({}),
-    recommendations.deleteMany({})
+    recommendations.deleteMany({}),
+    // Upload history belongs to the data sets being replaced, so it goes with them.
+    // Leaving it would offer restore buttons pointing at rows that no longer exist.
+    versions.deleteMany({}),
+    versionRows.deleteMany({})
   ])
   const removedCount = removed.reduce((sum, result) => sum + result.deletedCount, 0)
 
@@ -539,6 +578,9 @@ async function seed(): Promise<void> {
   await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest } satisfies DatasetDoc)
   await salesRows.insertMany(salesRowDocs)
   await insights.insertMany(insightDocs)
+
+  const currentVersionId = await seedVersions(datasetIdHex, salesRowDocs)
+  await datasets.updateOne({ _id: new ObjectId(dsId) }, { $set: { currentVersionId } })
 
   console.log('')
   console.log('  Seed complete')
@@ -550,6 +592,7 @@ async function seed(): Promise<void> {
   console.log(`  Data sets        1  (${dataset.name})`)
   console.log(`  Sales rows       ${salesRowDocs.length}`)
   console.log(`  Insights         ${insightDocs.length}`)
+  console.log(`  Upload history   2 versions`)
   printSeedDetails(salesRowDocs, periodStart, periodEnd)
 }
 
