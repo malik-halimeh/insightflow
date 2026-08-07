@@ -31,6 +31,18 @@ milestone. **Do not start the milestone until its decision is answered.**
       hand-drawn SVG. *Blocks M1.11.*
 - [ ] **C6 — Cache a private endpoint while data sets have no owner field?**
       *Blocks M1.12 only.*
+- [ ] **C7 — Where do a version's rows live?** `salesRows` has no version
+      discriminator, and four queries filter on `datasetId` alone — in M2's, M3's and
+      M4's folders. If versions share that collection, every read merges them and
+      revenue is multiplied by the version count, silently.
+      **Design A:** add `versionId` to `salesRowSchema` — breaks a contract four
+      people import, changes the index, and requires read-query changes in three
+      other members' folders.
+      **Design B (recommended):** `salesRows` keeps its current meaning — always the
+      current version's rows. Each upload archives a copy to a separate
+      `datasetVersionRows` collection; restore rehydrates from it. Zero changes
+      outside M1, at the cost of bounded duplicate storage.
+      *Blocks M1.4, M1.5, M1.6, M1.8.*
 
 ---
 
@@ -114,10 +126,15 @@ milestone. **Do not start the milestone until its decision is answered.**
 
 - [ ] Function to record a version for a data set
 - [ ] Enforce the **ten-version cap** inside the helper, not at the call site
-- [ ] Compute quality from **stored rows** — gaps in dates, duplicate rows, negative
-      or absurd values — so `server/utils/csv.ts` (M2's) is never touched
+- [ ] **Gate `versioningEnabled` inside this helper, not at the call site** — the call
+      site is M2's file, and it should be written once and never revisited
+- [ ] Persist the `UploadReport` the import already produced rather than recomputing
+      it — `readSalesRows` already yields `problems[]`, `invalid`, `total`, `valid`
+- [ ] Add only the checks that report lacks: **date gaps and duplicate rows**
 - [ ] Reuse the `byDate` aggregation pattern from
       `server/api/analytics/[datasetId]/summary.get.ts` for date-gap detection
+- [ ] Archive before replacing, so a failure part-way leaves the data set
+      recoverable rather than empty
 - [ ] Quality **warns, never blocks** — an owner with imperfect data still gets a
       dashboard
 - [ ] Pure enough to call directly in a script, without an H3 event
@@ -181,6 +198,13 @@ milestone. **Do not start the milestone until its decision is answered.**
       figures changed to match
 - [ ] Confirm `/api/forecast/:id` also reflects it, once M1.10 exists
 - [ ] Restoring a version from another data set → 404
+- [ ] **Restoring the version that is already current → successful no-op**, not an
+      error. M2's confirmation dialog should not show a failure for a sensible action
+- [ ] **Restoring a version the ten-version cap has already pruned → clear failure.**
+      The cap creates this case; it must never silently restore zero rows and leave
+      the owner with an empty data set
+- [ ] After restore, confirm `rowCount`, `periodStart` and `periodEnd` all moved
+      together with the pointer
 
 ---
 
@@ -267,7 +291,8 @@ milestone. **Do not start the milestone until its decision is answered.**
 
 - [ ] Apply the C6 decision before caching anything private
 - [ ] Convert `/api/forecast/:datasetId` to `defineCachedEventHandler`
-- [ ] Convert the versions list if it warrants it
+- [ ] **Do not cache the versions list.** It is a short list, read rarely, and
+      caching it adds invalidation surface for no measurable gain
 - [ ] **Invalidate on upload and on restore** — reuse `routeCachePrefix()` and the
       `useStorage('cache')` pattern in
       `server/api/publish/[recommendationId].delete.ts`
@@ -323,3 +348,32 @@ milestone. **Do not start the milestone until its decision is answered.**
 - [ ] M3 confirms the forecast endpoint and chart match what was announced
 - [ ] Nothing outside M1's ownership was edited, except the handovers in M1.6 and the
       cascade line, both made by their owner
+- [ ] **No existing query against `salesRows` returns rows from more than one
+      version.** Check all four: `analytics/[datasetId]/summary.get.ts`,
+      `datasets/[id]/rows.get.ts`, `recommendations/index.get.ts`,
+      `datasets/[id].delete.ts`. Upload twice, then confirm the dashboard total is
+      unchanged — not doubled
+
+---
+
+## Shared-file conflict watch
+
+Three of these files are appended to by more than one member in Phase 2. Landing
+M1's lines early means M4 and M5 rebase onto them instead of three-way colliding late.
+
+- [ ] `shared/schemas/index.ts` — M1 adds up to two exports; **M4 adds `outcome.ts`,
+      M5 adds `benchmark.ts`**. Land M1's lines in the first days
+- [ ] `server/utils/indexes.ts` — M1's file, but M4 (outcomes) and M5 (benchmarks)
+      may need indexes. They must request rather than edit; expect the asks
+- [ ] `nuxt.config.ts` — M1's alone, but it carries every member's feature flag.
+      Add all four in M1.1 so nobody needs to ask later
+
+---
+
+## Deferred improvement
+
+- [ ] Export the four-week threshold from `shared/` as a named constant. Today it is
+      `MINIMUM_DAYS_FOR_TRENDS = 28`, a local const in `app/pages/dashboard/index.vue`
+      (M3's), and the forecast guard needs the same number. Define it once, offer it
+      to M3, and let them adopt it when convenient — two copies of one number in two
+      owners' folders will drift otherwise
