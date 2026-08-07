@@ -4,6 +4,7 @@ import { COLLECTIONS, ensureIndexes } from './indexes'
 // scripts/seed.ts, which runs outside Nitro and cannot resolve Nuxt aliases.
 import type {
   Dataset,
+  DatasetVersion,
   PublishedInsight,
   Recommendation,
   Rule,
@@ -40,6 +41,21 @@ export type SalesRowDoc = DocOf<SalesRow>
 export type RecommendationDoc = DocOf<Recommendation>
 export type RuleDoc = DocOf<Rule>
 export type PublishedInsightDoc = DocOf<PublishedInsight>
+export type DatasetVersionDoc = DocOf<DatasetVersion>
+
+/**
+ * An archived sales row: the same shape as a live one, plus the version it belongs to.
+ *
+ * `versionId` lives here and only here. It is deliberately absent from
+ * `salesRowSchema`, because that contract is imported by four people and every
+ * query against `salesRows` filters by `datasetId` alone — adding a second
+ * discriminator there would mean each of those queries had to learn about it, or
+ * silently return several versions merged together.
+ *
+ * `datasetId` is carried too, redundantly, so deleting a data set can remove its
+ * archive in one query instead of first collecting every version id.
+ */
+export type DatasetVersionRowDoc = DocOf<SalesRow> & { versionId: string }
 
 /**
  * Connection state is cached on globalThis so a hot reload in dev, and a warm
@@ -136,6 +152,8 @@ export const salesRowsCollection = () => collection<SalesRowDoc>(COLLECTIONS.sal
 export const recommendationsCollection = () => collection<RecommendationDoc>(COLLECTIONS.recommendations)
 export const rulesCollection = () => collection<RuleDoc>(COLLECTIONS.rules)
 export const publishedInsightsCollection = () => collection<PublishedInsightDoc>(COLLECTIONS.publishedInsights)
+export const datasetVersionsCollection = () => collection<DatasetVersionDoc>(COLLECTIONS.datasetVersions)
+export const datasetVersionRowsCollection = () => collection<DatasetVersionRowDoc>(COLLECTIONS.datasetVersionRows)
 
 export async function closeMongoClient(): Promise<void> {
   const state = cache()
