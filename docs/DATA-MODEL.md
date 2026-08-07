@@ -171,10 +171,33 @@ anything.
 Two new collections, plus one new field on an existing record. Nothing already
 stored changes shape.
 
-| Collection | Holds | Owner |
-| --- | --- | --- |
-| `datasetVersions` | One record per upload: the rows it contained, how many were rejected, when it happened. A data set points at its current version. | **M1** |
-| `outcomes` | One record per recommendation an owner marked as followed: the date, the metric being watched, and a frozen snapshot of the "before" window. | **M4** |
+| Collection | Holds | Owner | Built? |
+| --- | --- | --- | --- |
+| `datasetVersions` | One record per upload: how many rows it contained, how many were rejected, its period, and a quality summary. | **M1** | ✅ |
+| `datasetVersionRows` | Those uploads' rows, keyed by `versionId`. | **M1** | ✅ |
+| `outcomes` | One record per recommendation an owner marked as followed: the date, the metric being watched, and a frozen snapshot of the "before" window. | **M4** | — |
+
+### Why the rows are archived separately
+
+**`salesRows` still means exactly what it always meant: the rows of the current
+version.** It gained no new field and no new index.
+
+That is deliberate, and it is the single most important thing to understand about
+versioning. Four queries filter `salesRows` by `datasetId` alone — in
+`analytics/[datasetId]/summary.get.ts`, `datasets/[id]/rows.get.ts`,
+`recommendations/index.get.ts` and `datasets/[id].delete.ts`. If several versions
+shared that collection, every one of those reads would silently combine them, and a
+data set uploaded three times would report three times its real revenue on the
+dashboard, in the rows table and in the rule engine — with no error anywhere.
+
+So each upload archives a copy into `datasetVersionRows`, and **restore rehydrates**:
+it copies the chosen version's rows back into `salesRows` and moves
+`currentVersionId`, `rowCount`, `periodStart` and `periodEnd` together. Everything
+downstream — the dashboard, the recommendations, the forecast — follows without
+knowing versioning exists.
+
+The cost is duplicate storage, bounded by the ten-version cap in
+`server/utils/versioning.ts`.
 
 Benchmarks are **computed, never stored.** They are an aggregate read over
 `publishedInsights` at request time, so there is no collection to keep in sync and
@@ -189,6 +212,13 @@ nothing extra to delete when an insight is unpublished.
    `datasetVersions` and `outcomes` behind when their data set or recommendation is
    deleted. Whoever writes the delete handler removes them.
 
-**New indexes will be needed** — at least `datasetVersions` by `{ datasetId: 1,
-createdAt: -1 }` and `outcomes` by `{ recommendationId: 1 }`. They belong in
-`server/utils/indexes.ts`, which M1 owns.
+**Indexes in place** (`server/utils/indexes.ts`, M1's):
+
+| Collection | Index | Why |
+| --- | --- | --- |
+| `datasetVersions` | `{ datasetId: 1, createdAt: -1 }` | The history page reads newest-first; the cap reads the same order from the other end |
+| `datasetVersionRows` | `{ versionId: 1, date: 1 }` | Restore reads one version back in date order |
+| `datasetVersionRows` | `{ datasetId: 1 }` | Deleting a data set clears its archive in one query |
+
+`outcomes` will need `{ recommendationId: 1 }` when M4 builds it. That file is M1's,
+so ask rather than edit.

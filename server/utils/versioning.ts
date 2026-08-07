@@ -94,9 +94,15 @@ export function assessQuality(rows: Pick<SalesRowDoc, 'date' | 'itemName' | 'uni
 /**
  * Records an upload and archives its rows.
  *
- * Call this *before* replacing `salesRows`. Archiving first means a failure part way
- * through leaves an extra copy of rows that are still live — untidy, and recoverable.
- * Replacing first and failing here would leave the upload with no history at all.
+ * Call this *after* the new rows are safely in `salesRows`, not before:
+ *
+ *   1. replace `salesRows` with the uploaded rows,
+ *   2. then call this to archive them as a version.
+ *
+ * The upload handler deletes the old rows before inserting the new ones. Archiving
+ * in between would mean a failure here leaves the old rows already gone and the new
+ * ones not yet written — an empty data set. Archiving afterwards means the worst a
+ * failure costs is a missing history entry, with the owner's rows intact and correct.
  *
  * Returns null when the feature is switched off, so the caller needs no flag check.
  */
@@ -106,6 +112,23 @@ export async function recordVersion(
   rejectedCount: number
 ): Promise<DatasetVersion | null> {
   if (!versioningEnabled()) return null
+
+  return writeVersion(datasetId, rows, rejectedCount)
+}
+
+/**
+ * The same work, without the feature-flag check.
+ *
+ * `scripts/seed.ts` uses this: the seed builds demo state rather than responding to
+ * a request, so whether the feature is switched on for a running site says nothing
+ * about whether the demo should have an upload history. Everything at runtime goes
+ * through `recordVersion` above and stays gated.
+ */
+export async function writeVersion(
+  datasetId: string,
+  rows: SalesRowArchiveInput[],
+  rejectedCount: number
+): Promise<DatasetVersion | null> {
   if (rows.length === 0) return null
 
   const versions = await datasetVersionsCollection()
