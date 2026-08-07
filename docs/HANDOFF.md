@@ -282,6 +282,8 @@ anyone's upload feature to start building.**
 | `publishedInsights` | 3 — with valid slugs, ready for the public feed |
 | `recommendations` | 0 — generated from your rules |
 | `rules` | 0 — create them at `/recommendations/rules` |
+| `datasetVersions` | 2 — an earlier partial upload and the full one, so the history page and restore both have something to show |
+| `datasetVersionRows` | ~947 — those two uploads' rows |
 
 The sales data has **deliberate patterns** so the recommendation engine has something
 real to find:
@@ -337,8 +339,28 @@ routeRules: {
 | `/api/home-stats` | Cached 5 minutes | Public counts for the landing page. Nothing account-specific. |
 | `/api/**` | — | Can be called from another origin. |
 
-**Phase 2 adds one more.** `/forecast/**` is private and per-owner, so it belongs with
-the client-only group. That rule goes in when the page does.
+**`/forecast/**` is already in place**, in the client-only group — it is private and
+per-owner. The rule matters more than it looks: without it the page would render on
+the server, where a plain `useFetch` does not forward the session cookie, so the
+endpoint would answer 401 and the app layout would render "Signed out" beside it.
+
+### Phase 2 feature flags
+
+Every Phase 2 feature is behind a boolean in `runtimeConfig`, **off unless the
+environment sets it to exactly `"true"`**. That is what lets unfinished work merge
+without appearing on the deployed site.
+
+To work on your feature, add the matching line to your local `.env`:
+
+```bash
+FORECAST_ENABLED="true"      # M3 — /api/forecast/:datasetId
+VERSIONING_ENABLED="true"    # M2 — upload history and restore
+OUTCOMES_ENABLED="true"      # M4
+BENCHMARKS_ENABLED="true"    # M5
+```
+
+Without it the endpoint answers **404 with a message saying the feature is off** —
+that is the flag working, not a bug.
 
 ### Why this matters
 

@@ -106,6 +106,23 @@ export async function recordVersion(
   rejectedCount: number
 ): Promise<DatasetVersion | null> {
   if (!versioningEnabled()) return null
+
+  return writeVersion(datasetId, rows, rejectedCount)
+}
+
+/**
+ * The same work, without the feature-flag check.
+ *
+ * `scripts/seed.ts` uses this: the seed builds demo state rather than responding to
+ * a request, so whether the feature is switched on for a running site says nothing
+ * about whether the demo should have an upload history. Everything at runtime goes
+ * through `recordVersion` above and stays gated.
+ */
+export async function writeVersion(
+  datasetId: string,
+  rows: SalesRowArchiveInput[],
+  rejectedCount: number
+): Promise<DatasetVersion | null> {
   if (rows.length === 0) return null
 
   const versions = await datasetVersionsCollection()
