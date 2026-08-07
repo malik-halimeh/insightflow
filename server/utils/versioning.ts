@@ -21,6 +21,18 @@ import {
  * its own failure behaviour is one they can call in a single line and never revisit.
  */
 
+/**
+ * What `recordVersion` needs from a row, and nothing more.
+ *
+ * Deliberately loose about `_id` and `datasetId`: the upload handler already has
+ * documents carrying both, and asking it to strip them first would make a one-line
+ * integration into a three-line one for no gain.
+ */
+export type SalesRowArchiveInput = Omit<SalesRowDoc, '_id' | 'datasetId'> & {
+  _id?: ObjectId
+  datasetId?: string
+}
+
 /** Older versions beyond this are dropped, archive and all. */
 const VERSION_LIMIT = 10
 
@@ -90,7 +102,7 @@ export function assessQuality(rows: Pick<SalesRowDoc, 'date' | 'itemName' | 'uni
  */
 export async function recordVersion(
   datasetId: string,
-  rows: Omit<SalesRowDoc, '_id' | 'datasetId'>[],
+  rows: SalesRowArchiveInput[],
   rejectedCount: number
 ): Promise<DatasetVersion | null> {
   if (!versioningEnabled()) return null
@@ -110,11 +122,14 @@ export async function recordVersion(
   const versionId = new ObjectId()
   const dates = rows.map(row => row.date).sort((a, b) => a.localeCompare(b))
 
+  // The spread comes first and the archive's own keys after, so a caller handing
+  // over rows that already carry `_id` and `datasetId` — which the upload handler
+  // does — gets a genuinely new archive row rather than one reusing the live id.
   const archived: DatasetVersionRowDoc[] = rows.map(row => ({
+    ...row,
     _id: new ObjectId(),
     versionId: versionId.toHexString(),
-    datasetId,
-    ...row
+    datasetId
   }))
 
   await (await datasetVersionRowsCollection()).insertMany(archived)
