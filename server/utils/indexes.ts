@@ -10,7 +10,21 @@ export const COLLECTIONS = {
   salesRows: 'salesRows',
   recommendations: 'recommendations',
   rules: 'rules',
-  publishedInsights: 'publishedInsights'
+  publishedInsights: 'publishedInsights',
+
+  /**
+   * Upload history. `datasetVersions` holds one record per upload;
+   * `datasetVersionRows` holds those uploads' rows.
+   *
+   * The rows are archived here rather than in `salesRows` because every read in
+   * the product filters `salesRows` by `datasetId` alone — the analytics summary,
+   * the rows table and the rule engine all do. Keeping more than one version in
+   * there would add one upload's revenue to another's on three screens at once,
+   * without raising an error. `salesRows` therefore keeps its original meaning:
+   * the rows of whichever version is current.
+   */
+  datasetVersions: 'datasetVersions',
+  datasetVersionRows: 'datasetVersionRows'
 } as const
 
 /**
@@ -55,6 +69,28 @@ export async function ensureIndexes(db: Db): Promise<void> {
     db.collection(COLLECTIONS.users).createIndex(
       { role: 1, status: 1, createdAt: -1 },
       { name: 'users_role_status_createdAt' }
+    ),
+
+    // The history page lists one data set's uploads newest first, and the
+    // ten-version cap reads the same order from the other end to find what to drop.
+    db.collection(COLLECTIONS.datasetVersions).createIndex(
+      { datasetId: 1, createdAt: -1 },
+      { name: 'datasetVersions_datasetId_createdAt' }
+    ),
+
+    // Restore reads one archived version back in date order, the same order the
+    // rows were stored in and the same order every analytics query wants them.
+    db.collection(COLLECTIONS.datasetVersionRows).createIndex(
+      { versionId: 1, date: 1 },
+      { name: 'datasetVersionRows_versionId_date' }
+    ),
+
+    // Deleting a data set has to take its archived rows with it. Mongo enforces no
+    // referential integrity, so the delete handler does — and it deletes by data
+    // set, not by walking each version.
+    db.collection(COLLECTIONS.datasetVersionRows).createIndex(
+      { datasetId: 1 },
+      { name: 'datasetVersionRows_datasetId' }
     )
   ])
 }
