@@ -2,7 +2,7 @@
 /**
  * Only used by `/`. Same header and footer as the default layout, but without
  * the `max-w-4xl` content wrapper, so the landing page's sections can each pick
- * their own width — full-bleed bands with a contained row inside, rather than
+ * their own width: full-bleed bands with a contained row inside, rather than
  * the whole page pinned to one column width the way the workspace is.
  */
 const { data: session } = await useFetch('/api/auth/session', { server: false })
@@ -86,7 +86,7 @@ const workspaceLabel = computed(() =>
                 </li>
                 <li>
                   <NuxtLink to="/login?mode=signup" class="text-muted hover:text-default">
-                    Create an account
+                    Get started
                   </NuxtLink>
                 </li>
               </ul>
@@ -95,7 +95,7 @@ const workspaceLabel = computed(() =>
         </div>
 
         <div class="mt-8 flex flex-col gap-2 border-t border-default pt-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>InsightFlow — a business intelligence tool for small businesses.</p>
+          <p>InsightFlow. A business intelligence tool for small businesses.</p>
           <p>© {{ new Date().getFullYear() }} InsightFlow</p>
         </div>
       </div>

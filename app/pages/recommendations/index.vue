@@ -10,7 +10,7 @@ definePageMeta({
   layout: 'app'
 })
 
-useSeoMeta({ title: 'Recommendations — InsightFlow' })
+useSeoMeta({ title: 'Recommendations - InsightFlow' })
 
 const {
   data: recommendations,

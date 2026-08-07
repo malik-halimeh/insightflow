@@ -476,7 +476,7 @@ async function seed(): Promise<void> {
 
   const dataset = datasetSchema.parse({
     id: datasetIdHex,
-    name: 'Bella Pizza — last 8 weeks',
+    name: 'Bella Pizza, last 8 weeks',
     businessType: 'restaurant',
     periodStart,
     periodEnd,
@@ -527,7 +527,7 @@ async function seed(): Promise<void> {
     await datasets.updateOne({ _id: new ObjectId(dsId) }, { $set: { currentVersionId } })
 
     console.log('')
-    console.log('  Additive seed complete — nothing was deleted')
+    console.log('  Additive seed complete. Nothing was deleted')
     console.log('  ──────────────────────────────────────────────')
     console.log(`  Database         ${process.env.MONGODB_DB}`)
     console.log(`  Users added      ${userWrites.upsertedCount}`)

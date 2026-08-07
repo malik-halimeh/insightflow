@@ -1,5 +1,5 @@
 <!--
-  Admin account settings — the only place an admin can change their own name,
+  Admin account settings: the only place an admin can change their own name,
   username, email or password without editing ADMIN_USERNAME/ADMIN_PASSWORD in
   .env and restarting the server. See server/api/admin/profile.patch.ts.
 -->
@@ -10,7 +10,7 @@ import type { AdminProfile } from '#shared/types/admin'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 definePageMeta({ middleware: 'auth', layout: 'admin' })
-useSeoMeta({ title: 'Account settings — InsightFlow' })
+useSeoMeta({ title: 'Account settings - InsightFlow' })
 
 const toast = useToast()
 

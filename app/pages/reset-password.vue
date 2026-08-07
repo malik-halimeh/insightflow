@@ -1,7 +1,7 @@
 <!--
   OWNER: M1
 
-  Second half of the reset flow — reached only via the link emailed by
+  Second half of the reset flow, reached only via the link emailed by
   forgot-password.vue. The token lives in the query string and travels to the
   server exactly once, on submit; see server/api/auth/reset-password.post.ts
   for what makes a token valid.
@@ -12,7 +12,7 @@ import { resetPasswordSchema, type ResetPasswordInput } from '#shared/schemas'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 definePageMeta({ layout: false })
-useSeoMeta({ title: 'Set a new password — InsightFlow' })
+useSeoMeta({ title: 'Set a new password - InsightFlow' })
 
 const route = useRoute()
 const token = typeof route.query.token === 'string' ? route.query.token : ''

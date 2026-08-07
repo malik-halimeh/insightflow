@@ -23,7 +23,7 @@ if (error.value || !insight.value) {
 
 const publishedInsight = insight.value
 const pageTitle = computed(() =>
-  `${publishedInsight.displayName}: ${publishedInsight.metricLabel} — InsightFlow`
+  `${publishedInsight.displayName}: ${publishedInsight.metricLabel} - InsightFlow`
 )
 const canonicalUrl = computed(() =>
   `${siteOrigin.value}/insights/${publishedInsight.slug}`

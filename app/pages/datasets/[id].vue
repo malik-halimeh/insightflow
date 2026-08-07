@@ -5,7 +5,7 @@
 
   The edit form binds to datasetCreateSchema, never to datasetSchema. The record
   schema also demands the id, the row count and the timestamps, which the server
-  owns and the form does not send — bind to it and every save is rejected with an
+  owns and the form does not send. Bind to it and every save is rejected with an
   error that has no field to appear in, so the button silently does nothing.
 -->
 
@@ -24,7 +24,7 @@ if (error.value || !dataset.value) {
   throw createError({ statusCode: 404, statusMessage: 'That data set could not be found.' })
 }
 
-useSeoMeta({ title: () => `${dataset.value?.name ?? 'Data set'} — InsightFlow` })
+useSeoMeta({ title: () => `${dataset.value?.name ?? 'Data set'} - InsightFlow` })
 
 // A sample, not the whole file. The endpoint caps it, because nobody scrolls six
 // hundred rows and sending them all just makes the page slow.
@@ -103,7 +103,7 @@ function shortDate(iso: string): string {
         <UiMetricCard label="Rows" :value="formatCount(dataset.rowCount)" />
         <UiMetricCard
           label="Covers"
-          :value="`${shortDate(dataset.periodStart)} – ${shortDate(dataset.periodEnd)}`"
+          :value="`${shortDate(dataset.periodStart)} to ${shortDate(dataset.periodEnd)}`"
         />
         <UiMetricCard label="Added" :value="shortDate(dataset.createdAt)" />
       </div>
@@ -201,7 +201,7 @@ function shortDate(iso: string): string {
               <UBadge v-if="row.original.category" color="neutral" variant="subtle" size="sm">
                 {{ row.original.category }}
               </UBadge>
-              <span v-else class="text-muted">—</span>
+              <span v-else class="text-muted">-</span>
             </template>
 
             <template #quantity-cell="{ row }">

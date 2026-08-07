@@ -12,7 +12,7 @@ import type { FormSubmitEvent, TabsItem } from '@nuxt/ui'
 // is signed out into a redirect loop.
 definePageMeta({ layout: false })
 
-// One sign-in form for every account — there is deliberately no "Business owner"
+// One sign-in form for every account. There is deliberately no "Business owner"
 // / "Admin" choice on this page. The server identifies the account by username or
 // email and returns its real role, and that role decides where the person lands.
 // Offering the choice here would invite someone to pick "Admin" and would put a
@@ -188,7 +188,7 @@ async function onSignUp(event: FormSubmitEvent<RegisterInput>) {
         <UFormField label="Business size" name="businessSize">
           <USelect
             v-model="registerState.businessSize"
-            :items="BUSINESS_SIZE_OPTIONS.map(option => ({ label: `${option.label} — ${option.hint}`, value: option.value }))"
+            :items="BUSINESS_SIZE_OPTIONS.map(option => ({ label: `${option.label} (${option.hint})`, value: option.value }))"
             class="w-full"
           />
         </UFormField>

@@ -14,7 +14,7 @@
  */
 const { data: session } = await useFetch('/api/auth/session', { server: false })
 
-// An admin has no /dashboard to go back to — the middleware would bounce them to
+// An admin has no /dashboard to go back to, and the middleware would bounce them to
 // /admin anyway, so the link may as well say where it actually goes.
 const isAdmin = computed(() => session.value?.authenticated && session.value.role === 'admin')
 const workspace = computed(() =>
@@ -57,7 +57,7 @@ const workspace = computed(() =>
 
     <footer class="border-t border-default">
       <div class="mx-auto w-full max-w-4xl px-4 py-4 text-sm text-muted">
-        InsightFlow — sales insights for small businesses.
+        InsightFlow. Sales insights for small businesses.
       </div>
     </footer>
   </div>

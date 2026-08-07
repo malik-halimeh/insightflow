@@ -1,7 +1,7 @@
 <!--
   OWNER: M1
 
-  Entry point for password reset — takes an email, always shows the same
+  Entry point for password reset. Takes an email, always shows the same
   generic confirmation regardless of whether an account exists (the server
   behaves the same way; see server/api/auth/forgot-password.post.ts).
 
@@ -14,7 +14,7 @@ import { forgotPasswordSchema, type ForgotPasswordInput } from '#shared/schemas'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 definePageMeta({ layout: false })
-useSeoMeta({ title: 'Reset your password — InsightFlow' })
+useSeoMeta({ title: 'Reset your password - InsightFlow' })
 
 const state = reactive<ForgotPasswordInput>({ email: '' })
 

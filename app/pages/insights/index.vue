@@ -2,7 +2,7 @@
 import type { PublishedInsight } from '#shared/schemas'
 
 useSeoMeta({
-  title: 'Insight feed — InsightFlow',
+  title: 'Insight feed - InsightFlow',
   description: 'Plain-language sales findings shared by small businesses.'
 })
 
