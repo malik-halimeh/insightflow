@@ -8,6 +8,7 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "seed": "tsx scripts/seed.ts",
+    "verify": "tsx scripts/verify-release.ts",
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
