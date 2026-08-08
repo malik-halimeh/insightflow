@@ -1,8 +1,7 @@
-import { ObjectId } from 'mongodb'
 import type { DatasetSummary } from '#shared/types/analytics'
 import type { ForecastSummary } from '#shared/types/forecast'
-import { requireSession } from '../../utils/auth'
-import { datasetsCollection, salesRowsCollection } from '../../utils/db'
+import { salesRowsCollection } from '../../utils/db'
+import { requireOwnedDataset } from '../../utils/ownership'
 import { REQUIRED_DAYS, forecastForward, measureAccuracy, recentActuals } from '../../utils/forecast'
 
 /**
@@ -21,8 +20,6 @@ const HORIZON_DAYS = 7
 const ACTUALS_DAYS = 28
 
 export default defineEventHandler(async (event): Promise<ForecastSummary> => {
-  requireSession(event)
-
   if (!useRuntimeConfig(event).forecastEnabled) {
     throw createError({
       statusCode: 404,
@@ -30,17 +27,8 @@ export default defineEventHandler(async (event): Promise<ForecastSummary> => {
     })
   }
 
-  const datasetId = getRouterParam(event, 'datasetId')
-
-  if (!datasetId || !ObjectId.isValid(datasetId)) {
-    throw createError({ statusCode: 400, statusMessage: 'That data set could not be found.' })
-  }
-
-  const dataset = await (await datasetsCollection()).findOne({ _id: new ObjectId(datasetId) })
-
-  if (!dataset) {
-    throw createError({ statusCode: 404, statusMessage: 'That data set could not be found.' })
-  }
+  const dataset = await requireOwnedDataset(event, getRouterParam(event, 'datasetId'))
+  const datasetId = dataset._id.toHexString()
 
   const { _id, name, businessType, periodStart, periodEnd, rowCount, createdAt } = dataset
   const summary: DatasetSummary = {

@@ -1,6 +1,7 @@
-import { ObjectId } from 'mongodb'
-import { requireSession } from '../../utils/auth'
+import { requireOwnedDataset } from '../../utils/ownership'
 import {
+  datasetVersionRowsCollection,
+  datasetVersionsCollection,
   datasetsCollection,
   publishedInsightsCollection,
   recommendationsCollection,
@@ -21,20 +22,32 @@ import {
  * rather than orphaned rows belonging to nothing, which nobody can find again.
  */
 export default defineEventHandler(async (event) => {
-  requireSession(event)
-
-  const id = getRouterParam(event, 'id')
-
-  if (!id || !ObjectId.isValid(id)) {
-    throw createError({ statusCode: 400, statusMessage: 'That data set could not be found.' })
-  }
-
+  // Ownership before anything is deleted. This is the most destructive route in
+  // the product, so it is also the one where a missing check costs the most: it
+  // would let any signed-in account destroy another business's entire history.
+  const existing = await requireOwnedDataset(event, getRouterParam(event, 'id'))
+  const id = existing._id.toHexString()
   const datasets = await datasetsCollection()
-  const existing = await datasets.findOne({ _id: new ObjectId(id) })
 
-  if (!existing) {
-    throw createError({ statusCode: 404, statusMessage: 'That data set could not be found.' })
-  }
+  /*
+    The archive goes too, and it goes first.
+
+    Upload history holds a full copy of every past upload's rows, so a data set
+    deleted without this leaves behind more rows than it did in `salesRows`. They
+    would be unreachable, permanent, and invisible to the owner who was told the
+    data was gone.
+
+    Archived rows before version records, for the same reason the two are ordered
+    that way in `pruneVersions`: rows whose version is gone are invisible and
+    harmless, where a version whose rows are gone is a history entry an owner can
+    see and click restore on with nothing behind it.
+
+    Ungated on purpose. The flag decides whether new history is written, never
+    whether history already on disk is cleaned up, so switching the feature off
+    must not start leaking archives.
+  */
+  await (await datasetVersionRowsCollection()).deleteMany({ datasetId: id })
+  const versions = await (await datasetVersionsCollection()).deleteMany({ datasetId: id })
 
   // Foreign keys are stored as hex strings, not ObjectIds.
   const [rows, recommendations, insights] = await Promise.all([
@@ -46,14 +59,15 @@ export default defineEventHandler(async (event) => {
     (await publishedInsightsCollection()).deleteMany({ datasetId: id })
   ])
 
-  await datasets.deleteOne({ _id: new ObjectId(id) })
+  await datasets.deleteOne({ _id: existing._id })
 
   return {
     deleted: {
       dataset: existing.name,
       salesRows: rows.deletedCount,
       recommendations: recommendations.deletedCount,
-      publishedInsights: insights.deletedCount
+      publishedInsights: insights.deletedCount,
+      uploadHistory: versions.deletedCount
     }
   }
 })

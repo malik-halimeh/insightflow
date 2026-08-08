@@ -1,24 +1,17 @@
-import { ObjectId } from 'mongodb'
 import { datasetCreateSchema, type Dataset } from '#shared/schemas'
-import { requireSession } from '../../utils/auth'
+import { requireOwnedDataset } from '../../utils/ownership'
 import { datasetsCollection } from '../../utils/db'
 
 export default defineEventHandler(async (event): Promise<Dataset> => {
-  requireSession(event)
-
-  const id = getRouterParam(event, 'id')
-
-  if (!id || !ObjectId.isValid(id)) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'That data set could not be found.'
-    })
-  }
+  // Ownership is proved before the body is even read, so a request for another
+  // account's data set is refused without the edit being validated or applied.
+  const existing = await requireOwnedDataset(event, getRouterParam(event, 'id'))
 
   // datasetCreateSchema, not datasetSchema. The record schema also demands the id,
-  // the row count and the timestamps, none of which the edit form sends and none
-  // of which a browser is allowed to set — so validating against it rejects every
-  // real edit, and the owner sees a form that does nothing when they press save.
+  // the owner, the row count and the timestamps, none of which the edit form sends
+  // and none of which a browser is allowed to set — so validating against it
+  // rejects every real edit, and the owner sees a form that does nothing when they
+  // press save.
   const parsed = datasetCreateSchema.safeParse(await readBody(event))
 
   if (!parsed.success) {
@@ -29,10 +22,12 @@ export default defineEventHandler(async (event): Promise<Dataset> => {
   }
 
   const result = await (await datasetsCollection()).findOneAndUpdate(
-    { _id: new ObjectId(id) },
+    // Matched on the owner as well as the id. Belt and braces next to the check
+    // above, and it closes the window between the two.
+    { _id: existing._id, ownerId: existing.ownerId },
     {
       // Only the fields the owner typed. Spreading a whole record here would let a
-      // request overwrite the row count or the created date.
+      // request overwrite the row count, the created date or the owner.
       $set: {
         ...parsed.data,
         updatedAt: new Date().toISOString()

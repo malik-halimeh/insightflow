@@ -1,12 +1,15 @@
 import { type Dataset } from '#shared/schemas'
-import { requireSession } from '../../utils/auth'
+import { requireOwnerId } from '../../utils/ownership'
 import { datasetsCollection } from '../../utils/db'
 
 export default defineEventHandler(async (event): Promise<Dataset[]> => {
-  requireSession(event)
+  // Filtered by the signed-in account, not merely gated behind a session. Before
+  // this filter existed, any approved owner listing their data sets was handed
+  // every other business's as well.
+  const ownerId = requireOwnerId(event)
 
   const documents = await (await datasetsCollection())
-    .find({})
+    .find({ ownerId })
     .sort({ createdAt: -1 })
     .toArray()
 

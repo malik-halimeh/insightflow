@@ -20,6 +20,20 @@ export type RuleOperator = z.infer<typeof ruleOperatorSchema>
 
 export const ruleSchema = z.object({
   id: idSchema,
+
+  /**
+   * The account this rule belongs to.
+   *
+   * Rules are the one owned record that does not hang off a data set, so unlike
+   * sales rows or recommendations they cannot inherit their scope and carry it
+   * themselves. Without this every owner shares one rule list and can delete a
+   * rule another owner wrote.
+   *
+   * Assigned by the server from the session, which is why `ruleCreateSchema`
+   * below omits it alongside the id.
+   */
+  ownerId: idSchema,
+
   name: z.string().min(1, 'Please give this rule a name.'),
   metric: metricSchema,
   dimension: dimensionSchema,
@@ -32,13 +46,14 @@ export const ruleSchema = z.object({
 export type Rule = z.infer<typeof ruleSchema>
 
 /**
- * What the owner fills in when writing a rule. Only the id is missing: the server
- * assigns it, and a browser must never generate a database key.
+ * What the owner fills in when writing a rule. The id and the owner are missing:
+ * the server assigns both, a browser must never generate a database key, and a
+ * browser that could send an owner could write a rule into someone else's list.
  *
  * Bind the rule form to this, not to `ruleSchema`. A form bound to the record
  * schema cannot submit, because it has no field for the id and so nowhere to show
  * the error.
  */
-export const ruleCreateSchema = ruleSchema.omit({ id: true })
+export const ruleCreateSchema = ruleSchema.omit({ id: true, ownerId: true })
 
 export type RuleCreate = z.infer<typeof ruleCreateSchema>

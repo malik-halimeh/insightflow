@@ -474,8 +474,29 @@ async function seed(): Promise<void> {
 
   const userDocs = await buildUsers(now)
 
+  /*
+    The demo data set belongs to the demo owner, not to nobody.
+
+    Every read in the product now filters by `ownerId`, so a seeded data set with
+    no owner is invisible to every account: the dashboard, the recommendations and
+    the history page would all render their empty state on a freshly seeded
+    database, which looks exactly like a broken build.
+
+    Matched by username rather than by position, so reordering `seedAccounts()`
+    cannot quietly reassign the demo data to an admin.
+  */
+  const demoOwnerUsername = (process.env.AUTH_USERNAME || 'owner').toLowerCase()
+  const demoOwner = userDocs.find(user => user.username === demoOwnerUsername)
+
+  if (!demoOwner) {
+    throw new Error(`The demo owner account "${demoOwnerUsername}" was not built, so the demo data set would have no owner.`)
+  }
+
+  const ownerId = demoOwner._id.toHexString()
+
   const dataset = datasetSchema.parse({
     id: datasetIdHex,
+    ownerId,
     name: 'Bella Pizza — last 8 weeks',
     businessType: 'restaurant',
     periodStart,

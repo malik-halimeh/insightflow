@@ -1,4 +1,3 @@
-import { ObjectId } from 'mongodb'
 import type {
   AnalyticsSummary,
   CategoryStat,
@@ -7,8 +6,8 @@ import type {
   RevenuePoint,
   TopItemStat
 } from '#shared/types/analytics'
-import { requireSession } from '../../../utils/auth'
-import { datasetsCollection, salesRowsCollection } from '../../../utils/db'
+import { salesRowsCollection } from '../../../utils/db'
+import { requireOwnedDataset } from '../../../utils/ownership'
 
 /**
  * Turns the raw sales rows of one data set into the figures the dashboard needs:
@@ -38,17 +37,10 @@ function weekdayIndex(date: string): number {
 }
 
 export default defineEventHandler(async (event): Promise<AnalyticsSummary> => {
-  requireSession(event)
-
-  const datasetId = getRouterParam(event, 'datasetId')
-  if (!datasetId || !ObjectId.isValid(datasetId)) {
-    throw createError({ statusCode: 400, statusMessage: 'That data set could not be found.' })
-  }
-
-  const dataset = await (await datasetsCollection()).findOne({ _id: new ObjectId(datasetId) })
-  if (!dataset) {
-    throw createError({ statusCode: 404, statusMessage: 'That data set could not be found.' })
-  }
+  // The dashboard's whole figure set for one data set, so the ownership check is
+  // what stops an id in the URL from returning another business's takings.
+  const dataset = await requireOwnedDataset(event, getRouterParam(event, 'datasetId'))
+  const datasetId = dataset._id.toHexString()
 
   const { _id, name, businessType, periodStart, periodEnd, rowCount, createdAt } = dataset
   const datasetSummary: DatasetSummary = {

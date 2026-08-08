@@ -6,7 +6,7 @@ import {
 } from '#shared/schemas'
 
 export default defineEventHandler(async (event): Promise<Rule> => {
-  requireSession(event)
+  const ownerId = requireOwnerId(event)
 
   const parsed = ruleCreateSchema.safeParse(await readBody(event))
   if (!parsed.success) {
@@ -17,9 +17,13 @@ export default defineEventHandler(async (event): Promise<Rule> => {
     })
   }
 
+  // The owner comes from the signed session, and `ruleCreateSchema` has no field
+  // for it, so a request cannot write a rule into another account's list even by
+  // sending one.
   const _id = new ObjectId()
   const rule = ruleSchema.parse({
     id: _id.toHexString(),
+    ownerId,
     ...parsed.data
   })
   const { id, ...document } = rule

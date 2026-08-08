@@ -80,10 +80,14 @@ export default defineEventHandler(async (event): Promise<AdminProfile> => {
   // reissued whenever either changes — otherwise the sidebar and every later
   // requireAdmin() call keep referring to the old identity for the rest of
   // this session even though the database has already moved on.
+  //
+  // The userId is the one thing that does not change here. It is the account's
+  // `_id`, which is exactly why owned records are keyed on it rather than on a
+  // username: renaming an account leaves everything it owns still attached.
   setCookie(
     event,
     SESSION_COOKIE,
-    createSessionToken(username, displayName, 'admin', config.sessionSecret),
+    createSessionToken(account._id.toHexString(), username, displayName, 'admin', config.sessionSecret),
     {
       httpOnly: true,
       sameSite: 'lax',
