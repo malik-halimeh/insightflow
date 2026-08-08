@@ -10,7 +10,16 @@ import { formatCount, formatPercentChange } from '#shared/format'
 
 type Finding = Pick<
   Recommendation,
-  'title' | 'body' | 'action' | 'metric' | 'dimension' | 'changePercent' | 'severity'
+  | 'title'
+  | 'body'
+  | 'action'
+  | 'metric'
+  | 'dimension'
+  | 'dimensionValue'
+  | 'operator'
+  | 'expectedDirection'
+  | 'changePercent'
+  | 'severity'
 >
 
 interface GroupSummary {
@@ -133,6 +142,9 @@ function buildComparisonFinding(
     action: rule.advice,
     metric: rule.metric,
     dimension: rule.dimension,
+    dimensionValue: group.label,
+    operator: rule.operator,
+    expectedDirection: rule.expectedDirection,
     changePercent,
     severity: severityForChange(changePercent)
   }
@@ -207,6 +219,9 @@ function evaluateUnsoldRule(rows: SalesRow[], rule: Rule): Finding[] {
       action: rule.advice,
       metric: rule.metric,
       dimension: rule.dimension,
+      dimensionValue: group.label,
+      operator: rule.operator,
+      expectedDirection: rule.expectedDirection,
       changePercent: 0,
       severity: 'warning' as const
     }]

@@ -24,6 +24,7 @@ const state = reactive<RuleCreate>({
   operator: 'above_average_by',
   threshold: 20,
   advice: '',
+  expectedDirection: 'up',
   enabled: true
 })
 
@@ -37,6 +38,7 @@ watch(
       operator: rule?.operator ?? 'above_average_by',
       threshold: rule?.threshold ?? 20,
       advice: rule?.advice ?? '',
+      expectedDirection: rule?.expectedDirection ?? 'up',
       enabled: rule?.enabled ?? true
     })
   },
@@ -127,6 +129,20 @@ function submit(event: FormSubmitEvent<RuleCreate>) {
             v-model="state.advice"
             class="w-full"
             :rows="4"
+          />
+        </UFormField>
+
+        <UFormField
+          label="If this advice works, the number should"
+          name="expectedDirection"
+        >
+          <USelect
+            v-model="state.expectedDirection"
+            class="w-full"
+            :items="[
+              { label: 'Go up', value: 'up' },
+              { label: 'Go down', value: 'down' }
+            ]"
           />
         </UFormField>
 
