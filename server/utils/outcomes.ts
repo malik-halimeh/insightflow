@@ -2,6 +2,8 @@ import type {
   Dimension,
   ExpectedDirection,
   Metric,
+  Outcome,
+  OutcomeDetailResponse,
   OutcomeReadiness,
   OutcomeStatus,
   OutcomeWindow,
@@ -10,7 +12,8 @@ import type {
 import {
   OUTCOME_MIN_SALES_DATES,
   OUTCOME_NO_CLEAR_EFFECT_PERCENT,
-  OUTCOME_WINDOW_DAYS
+  OUTCOME_WINDOW_DAYS,
+  outcomeSchema
 } from '../../shared/schemas/outcome'
 
 const MILLISECONDS_PER_DAY = 86_400_000
@@ -208,5 +211,61 @@ export function calculateOutcomeVerdict(
   return {
     changePercent,
     status: improved ? 'improved' : 'worsened'
+  }
+}
+
+/**
+ * Resolves a pending outcome from current rows when both readiness gates pass.
+ * The function is pure: persistence decides whether this candidate wins the
+ * pending-to-completed race, and completed records are returned unchanged.
+ */
+export function resolveOutcome(
+  outcome: Outcome,
+  rows: SalesRow[],
+  datasetVersionId: string | null,
+  now = new Date().toISOString()
+): OutcomeDetailResponse {
+  if (outcome.status !== 'pending') {
+    return { outcome, readiness: null }
+  }
+
+  const readiness = calculateOutcomeReadiness(
+    rows,
+    outcome.followedDate,
+    now.slice(0, 10)
+  )
+
+  if (!readiness.ready) {
+    return { outcome, readiness }
+  }
+
+  const after = measureOutcomeWindow(
+    rows,
+    outcomeWindows(outcome.followedDate).after,
+    {
+      metric: outcome.recommendation.metric,
+      dimension: outcome.recommendation.dimension,
+      dimensionValue: outcome.recommendation.dimensionValue
+    },
+    datasetVersionId
+  )
+  const verdict = calculateOutcomeVerdict(
+    outcome.beforeValue,
+    after.value,
+    outcome.recommendation.expectedDirection
+  )
+
+  return {
+    outcome: outcomeSchema.parse({
+      ...outcome,
+      afterWindow: after.window,
+      afterValue: after.value,
+      changePercent: verdict.changePercent,
+      hasMissingSalesDates: after.window.missingSalesDates > 0,
+      status: verdict.status,
+      completedAt: now,
+      updatedAt: now
+    }),
+    readiness: null
   }
 }
