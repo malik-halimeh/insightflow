@@ -1,6 +1,11 @@
 import { z } from 'zod'
 import { idSchema, isoDateTimeSchema } from './common'
-import { dimensionSchema, metricSchema, ruleOperatorSchema } from './rule'
+import {
+  dimensionSchema,
+  expectedDirectionSchema,
+  metricSchema,
+  ruleOperatorSchema
+} from './rule'
 
 export const severitySchema = z.enum(['info', 'opportunity', 'warning'], {
   error: 'Please choose how important this finding is.'
@@ -32,6 +37,8 @@ export const recommendationSchema = z.object({
   // Optional while recommendations written before this contract still exist.
   dimensionValue: z.string().min(1).nullable().optional(),
   operator: ruleOperatorSchema.nullable().optional(),
+  /** Frozen from the rule so later edits cannot change how this finding is measured. */
+  expectedDirection: expectedDirectionSchema.nullable().optional(),
   // Negative values describe a fall, so this is not restricted to positive numbers.
   changePercent: z.number({ error: 'Please enter the change as a number, for example 12.5.' }),
   severity: severitySchema,

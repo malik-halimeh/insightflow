@@ -16,6 +16,7 @@ const starterRuleDefinitions: RuleCreate[] = [
     operator: 'above_average_by',
     threshold: 20,
     advice: 'Prepare extra stock and schedule enough staff before this busy day.',
+    expectedDirection: 'up',
     enabled: true
   },
   {
@@ -25,6 +26,7 @@ const starterRuleDefinitions: RuleCreate[] = [
     operator: 'below_average_by',
     threshold: 15,
     advice: 'Consider running an offer or promotion to bring in more customers on this day.',
+    expectedDirection: 'up',
     enabled: true
   },
   {
@@ -34,6 +36,7 @@ const starterRuleDefinitions: RuleCreate[] = [
     operator: 'below_average_by',
     threshold: 70,
     advice: 'Review whether this item needs a different offer or should remain on the menu.',
+    expectedDirection: 'up',
     enabled: true
   }
 ]
@@ -136,6 +139,9 @@ export default defineEventHandler(async (event): Promise<Recommendation[]> => {
         $set: {
           body: finding.body,
           action: finding.action,
+          dimensionValue: finding.dimensionValue,
+          operator: finding.operator,
+          expectedDirection: finding.expectedDirection,
           changePercent: finding.changePercent,
           severity: finding.severity
         },
