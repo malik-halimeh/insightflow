@@ -2,7 +2,7 @@ import { ObjectId } from 'mongodb'
 import type { UploadReport } from '#shared/types/upload'
 import { requireSession } from '../../../utils/auth'
 import { readSalesRows, withRevenue } from '../../../utils/csv'
-import { datasetsCollection, salesRowsCollection } from '../../../utils/db'
+import { datasetsCollection, salesRowsCollection, datasetVersionsCollection } from '../../../utils/db'
 
 /**
  * Imports the usable rows of a spreadsheet into an existing data set.
@@ -51,6 +51,27 @@ export default defineEventHandler(async (event): Promise<UploadReport> => {
 
   const salesRows = await salesRowsCollection()
 
+  
+  if (dataset.rowCount > 0) {
+    const versionsCollection = await datasetVersionsCollection()
+    const existingVersionsCount = await versionsCollection.countDocuments({ datasetId: id })
+
+    await versionsCollection.insertOne({
+      _id: new ObjectId(),
+      datasetId: id,
+      versionNumber: existingVersionsCount + 1,
+      rowCount: dataset.rowCount,
+      periodStart: dataset.periodStart,
+      periodEnd: dataset.periodEnd,
+      rejectedCount: 0,
+      quality: {
+        thin: dataset.rowCount < 20,
+        missingDays: 0,
+        duplicateRows: 0
+      },
+      createdAt: dataset.updatedAt || dataset.createdAt
+    })
+  }
   // Replace rather than append. The alternative is an owner who uploads the same
   // export twice and sees their revenue double.
   await salesRows.deleteMany({ datasetId: id })
