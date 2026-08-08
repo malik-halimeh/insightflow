@@ -40,7 +40,10 @@ export type DatasetDoc = DocOf<Dataset>
 export type SalesRowDoc = DocOf<SalesRow>
 export type RecommendationDoc = DocOf<Recommendation>
 export type RuleDoc = DocOf<Rule>
-export type PublishedInsightDoc = DocOf<PublishedInsight>
+export type PublishedInsightDoc = DocOf<PublishedInsight> & {
+  /** Stable account id for private distinct-contributor aggregation. */
+  contributorId?: string
+}
 export type DatasetVersionDoc = DocOf<DatasetVersion>
 
 /**
