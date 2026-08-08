@@ -24,7 +24,7 @@ import { formatCount, formatMoney } from '#shared/format'
 import type { AnalyticsSummary, DatasetSummary } from '#shared/types/analytics'
 
 definePageMeta({ middleware: 'auth', layout: 'app' })
-useSeoMeta({ title: 'Dashboard — InsightFlow' })
+useSeoMeta({ title: 'Dashboard - InsightFlow' })
 
 /** Four weeks of trading days. Below this, comparisons are hidden rather than guessed. */
 const MINIMUM_DAYS_FOR_TRENDS = 28
@@ -62,8 +62,8 @@ const loading = computed(() =>
 
 const enoughHistory = computed(() => (summary.value?.activeDays ?? 0) >= MINIMUM_DAYS_FOR_TRENDS)
 
-const bestSeller = computed(() => summary.value?.topItems[0]?.itemName ?? '—')
-const worstSeller = computed(() => summary.value?.topItems.at(-1)?.itemName ?? '—')
+const bestSeller = computed(() => summary.value?.topItems[0]?.itemName ?? '-')
+const worstSeller = computed(() => summary.value?.topItems.at(-1)?.itemName ?? '-')
 </script>
 
 <template>

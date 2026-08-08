@@ -1,7 +1,7 @@
 <!--
   OWNER: M1
 
-  Entry point for password reset — takes an email, always shows the same
+  Entry point for password reset. Takes an email, always shows the same
   generic confirmation regardless of whether an account exists (the server
   behaves the same way; see server/api/auth/forgot-password.post.ts).
 
@@ -14,7 +14,7 @@ import { forgotPasswordSchema, type ForgotPasswordInput } from '#shared/schemas'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 definePageMeta({ layout: false })
-useSeoMeta({ title: 'Reset your password — InsightFlow' })
+useSeoMeta({ title: 'Reset your password - InsightFlow' })
 
 const state = reactive<ForgotPasswordInput>({ email: '' })
 
@@ -43,7 +43,7 @@ async function onSubmit(event: FormSubmitEvent<ForgotPasswordInput>) {
   <div class="min-h-screen flex items-center justify-center px-4 py-12 sm:px-6">
     <div class="w-full max-w-sm">
       <NuxtLink to="/" class="flex items-center gap-2 font-semibold tracking-tight">
-        <span class="flex size-7 items-center justify-center rounded-md bg-primary text-inverted">
+        <span class="flex size-7 items-center justify-center rounded-md bg-primary on-accent">
           <UIcon name="i-lucide-chart-column" class="size-4" />
         </span>
         InsightFlow
@@ -99,7 +99,7 @@ async function onSubmit(event: FormSubmitEvent<ForgotPasswordInput>) {
       </UForm>
 
       <p class="mt-6 text-sm text-muted">
-        <NuxtLink to="/login" class="text-primary hover:underline">
+        <NuxtLink to="/login" class="ink-accent hover:underline">
           Back to sign in
         </NuxtLink>
       </p>

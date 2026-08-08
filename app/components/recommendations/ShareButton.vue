@@ -2,7 +2,7 @@
   OWNER: M4 (recommendations and publishing)
 
   The publish button and its dialog. This replaces the earlier ShareDialog, which
-  asked for the same three fields — two components doing one job would have
+  asked for the same three fields. Two components doing one job would have
   drifted apart within a week.
 
   WHY THE PREVIEW IS HERE

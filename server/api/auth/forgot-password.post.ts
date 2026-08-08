@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
       <p>Hi ${account.displayName},</p>
       <p>Someone asked to reset the password on your InsightFlow account. If this was you, use the link below — it expires in ${TOKEN_TTL_MINUTES} minutes.</p>
       <p><a href="${resetUrl}">${resetUrl}</a></p>
-      <p>If you didn't request this, you can safely ignore this email — your password will not change.</p>
+      <p>If you didn't request this, you can safely ignore this email. Your password will not change.</p>
     `
   })
 
