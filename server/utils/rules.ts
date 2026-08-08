@@ -6,7 +6,18 @@ import type {
   SalesRow,
   Severity
 } from '#shared/schemas'
-import { formatCount, formatPercentChange } from '#shared/format'
+/*
+  Relative rather than the #shared alias, and only this line needs to be.
+
+  Every other import in this file is `import type`, which TypeScript erases, so
+  the alias never has to resolve at runtime. This one imports values, so it does.
+  Nitro can resolve `#shared/*`; a plain Node process started by tsx cannot, which
+  is what `scripts/seed.ts` is. Before this line changed, importing anything from
+  this module into a script failed with ERR_PACKAGE_IMPORT_NOT_DEFINED.
+
+  Same reasoning, and the same fix, as the note at the top of ./db.ts.
+*/
+import { formatCount, formatPercentChange } from '../../shared/format'
 
 type Finding = Pick<
   Recommendation,

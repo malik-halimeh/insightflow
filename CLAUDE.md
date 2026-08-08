@@ -59,10 +59,19 @@ New paths only. Everything above still applies unchanged.
 | **M4** | `shared/schemas/outcome.ts`, `server/api/outcomes/**`, `app/pages/recommendations/[id]/outcome.vue` |
 | **M5** | `shared/schemas/benchmark.ts`, `server/api/benchmarks/**`, `app/pages/insights/benchmarks.vue` |
 
-**One exception to the table above.** `server/api/datasets/versions/**` sits inside M2's
-`server/api/datasets/**` but belongs to **M1**. It is the only carve-out; the rest of
-`server/api/datasets/` is still M2's. If you are M2, you call those endpoints, you do not
-edit them.
+**Two exceptions to the table above.**
+
+`server/api/datasets/versions/**` sits inside M2's `server/api/datasets/**` but belongs to
+**M1**. The rest of `server/api/datasets/` is still M2's. If you are M2, you call those
+endpoints, you do not edit them.
+
+`server/utils/outcomes.ts` sits inside M1's `server/utils/**` but belongs to **M4**. It is
+the outcome measurement: the two windows either side of the follow date, the readiness
+check, and the verdict. That is M4's domain logic and changes with M4's product decisions,
+so M1 owning the file would block M4 on M1 for every one of them. It cannot live under
+`server/api/outcomes/` instead, because Nitro registers every file there as a route and a
+helper module would become an endpoint. One file, named exactly, and the rest of
+`server/utils/` is still M1's.
 
 **Schemas.** In Phase 1 every file in `shared/**` was M1's. In Phase 2, M4 and M5 each own
 one new schema file, listed above. Nothing else in `shared/` changes owner — and a schema is

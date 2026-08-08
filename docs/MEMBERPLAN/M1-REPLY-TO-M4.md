@@ -164,19 +164,66 @@ fixes above. It needs no dependency, it runs with `npx tsx scripts/<name>.ts`, a
 it is honest about what it checked. `scripts/` is mine, so send me the file and I
 will land it.
 
-### 5. What I owe you once your schema is stable
+### 5. What I owe you once your schema is stable: delivered
 
-Confirmed, all four, and none of them are large. Send me the merged
-`shared/schemas/outcome.ts` and I will deliver in one pass:
+All of it is on `main`. Pull before you start Milestone 5.
 
-- the barrel export in `shared/schemas/index.ts`
+- `export * from './outcome'` in `shared/schemas/index.ts`
 - `OutcomeDoc` and `outcomesCollection()` in `server/utils/db.ts`
-- indexes in `server/utils/indexes.ts`: unique on `recommendationId`, plus
-  `datasetId` and `status` for the queries your list page will make
-- seeded examples in `scripts/seed.ts`, covering improved, worsened, no clear
-  effect, and not yet ready
+- three indexes in `server/utils/indexes.ts`: **unique** on `recommendationId`,
+  plus `datasetId + createdAt` for your list and `status + datasetId` for the
+  readiness sweep
+- the outcome cascade in `server/api/datasets/[id].delete.ts`, reported as
+  `outcomes` in the response
+- the `expectedDirection` migration, folded into `scripts/assign-owners.ts` so
+  there is one command to run rather than two
+- seeded rules, findings and outcomes in `scripts/seed.ts`
 
-I am not writing them against a draft. One stable schema, one pass.
+**The unique index is doing real work, so do not remove it.** A recommendation is
+followed once. Without it, an owner who double-clicks "Record outcome", or whose
+browser retries a request whose response it never saw, gets two outcomes against
+one finding and both are counted by the scoreboard. Catch the duplicate-key error
+and return the existing record; a `findOne` then `insertOne` cannot close that
+window, because there is always a gap between the two where a second request fits.
+
+**On the seed.** The findings come from `evaluateRule`, not from hand-written
+strings, because your route upserts on title, metric and dimension: a seeded title
+that drifted from what your engine produces would leave the seeded outcome pointing
+at a recommendation nobody can reach, with a duplicate finding beside it. The before
+and after values are summed from the seeded rows rather than invented, so the
+verdicts are whatever the data really did. It currently produces one pending, one
+no-clear-effect and one worsened.
+
+Two things came out of building it that you should know:
+
+**Your `superRefine` caught a bug in my seed.** My after-window was fifteen days
+wide, which made `missingSalesDates` negative, and the parse refused it. That is the
+schema doing exactly what it should.
+
+**`server/utils/rules.ts` had a latent import bug and I fixed one line.** It
+imported `formatCount` and `formatPercentChange` from `#shared/format`. Every other
+import in that file is `import type`, which TypeScript erases, so the alias never
+had to resolve at runtime. Those two are values, so it did, and Nitro can resolve
+`#shared/*` while a plain Node process started by tsx cannot. Importing anything
+from that module into a script failed with `ERR_PACKAGE_IMPORT_NOT_DEFINED`. It is
+now a relative path, matching the note at the top of `db.ts`. **This will bite you
+in Milestone 5** if your calculation module imports a value through the alias and
+anything outside Nitro ever loads it.
+
+### 6. Milestone 5: the calculation module is yours
+
+`server/utils/outcomes.ts`, and it is **M4's**, not mine. I have written the
+carve-out into CLAUDE.md beside the existing one for `server/api/datasets/versions/**`,
+so it is a rule rather than a favour.
+
+The reasoning: that module is the measurement itself, and the measurement changes
+whenever a product decision about outcomes changes. Those decisions are yours, so a
+file M1 owned would block you on me every time one moved. It cannot go under
+`server/api/outcomes/` instead, because Nitro registers every file in that tree as
+a route and a helper module would quietly become an endpoint.
+
+The rest of `server/utils/` stays mine. If you need something from it that does not
+exist yet, ask rather than adding it.
 
 ## Versioning semantics for outcome measurement
 

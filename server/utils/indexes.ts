@@ -13,6 +13,13 @@ export const COLLECTIONS = {
   publishedInsights: 'publishedInsights',
 
   /**
+   * Whether the advice worked. One record per followed recommendation, holding a
+   * frozen snapshot of the finding and the two measurement windows either side of
+   * the date the owner acted.
+   */
+  outcomes: 'outcomes',
+
+  /**
    * Upload history. `datasetVersions` holds one record per upload;
    * `datasetVersionRows` holds those uploads' rows.
    *
@@ -109,6 +116,38 @@ export async function ensureIndexes(db: Db): Promise<void> {
     db.collection(COLLECTIONS.datasetVersionRows).createIndex(
       { datasetId: 1 },
       { name: 'datasetVersionRows_datasetId' }
+    ),
+
+    /*
+      One outcome per recommendation, enforced here rather than in the route.
+
+      A recommendation is followed once. Two outcomes against the same finding
+      would both be counted by the scoreboard, so an owner who double-clicks
+      "Record outcome", or whose browser retries a request it never saw the
+      response to, would move their own improvement rate. A unique index makes
+      that a duplicate-key error the route can turn into the existing record,
+      which a findOne-then-insert cannot: there is always a window between the
+      two where a second request fits.
+    */
+    db.collection(COLLECTIONS.outcomes).createIndex(
+      { recommendationId: 1 },
+      { unique: true, name: 'outcomes_recommendationId_unique' }
+    ),
+
+    /*
+      The outcomes list and its scoreboard read one data set, newest first, and
+      the readiness sweep reads the pending ones. Status leads the second index
+      because 'pending' is the only value that sweep looks for, and it stays a
+      small slice of the collection as completed outcomes accumulate.
+    */
+    db.collection(COLLECTIONS.outcomes).createIndex(
+      { datasetId: 1, createdAt: -1 },
+      { name: 'outcomes_datasetId_createdAt' }
+    ),
+
+    db.collection(COLLECTIONS.outcomes).createIndex(
+      { status: 1, datasetId: 1 },
+      { name: 'outcomes_status_datasetId' }
     )
   ])
 }

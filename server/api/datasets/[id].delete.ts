@@ -4,6 +4,7 @@ import {
   datasetVersionsCollection,
   datasetsCollection,
   publishedInsightsCollection,
+  outcomesCollection,
   recommendationsCollection,
   salesRowsCollection
 } from '../../utils/db'
@@ -50,9 +51,13 @@ export default defineEventHandler(async (event) => {
   const versions = await (await datasetVersionsCollection()).deleteMany({ datasetId: id })
 
   // Foreign keys are stored as hex strings, not ObjectIds.
-  const [rows, recommendations, insights] = await Promise.all([
+  const [rows, recommendations, insights, outcomes] = await Promise.all([
     (await salesRowsCollection()).deleteMany({ datasetId: id }),
     (await recommendationsCollection()).deleteMany({ datasetId: id }),
+    // Outcomes go with the recommendations they measure. An outcome whose
+    // recommendation is gone can never be read again and would still be counted
+    // by any scoreboard that queried the collection directly.
+    (await outcomesCollection()).deleteMany({ datasetId: id }),
     // The confirmation promises that anything published from this data set comes
     // down, including its public link. Without this the page stays live on the
     // open internet after the data behind it is gone.
@@ -67,6 +72,7 @@ export default defineEventHandler(async (event) => {
       salesRows: rows.deletedCount,
       recommendations: recommendations.deletedCount,
       publishedInsights: insights.deletedCount,
+      outcomes: outcomes.deletedCount,
       uploadHistory: versions.deletedCount
     }
   }
