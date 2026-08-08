@@ -266,6 +266,11 @@ async function unpublish(recommendationId: string) {
       </template>
     </UAlert>
 
+    <RecommendationsOutcomeScoreboard
+      v-if="outcomeStatus !== 'pending' && !outcomesDisabled && !outcomeLoadFailed"
+      :scoreboard="outcomeResponse.scoreboard"
+    />
+
     <div
       v-if="status === 'pending' || publishStatus === 'pending' || outcomeStatus === 'pending'"
       class="space-y-4"
