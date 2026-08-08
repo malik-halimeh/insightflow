@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { idSchema, isoDateTimeSchema } from './common'
 import { businessTypeSchema } from './dataset'
+import { dimensionSchema, metricSchema, ruleOperatorSchema } from './rule'
 
 // Lowercase words joined by single hyphens, e.g. "quiet-tuesday-evenings".
 // Uniqueness cannot be checked here; it is enforced by a unique index in the database.
@@ -24,6 +25,11 @@ export const publishedInsightSchema = z.object({
     .max(280, 'Please keep the caption to 280 characters or fewer.'),
   metricLabel: z.string().min(1, 'Please say what this number measures.'),
   metricValue: z.number({ error: 'Please enter this measurement as a number.' }),
+  // Null for legacy publications created before canonical benchmark fields existed.
+  metric: metricSchema.nullable().default(null),
+  dimension: dimensionSchema.nullable().default(null),
+  dimensionValue: z.string().min(1).nullable().default(null),
+  operator: ruleOperatorSchema.nullable().default(null),
   // Defaults to hiding real figures so publishing never exposes takings by accident.
   hideAbsoluteNumbers: z.boolean().default(true),
   businessType: businessTypeSchema,
