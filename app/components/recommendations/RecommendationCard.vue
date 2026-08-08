@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import type {
+  OutcomeCreate,
+  OutcomeStatus,
+  OutcomeSummary,
   PublishedInsight,
   PublishedInsightCreate,
   Recommendation
 } from '#shared/schemas'
+import FollowOutcomeButton from './FollowOutcomeButton.vue'
 import ShareButton from './ShareButton.vue'
 
 const props = defineProps<{
@@ -12,10 +16,16 @@ const props = defineProps<{
   publishing?: boolean
   unpublishing?: boolean
   serverError?: string | null
+  outcome?: OutcomeSummary | null
+  outcomeLoading?: boolean
+  outcomesDisabled?: boolean
+  outcomeLoadError?: boolean
+  outcomeServerError?: string | null
 }>()
 const emit = defineEmits<{
   publish: [PublishedInsightCreate]
   unpublish: [recommendationId: string]
+  follow: [OutcomeCreate]
 }>()
 
 const unpublishOpen = ref(false)
@@ -41,6 +51,30 @@ function unpublish() {
   unpublishOpen.value = false
   emit('unpublish', props.recommendation.id)
 }
+
+const outcomeUnavailableReason = computed(() => {
+  if (
+    !props.recommendation.dimensionValue
+    || !props.recommendation.operator
+    || !props.recommendation.expectedDirection
+  ) {
+    return 'This finding was generated before outcome tracking, so its result cannot be measured.'
+  }
+
+  if (props.recommendation.dimension === 'hour') {
+    return 'This finding needs time-of-day sales data before its result can be measured.'
+  }
+
+  return null
+})
+
+function outcomeLabel(status: OutcomeStatus): string {
+  if (status === 'pending') return 'Waiting for result'
+  if (status === 'improved') return 'Improved'
+  if (status === 'no_clear_effect') return 'No clear effect'
+  return 'Worsened'
+}
+
 </script>
 
 <template>
@@ -108,41 +142,89 @@ function unpublish() {
     </div>
 
     <template #footer>
-      <div class="flex flex-wrap items-center justify-end gap-2">
-        <template v-if="publishedInsight">
-          <UBadge color="neutral" variant="subtle">
-            Published
+      <div class="flex w-full flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <template v-if="outcome">
+            <UBadge color="neutral" variant="subtle">
+              {{ outcomeLabel(outcome.status) }}
+            </UBadge>
+
+            <UButton
+              :to="`/recommendations/${recommendation.id}/outcome`"
+              color="neutral"
+              variant="subtle"
+              icon="i-lucide-lightbulb"
+            >
+              View outcome
+            </UButton>
+          </template>
+
+          <UBadge v-else-if="outcomesDisabled" color="neutral" variant="subtle">
+            Outcome tracking unavailable
           </UBadge>
 
-          <UButton
-            :to="`/insights/${publishedInsight.slug}`"
-            color="neutral"
-            variant="subtle"
-            icon="i-lucide-external-link"
-          >
-            View public insight
+          <UBadge v-else-if="outcomeLoadError" color="error" variant="subtle">
+            Outcome status unavailable
+          </UBadge>
+
+          <UButton v-else-if="outcomeLoading" loading disabled>
+            Checking outcome
           </UButton>
 
-          <UButton
-            color="error"
-            icon="i-lucide-eye-off"
-            :loading="unpublishing"
-            @click="unpublishOpen = true"
-          >
-            Unpublish
-          </UButton>
-        </template>
+          <div v-else-if="outcomeUnavailableReason" class="space-y-2">
+            <UButton disabled icon="i-lucide-check">
+              I followed this
+            </UButton>
+            <p class="text-xs text-muted">
+              {{ outcomeUnavailableReason }}
+            </p>
+          </div>
 
-        <ShareButton
-          v-else
-          :recommendation-id="recommendation.id"
-          :title="recommendation.title"
-          :metric-label="metricLabel"
-          :metric-value="recommendation.changePercent"
-          :loading="publishing"
-          :server-error="serverError"
-          @publish="emit('publish', $event)"
-        />
+          <FollowOutcomeButton
+            v-else
+            :recommendation-id="recommendation.id"
+            :loading="outcomeLoading"
+            :server-error="outcomeServerError"
+            @follow="emit('follow', $event)"
+          />
+        </div>
+
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <template v-if="publishedInsight">
+            <UBadge color="neutral" variant="subtle">
+              Published
+            </UBadge>
+
+            <UButton
+              :to="`/insights/${publishedInsight.slug}`"
+              color="neutral"
+              variant="subtle"
+              icon="i-lucide-external-link"
+            >
+              View public insight
+            </UButton>
+
+            <UButton
+              color="error"
+              icon="i-lucide-eye-off"
+              :loading="unpublishing"
+              @click="unpublishOpen = true"
+            >
+              Unpublish
+            </UButton>
+          </template>
+
+          <ShareButton
+            v-else
+            :recommendation-id="recommendation.id"
+            :title="recommendation.title"
+            :metric-label="metricLabel"
+            :metric-value="recommendation.changePercent"
+            :loading="publishing"
+            :server-error="serverError"
+            @publish="emit('publish', $event)"
+          />
+        </div>
       </div>
     </template>
   </UCard>

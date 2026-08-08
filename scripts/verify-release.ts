@@ -183,8 +183,8 @@ async function main() {
       bobStill?.name === 'ZZ Bob verification set', String(bobStill?.name))
 
     // ----------------------------------------------------- 4. duplicate request
-    // The outcome route is M4's and not built yet, so this exercises the guarantee
-    // M1 owns: the unique index, which is what makes a retry safe to catch.
+    // Exercise the database guarantee independently of the route. The route check
+    // below proves M4 turns this duplicate-key error into an idempotent response.
     const recommendationId = new ObjectId().toHexString()
     const outcomes = await outcomesCollection()
     const base = {
@@ -227,6 +227,134 @@ async function main() {
       changePercent: -30, severity: 'warning', createdAt: new Date().toISOString()
     })
 
+    // --------------------------------------------------------- 5. outcome loop
+    const outcomeBody = JSON.stringify({
+      recommendationId: recId.toHexString(),
+      followedDate: '2026-02-04',
+      note: 'Moved House Fries to the top of the menu.'
+    })
+    const recorded = await call(alice, '/api/outcomes', {
+      method: 'POST',
+      body: outcomeBody
+    })
+    const recordedId = String((recorded.body as { id?: string }).id ?? '')
+    check('outcomes', 'a followed recommendation records an immutable baseline',
+      recorded.status === 201 && recordedId.length === 24, `${recorded.status}`)
+    check('outcomes', 'the before value is measured from the matching scope',
+      (recorded.body as { beforeValue?: number }).beforeValue === 66,
+      String((recorded.body as { beforeValue?: number }).beforeValue))
+
+    const retried = await call(alice, '/api/outcomes', {
+      method: 'POST',
+      body: outcomeBody
+    })
+    check('outcomes', 'retrying the route returns the existing outcome',
+      retried.status === 200
+      && (retried.body as { id?: string }).id === recordedId,
+      `${retried.status}`)
+    check('outcomes', 'the route retry still leaves exactly one outcome',
+      await outcomes.countDocuments({ recommendationId: recId.toHexString() }) === 1)
+
+    const future = await call(alice, '/api/outcomes', {
+      method: 'POST',
+      body: JSON.stringify({
+        recommendationId: recId.toHexString(),
+        followedDate: '2999-01-01'
+      })
+    })
+    check('outcomes', 'a future follow date is rejected', future.status === 400, `${future.status}`)
+
+    const bobRecord = await call(bob, '/api/outcomes', {
+      method: 'POST',
+      body: outcomeBody
+    })
+    check('isolation', 'another owner cannot record an outcome for this finding',
+      bobRecord.status === 404, `${bobRecord.status}`)
+
+    const pending = await call(alice, `/api/outcomes/${recId.toHexString()}`)
+    const pendingBody = pending.body as {
+      outcome?: { status?: string, beforeValue?: number }
+      readiness?: { ready?: boolean, salesDatesReady?: boolean }
+    }
+    check('outcomes', 'a fresh request reads the persisted outcome',
+      pending.status === 200 && pendingBody.outcome?.status === 'pending', `${pending.status}`)
+    check('outcomes', 'too few after-period sales dates keep it pending',
+      pendingBody.readiness?.ready === false && pendingBody.readiness.salesDatesReady === false)
+
+    const aliceRows = await salesRowsCollection()
+    await aliceRows.insertOne({
+      _id: new ObjectId(), datasetId: aliceSet, date: '2026-02-03',
+      itemName: 'House Fries', category: 'Sides', quantity: 20,
+      unitPrice: 5, revenue: 100
+    })
+    const baselineAfterSourceChange = await call(alice, `/api/outcomes/${recId.toHexString()}`)
+    check('outcomes', 'later source changes do not rewrite the before snapshot',
+      (baselineAfterSourceChange.body as { outcome?: { beforeValue?: number } }).outcome?.beforeValue === 66)
+
+    await aliceRows.insertMany(Array.from({ length: 7 }, (_, index) => ({
+      _id: new ObjectId(),
+      datasetId: aliceSet,
+      date: `2026-02-${String(index + 4).padStart(2, '0')}`,
+      itemName: 'House Fries',
+      category: 'Sides',
+      quantity: 2,
+      unitPrice: 5,
+      revenue: 10
+    })))
+
+    const completed = await call(alice, `/api/outcomes/${recId.toHexString()}`)
+    const completedOutcome = (completed.body as {
+      outcome?: {
+        status?: string
+        beforeValue?: number
+        afterValue?: number
+        changePercent?: number | null
+      }
+    }).outcome
+    check('outcomes', 'seven sales dates after fourteen elapsed days complete the result',
+      completed.status === 200 && completedOutcome?.status === 'improved', `${completed.status}`)
+    check('outcomes', 'the completed comparison keeps its original baseline',
+      completedOutcome?.beforeValue === 66)
+    check('outcomes', 'the completed comparison stores the measured after value',
+      completedOutcome?.afterValue === 70 && completedOutcome.changePercent === 6.1,
+      `after=${completedOutcome?.afterValue} change=${completedOutcome?.changePercent}`)
+
+    await aliceRows.insertOne({
+      _id: new ObjectId(), datasetId: aliceSet, date: '2026-02-04',
+      itemName: 'House Fries', category: 'Sides', quantity: 100,
+      unitPrice: 5, revenue: 500
+    })
+    const frozen = await call(alice, `/api/outcomes/${recId.toHexString()}`)
+    const frozenOutcome = (frozen.body as {
+      outcome?: { status?: string, afterValue?: number, changePercent?: number | null }
+    }).outcome
+    check('outcomes', 'a completed result remains frozen after later row changes',
+      frozenOutcome?.status === 'improved'
+      && frozenOutcome.afterValue === 70
+      && frozenOutcome.changePercent === 6.1)
+
+    const outcomeList = await call(alice, '/api/outcomes')
+    const outcomeListBody = outcomeList.body as {
+      outcomes?: { id?: string }[]
+      scoreboard?: { improved?: number, completed?: number, pending?: number }
+    }
+    check('outcomes', 'the outcomes list survives a fresh request',
+      outcomeList.status === 200
+      && outcomeListBody.outcomes?.some(outcome => outcome.id === recordedId) === true)
+    check('outcomes', 'the persisted result appears in the scoreboard',
+      (outcomeListBody.scoreboard?.improved ?? 0) >= 1
+      && (outcomeListBody.scoreboard?.completed ?? 0) >= 1)
+
+    const bobOutcomeList = await call(bob, '/api/outcomes')
+    check('isolation', 'another owner cannot see this outcome in their scoreboard',
+      bobOutcomeList.status === 200
+      && (bobOutcomeList.body as { scoreboard?: { total?: number } }).scoreboard?.total === 0,
+      `${bobOutcomeList.status}`)
+
+    const bobOutcomeDetail = await call(bob, `/api/outcomes/${recId.toHexString()}`)
+    check('isolation', 'another owner cannot read the outcome detail',
+      bobOutcomeDetail.status === 404, `${bobOutcomeDetail.status}`)
+
     const publishBody = JSON.stringify({
       recommendationId: recId.toHexString(),
       displayName: 'ZZ Verify Alice',
@@ -260,7 +388,7 @@ async function main() {
       recommendationId: new ObjectId().toHexString()
     } as OutcomeDoc)
 
-    // -------------------------------------------------------- 5. deletion flow
+    // -------------------------------------------------------- 6. deletion flow
     const beforeCounts = {
       rows: await (await salesRowsCollection()).countDocuments({ datasetId: aliceSet }),
       recs: await recs.countDocuments({ datasetId: aliceSet }),
