@@ -93,168 +93,244 @@ async function onSignUp(event: FormSubmitEvent<RegisterInput>) {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center p-6">
-    <UCard class="w-full max-w-sm">
-      <template #header>
-        <h1 class="text-lg font-semibold">
+  <!--
+    Split screen. The brand panel is the reason someone is filling this form in,
+    so it carries the product's own output rather than a slogan, and it is hidden
+    below lg where a second column would only push the form off the fold.
+  -->
+  <div class="min-h-[100dvh] lg:grid lg:grid-cols-2">
+    <!--
+      The palette's #D97706 at full strength, carrying its #09090B rather than
+      white: white on amber 600 is 3.18:1, the near-black is 6.25:1. Pinned to the
+      600 step rather than the semantic token, so the panel is the same amber in
+      light and in dark and nothing here has to flip.
+
+      The overlays are black at low alpha rather than white, for the same reason:
+      a white wash on a light accent barely separates, a dark one does.
+    -->
+    <aside class="on-accent relative hidden overflow-hidden bg-primary-600 p-12 lg:flex lg:flex-col lg:justify-between">
+      <NuxtLink to="/" class="flex items-center gap-2 font-semibold tracking-tight">
+        <span class="flex size-7 items-center justify-center rounded-md bg-black/10">
+          <UIcon name="i-lucide-chart-column" class="size-4" />
+        </span>
+        InsightFlow
+      </NuxtLink>
+
+      <div class="max-w-md">
+        <h2 class="on-accent text-4xl font-semibold leading-[1.05] tracking-tight">
+          Your sales, in plain language.
+        </h2>
+        <p class="mt-4 text-lg leading-relaxed opacity-80">
+          Upload a spreadsheet. Get findings you can act on the same afternoon.
+        </p>
+
+        <div class="mt-10 rounded-[calc(var(--ui-radius)*1.5)] bg-black/[0.07] p-6 ring-1 ring-inset ring-black/10">
+          <p class="text-sm opacity-85">
+            A finding, as your workspace writes it
+          </p>
+          <p class="mt-3 text-xl font-semibold leading-snug">
+            Saturdays take 32% more than an average day here.
+          </p>
+          <p class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium">
+            <UIcon name="i-lucide-arrow-up-right" class="size-4" />
+            +32.4%
+            <span class="font-normal opacity-85">Saturday against the weekly average</span>
+          </p>
+        </div>
+      </div>
+
+      <ul class="space-y-3 text-sm opacity-90">
+        <li class="flex items-start gap-2.5">
+          <UIcon name="i-lucide-check" class="mt-0.5 size-4 shrink-0" />
+          Free to sign up, with no card and no setup call
+        </li>
+        <li class="flex items-start gap-2.5">
+          <UIcon name="i-lucide-check" class="mt-0.5 size-4 shrink-0" />
+          Your data is yours. Publishing shares a change, never a figure
+        </li>
+        <li class="flex items-start gap-2.5">
+          <UIcon name="i-lucide-check" class="mt-0.5 size-4 shrink-0" />
+          Every business account is reviewed before it goes live
+        </li>
+      </ul>
+    </aside>
+
+    <div class="flex min-h-[100dvh] items-center justify-center p-6 lg:min-h-0">
+      <div class="w-full max-w-sm">
+        <NuxtLink
+          to="/"
+          class="mb-8 flex items-center gap-2 font-semibold tracking-tight lg:hidden"
+        >
+          <span class="flex size-7 items-center justify-center rounded-md bg-primary on-accent">
+            <UIcon name="i-lucide-chart-column" class="size-4" />
+          </span>
+          InsightFlow
+        </NuxtLink>
+
+        <h1 class="text-2xl font-semibold tracking-tight">
           {{ mode === 'signin' ? 'Sign in to InsightFlow' : 'Create your account' }}
         </h1>
-      </template>
-
-      <UTabs v-model="mode" :items="authTabs" class="mb-6" />
-
-      <UAlert
-        v-if="successMessage"
-        class="mb-4"
-        color="success"
-        variant="subtle"
-        icon="i-lucide-circle-check"
-        :description="successMessage"
-      />
-
-      <UAlert
-        v-if="serverError"
-        class="mb-4"
-        color="error"
-        variant="subtle"
-        :description="serverError"
-      />
-
-      <UForm
-        v-if="mode === 'signin'"
-        :schema="loginSchema"
-        :state="loginState"
-        class="space-y-4"
-        @submit="onSignIn"
-      >
-        <UFormField label="Username or email" name="identifier">
-          <UInput v-model="loginState.identifier" autocomplete="username" class="w-full" />
-        </UFormField>
-
-        <UFormField label="Password" name="password">
-          <UInput
-            v-model="loginState.password"
-            type="password"
-            autocomplete="current-password"
-            class="w-full"
-          />
-          <template #hint>
-            <NuxtLink to="/forgot-password" class="text-primary hover:underline">
-              Forgot password?
-            </NuxtLink>
-          </template>
-        </UFormField>
-
-        <UButton type="submit" :loading="pending" block>
-          Sign in
-        </UButton>
-      </UForm>
-
-      <UForm
-        v-else
-        :schema="registerSchema"
-        :state="registerState"
-        class="space-y-4"
-        @submit="onSignUp"
-      >
-        <UFormField label="Your name" name="displayName">
-          <UInput
-            v-model="registerState.displayName"
-            autocomplete="name"
-            placeholder="Bella Rossi"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UFormField label="Username" name="username">
-          <UInput
-            v-model="registerState.username"
-            autocomplete="username"
-            placeholder="bellapizza"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UFormField label="Email" name="email">
-          <UInput
-            v-model="registerState.email"
-            type="email"
-            autocomplete="email"
-            placeholder="you@yourbusiness.com"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UFormField label="Business size" name="businessSize">
-          <USelect
-            v-model="registerState.businessSize"
-            :items="BUSINESS_SIZE_OPTIONS.map(option => ({ label: `${option.label} (${option.hint})`, value: option.value }))"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UFormField label="Phone number" name="phone">
-          <UInput
-            v-model="registerState.phone"
-            type="tel"
-            autocomplete="tel"
-            placeholder="+1 555 123 4567"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UFormField label="Business location" name="location">
-          <UInput
-            v-model="registerState.location"
-            autocomplete="address-level2"
-            placeholder="Beirut, Lebanon"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UFormField
-          label="Estimated customers per month"
-          name="estimatedCustomersPerMonth"
-          hint="Your best estimate is fine"
-        >
-          <UInputNumber
-            v-model="registerState.estimatedCustomersPerMonth"
-            :min="1"
-            :max="1000000"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UFormField
-          label="Password"
-          name="password"
-          hint="At least 8 characters, with a letter and a number"
-        >
-          <UInput
-            v-model="registerState.password"
-            type="password"
-            autocomplete="new-password"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UFormField label="Confirm password" name="confirmPassword">
-          <UInput
-            v-model="registerState.confirmPassword"
-            type="password"
-            autocomplete="new-password"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UButton type="submit" :loading="pending" block>
-          Create account
-        </UButton>
-
-        <p class="text-xs text-muted">
-          An admin reviews your account before you can sign in.
+        <p class="mt-2 text-sm text-muted">
+          {{ mode === 'signin'
+            ? 'Pick up where your last upload left off.'
+            : 'Tell us about your business and an admin will review it shortly.' }}
         </p>
-      </UForm>
-    </UCard>
+
+        <UTabs v-model="mode" :items="authTabs" class="my-6" />
+
+        <UAlert
+          v-if="successMessage"
+          class="mb-4"
+          color="success"
+          variant="subtle"
+          icon="i-lucide-circle-check"
+          :description="successMessage"
+        />
+
+        <UAlert
+          v-if="serverError"
+          class="mb-4"
+          color="error"
+          variant="subtle"
+          :description="serverError"
+        />
+
+        <UForm
+          v-if="mode === 'signin'"
+          :schema="loginSchema"
+          :state="loginState"
+          class="space-y-4"
+          @submit="onSignIn"
+        >
+          <UFormField label="Username or email" name="identifier">
+            <UInput v-model="loginState.identifier" autocomplete="username" class="w-full" />
+          </UFormField>
+
+          <UFormField label="Password" name="password">
+            <UInput
+              v-model="loginState.password"
+              type="password"
+              autocomplete="current-password"
+              class="w-full"
+            />
+            <template #hint>
+              <NuxtLink to="/forgot-password" class="ink-accent hover:underline">
+                Forgot password?
+              </NuxtLink>
+            </template>
+          </UFormField>
+
+          <UButton type="submit" :loading="pending" block>
+            Sign in
+          </UButton>
+        </UForm>
+
+        <UForm
+          v-else
+          :schema="registerSchema"
+          :state="registerState"
+          class="space-y-4"
+          @submit="onSignUp"
+        >
+          <UFormField label="Your name" name="displayName">
+            <UInput
+              v-model="registerState.displayName"
+              autocomplete="name"
+              placeholder="Bella Rossi"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField label="Username" name="username">
+            <UInput
+              v-model="registerState.username"
+              autocomplete="username"
+              placeholder="bellapizza"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField label="Email" name="email">
+            <UInput
+              v-model="registerState.email"
+              type="email"
+              autocomplete="email"
+              placeholder="you@yourbusiness.com"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField label="Business size" name="businessSize">
+            <USelect
+              v-model="registerState.businessSize"
+              :items="BUSINESS_SIZE_OPTIONS.map(option => ({ label: `${option.label} (${option.hint})`, value: option.value }))"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField label="Phone number" name="phone">
+            <UInput
+              v-model="registerState.phone"
+              type="tel"
+              autocomplete="tel"
+              placeholder="+1 555 123 4567"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField label="Business location" name="location">
+            <UInput
+              v-model="registerState.location"
+              autocomplete="address-level2"
+              placeholder="Beirut, Lebanon"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField
+            label="Estimated customers per month"
+            name="estimatedCustomersPerMonth"
+            hint="Your best estimate is fine"
+          >
+            <UInputNumber
+              v-model="registerState.estimatedCustomersPerMonth"
+              :min="1"
+              :max="1000000"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField
+            label="Password"
+            name="password"
+            hint="At least 8 characters, with a letter and a number"
+          >
+            <UInput
+              v-model="registerState.password"
+              type="password"
+              autocomplete="new-password"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField label="Confirm password" name="confirmPassword">
+            <UInput
+              v-model="registerState.confirmPassword"
+              type="password"
+              autocomplete="new-password"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UButton type="submit" :loading="pending" block>
+            Create account
+          </UButton>
+
+          <p class="text-xs text-muted">
+            An admin reviews your account before you can sign in.
+          </p>
+        </UForm>
+      </div>
+    </div>
   </div>
 </template>

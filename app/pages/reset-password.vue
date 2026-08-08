@@ -44,7 +44,7 @@ async function onSubmit(event: FormSubmitEvent<ResetPasswordInput>) {
   <div class="min-h-screen flex items-center justify-center px-4 py-12 sm:px-6">
     <div class="w-full max-w-sm">
       <NuxtLink to="/" class="flex items-center gap-2 font-semibold tracking-tight">
-        <span class="flex size-7 items-center justify-center rounded-md bg-primary text-inverted">
+        <span class="flex size-7 items-center justify-center rounded-md bg-primary on-accent">
           <UIcon name="i-lucide-chart-column" class="size-4" />
         </span>
         InsightFlow
@@ -108,7 +108,7 @@ async function onSubmit(event: FormSubmitEvent<ResetPasswordInput>) {
       </UForm>
 
       <p v-if="successMessage" class="mt-6 text-sm text-muted">
-        <NuxtLink to="/login" class="text-primary hover:underline">
+        <NuxtLink to="/login" class="ink-accent hover:underline">
           Continue to sign in
         </NuxtLink>
       </p>

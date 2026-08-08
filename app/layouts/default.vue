@@ -1,5 +1,10 @@
 <script setup lang="ts">
 /**
+ * The public shell, used by the insight feed and by a single published insight.
+ * The workspace has its own layout; this one is what a stranger sees, so it
+ * carries the same mark and the same sign-up route as the landing page rather
+ * than a bare wordmark on a rule.
+ *
  * Checked in the browser only, never during rendering. Two reasons, both of which
  * would be bugs rather than inefficiencies:
  *
@@ -24,40 +29,54 @@ const workspace = computed(() =>
 
 <template>
   <div class="min-h-screen flex flex-col">
-    <header class="border-b border-default">
+    <header class="sticky top-0 z-50 border-b border-default bg-default/80 backdrop-blur">
       <!-- Wraps rather than collapsing to a menu: two links do not need one. -->
-      <div class="mx-auto w-full max-w-4xl px-4 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <NuxtLink to="/" class="font-semibold tracking-tight">
+      <div class="mx-auto w-full max-w-5xl px-4 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <NuxtLink to="/" class="flex items-center gap-2 font-semibold tracking-tight">
+          <span class="flex size-7 items-center justify-center rounded-md bg-primary on-accent">
+            <UIcon name="i-lucide-chart-column" class="size-4" />
+          </span>
           InsightFlow
         </NuxtLink>
 
+        <!--
+          One line at every width. Below sm the bar cannot hold four things, so the
+          feed link shortens and "Sign in" drops out. Nothing becomes unreachable:
+          "Get started" opens /login, where signing in is the other tab.
+        -->
         <nav class="flex items-center gap-4 text-sm">
           <NuxtLink to="/insights" class="text-muted hover:text-default">
-            Insight feed
+            <span class="sm:hidden">Insights</span>
+            <span class="hidden sm:inline">Insight feed</span>
           </NuxtLink>
-          <NuxtLink
-            v-if="session?.authenticated"
-            :to="workspace.to"
-            class="text-muted hover:text-default"
-          >
-            {{ workspace.label }}
-          </NuxtLink>
-          <NuxtLink v-else to="/login" class="text-muted hover:text-default">
-            Sign in
-          </NuxtLink>
+
+          <template v-if="session?.authenticated">
+            <NuxtLink :to="workspace.to" class="text-muted hover:text-default">
+              {{ workspace.label }}
+            </NuxtLink>
+          </template>
+          <template v-else>
+            <NuxtLink to="/login" class="hidden text-muted hover:text-default sm:inline">
+              Sign in
+            </NuxtLink>
+            <UButton to="/login?mode=signup" size="sm">
+              Get started
+            </UButton>
+          </template>
         </nav>
       </div>
     </header>
 
     <main class="flex-1">
-      <div class="mx-auto w-full max-w-4xl px-4 py-8">
+      <div class="mx-auto w-full max-w-5xl px-4 py-10">
         <slot />
       </div>
     </main>
 
     <footer class="border-t border-default">
-      <div class="mx-auto w-full max-w-4xl px-4 py-4 text-sm text-muted">
-        InsightFlow. Sales insights for small businesses.
+      <div class="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-6 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+        <p>InsightFlow. Sales insights for small businesses.</p>
+        <p>© {{ new Date().getFullYear() }} InsightFlow</p>
       </div>
     </footer>
   </div>
