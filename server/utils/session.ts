@@ -2,6 +2,15 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 import type { UserRole } from '#shared/schemas'
 
 export interface SessionPayload {
+  /**
+   * The signed-in account's `_id` as a hex string, and the key every owned record
+   * is scoped by.
+   *
+   * The id rather than the username, for the same reason every other foreign key
+   * in this project is an id: a username is a label a person may one day change,
+   * and data keyed on it would be orphaned the moment they did.
+   */
+  userId: string
   username: string
   displayName: string
   /**
@@ -44,6 +53,7 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 export function createSessionToken(
+  userId: string,
   username: string,
   displayName: string,
   role: UserRole,
@@ -51,6 +61,7 @@ export function createSessionToken(
   ttlSeconds: number = SESSION_TTL_SECONDS
 ): string {
   const payload: SessionPayload = {
+    userId,
     username,
     displayName,
     role,
@@ -79,6 +90,11 @@ export function verifySessionToken(token: string, secret: string): SessionPayloa
   // and the owner signs in again. Defaulting it to a role instead would be
   // guessing at someone's access level from a token that never stated one.
   if (typeof payload.displayName !== 'string') return null
+  // Same reasoning, and it matters more here. A token issued before per-owner
+  // scoping carries no userId, and the only alternatives to refusing it are to
+  // guess whose data it may read or to let it read everyone's. Refusing costs one
+  // sign-in; the sessions in question expire within eight hours anyway.
+  if (typeof payload.userId !== 'string' || payload.userId === '') return null
   if (payload.role !== 'business_owner' && payload.role !== 'admin') return null
   if (payload.exp <= Math.floor(Date.now() / 1000)) return null
 

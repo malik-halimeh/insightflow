@@ -43,9 +43,9 @@ interface EvaluatedRule {
   ruleId: string | null
 }
 
-async function rulesToEvaluate(): Promise<EvaluatedRule[]> {
+async function rulesToEvaluate(ownerId: string): Promise<EvaluatedRule[]> {
   const documents = await (await rulesCollection())
-    .find({})
+    .find({ ownerId })
     .sort({ name: 1 })
     .toArray()
 
@@ -62,9 +62,13 @@ async function rulesToEvaluate(): Promise<EvaluatedRule[]> {
   // The starter rules keep the first-run experience useful before the owner has
   // saved any rules. They are not database records, so their findings have no
   // ruleId. Once the owner saves a rule, only saved rules are evaluated.
+  //
+  // Now per account rather than per site: an owner with no saved rules of their
+  // own gets the starters, whatever anyone else has written.
   return starterRuleDefinitions.map(definition => ({
     rule: ruleSchema.parse({
       id: new ObjectId().toHexString(),
+      ownerId,
       ...definition
     }),
     ruleId: null
@@ -72,11 +76,13 @@ async function rulesToEvaluate(): Promise<EvaluatedRule[]> {
 }
 
 export default defineEventHandler(async (event): Promise<Recommendation[]> => {
-  requireSession(event)
+  const ownerId = requireOwnerId(event)
 
+  // The owner's own latest data set. Unfiltered, this handed one business
+  // recommendations computed from whichever business had uploaded most recently.
   const datasets = await datasetsCollection()
   const latestDataset = await datasets.findOne(
-    {},
+    { ownerId },
     { sort: { createdAt: -1 } }
   )
 
@@ -107,7 +113,7 @@ export default defineEventHandler(async (event): Promise<Recommendation[]> => {
     ...row
   }))
 
-  const evaluatedRules = await rulesToEvaluate()
+  const evaluatedRules = await rulesToEvaluate(ownerId)
   const findings = evaluatedRules.flatMap(({ rule, ruleId }) =>
     evaluateRule(rows, rule).map(finding => ({ finding, ruleId }))
   )

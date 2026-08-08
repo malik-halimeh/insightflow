@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { SESSION_COOKIE, loginSchema, type UserRole } from '#shared/schemas'
 import { SESSION_TTL_SECONDS, createSessionToken, credentialsMatch } from '../../utils/session'
 import { verifyPassword } from '../../utils/password'
@@ -41,6 +42,7 @@ export default defineEventHandler(async (event) => {
   const identifier = parsed.data.identifier.trim().toLowerCase()
   const { password } = parsed.data
 
+  let userId: string | null = null
   let username: string | null = null
   let displayName: string | null = null
   let role: UserRole | null = null
@@ -58,6 +60,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 403, statusMessage: STATUS_MESSAGE[account.status] })
     }
 
+    userId = account._id.toHexString()
     username = account.username
     displayName = account.displayName
     role = account.role
@@ -70,20 +73,32 @@ export default defineEventHandler(async (event) => {
       { username: config.authUsername.toLowerCase(), password: config.authPassword }
     )
     if (matches) {
+      /*
+        The bootstrap account has no row in `users`, so it has no `_id` to scope
+        its work by. It gets one derived from its own username instead: stable
+        across restarts, so the data sets it creates are still its own after a
+        redeploy, and distinct from every real account's id because no ObjectId is
+        ever generated this way.
+
+        Deriving rather than inventing matters. A fixed literal would be shared by
+        every machine using the fallback, and a random one would orphan the
+        previous session's data on every restart.
+      */
+      userId = createHash('sha256').update(`bootstrap:${config.authUsername.toLowerCase()}`).digest('hex').slice(0, 24)
       username = config.authUsername
       displayName = config.authUsername
       role = 'business_owner'
     }
   }
 
-  if (!username || !displayName || !role) {
+  if (!userId || !username || !displayName || !role) {
     throw createError({ statusCode: 401, statusMessage: GENERIC_FAILURE })
   }
 
   setCookie(
     event,
     SESSION_COOKIE,
-    createSessionToken(username, displayName, role, config.sessionSecret),
+    createSessionToken(userId, username, displayName, role, config.sessionSecret),
     {
       httpOnly: true,
       sameSite: 'lax',

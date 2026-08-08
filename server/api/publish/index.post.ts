@@ -47,21 +47,6 @@ export default defineEventHandler(async (event): Promise<PublishedInsight> => {
     })
   }
 
-  const insights = await publishedInsightsCollection()
-  const existing = await insights.findOne({
-    recommendationId: parsed.data.recommendationId
-  })
-
-  // Publishing is idempotent. If the browser retries after losing the response,
-  // return the public record instead of creating a duplicate page.
-  if (existing) {
-    const { _id, ...insight } = existing
-    return publishedInsightSchema.parse({
-      id: _id.toHexString(),
-      ...insight
-    })
-  }
-
   const recommendation = await (await recommendationsCollection()).findOne({
     _id: new ObjectId(parsed.data.recommendationId)
   })
@@ -73,14 +58,31 @@ export default defineEventHandler(async (event): Promise<PublishedInsight> => {
     })
   }
 
-  const dataset = await (await datasetsCollection()).findOne({
-    _id: new ObjectId(recommendation.datasetId)
+  // The ownership check for this route, and it belongs here rather than earlier:
+  // a recommendation carries no owner of its own, so the data set behind it is
+  // what says whose finding this is. Publishing puts a page on the open internet
+  // under a name the caller chooses, so without this an account could publish
+  // another business's finding.
+  const dataset = await requireOwnedDataset(event, recommendation.datasetId)
+
+  const insights = await publishedInsightsCollection()
+  const existing = await insights.findOne({
+    recommendationId: parsed.data.recommendationId
   })
 
-  if (!dataset) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: 'The data set behind this recommendation could not be found.'
+  // Publishing is idempotent. If the browser retries after losing the response,
+  // return the public record instead of creating a duplicate page.
+  //
+  // Deliberately after the ownership check rather than before it. Checked first,
+  // this returned another account's published insight as though the caller had
+  // just published it, which is a wrong answer even though the record itself is
+  // public. The retry it exists for is the caller's own, and by here that is the
+  // only kind that can reach it.
+  if (existing) {
+    const { _id, ...insight } = existing
+    return publishedInsightSchema.parse({
+      id: _id.toHexString(),
+      ...insight
     })
   }
 

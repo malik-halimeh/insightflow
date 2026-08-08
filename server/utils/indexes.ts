@@ -39,6 +39,24 @@ export async function ensureIndexes(db: Db): Promise<void> {
       { name: 'salesRows_datasetId_date' }
     ),
 
+    /*
+      Per-owner scoping. `ownerId` is now the first thing almost every query
+      filters on, so it leads both of these compound indexes: the data set list
+      reads one owner's newest first, and the recommendations page reads one
+      owner's single newest.
+
+      Not unique. An owner has many data sets and many rules, which is the point.
+    */
+    db.collection(COLLECTIONS.datasets).createIndex(
+      { ownerId: 1, createdAt: -1 },
+      { name: 'datasets_ownerId_createdAt' }
+    ),
+
+    db.collection(COLLECTIONS.rules).createIndex(
+      { ownerId: 1, name: 1 },
+      { name: 'rules_ownerId_name' }
+    ),
+
     // The public feed looks insights up by slug, and two businesses must never
     // be able to claim the same public URL.
     db.collection(COLLECTIONS.publishedInsights).createIndex(

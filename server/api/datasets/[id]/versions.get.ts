@@ -1,7 +1,6 @@
-import { ObjectId } from 'mongodb'
 import type { DatasetVersion } from '#shared/schemas'
-import { requireSession } from '../../../utils/auth'
-import { datasetVersionsCollection, datasetsCollection } from '../../../utils/db'
+import { datasetVersionsCollection } from '../../../utils/db'
+import { requireOwnedDataset } from '../../../utils/ownership'
 
 /**
  * Every upload of one data set, newest first, for the history page.
@@ -15,22 +14,12 @@ import { datasetVersionsCollection, datasetsCollection } from '../../../utils/db
  * the owner a second request to save nothing.
  */
 export default defineEventHandler(async (event): Promise<DatasetVersion[]> => {
-  requireSession(event)
-
-  const id = getRouterParam(event, 'id')
-
-  if (!id || !ObjectId.isValid(id)) {
-    throw createError({ statusCode: 400, statusMessage: 'That data set could not be found.' })
-  }
-
   // Checked rather than assumed, so an unknown data set reads as "not found"
   // instead of an empty history, which would look like a data set that simply had
-  // no uploads yet.
-  const dataset = await (await datasetsCollection()).findOne({ _id: new ObjectId(id) })
-
-  if (!dataset) {
-    throw createError({ statusCode: 404, statusMessage: 'That data set could not be found.' })
-  }
+  // no uploads yet. The same call proves the data set is the caller's, so an id
+  // belonging to another business cannot list its upload history either.
+  const dataset = await requireOwnedDataset(event, getRouterParam(event, 'id'))
+  const id = dataset._id.toHexString()
 
   const documents = await (await datasetVersionsCollection())
     .find({ datasetId: id })

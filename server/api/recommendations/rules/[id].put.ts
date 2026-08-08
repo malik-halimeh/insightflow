@@ -7,7 +7,7 @@ import {
 } from '#shared/schemas'
 
 export default defineEventHandler(async (event): Promise<Rule> => {
-  requireSession(event)
+  const ownerId = requireOwnerId(event)
 
   const parsedId = idSchema.safeParse(getRouterParam(event, 'id'))
   if (!parsedId.success) {
@@ -27,8 +27,11 @@ export default defineEventHandler(async (event): Promise<Rule> => {
     })
   }
 
+  // Matched on the owner as well as the id, so another account's rule reads as
+  // missing rather than being silently rewritten. `$set` carries only the fields
+  // the form sends, so the edit cannot reassign the owner.
   const document = await (await rulesCollection()).findOneAndUpdate(
-    { _id: new ObjectId(parsedId.data) },
+    { _id: new ObjectId(parsedId.data), ownerId },
     { $set: parsed.data },
     { returnDocument: 'after' }
   )

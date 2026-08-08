@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
-import { requireSession } from '../../../../../utils/auth'
 import { datasetVersionsCollection, datasetsCollection } from '../../../../../utils/db'
+import { requireOwnedDataset } from '../../../../../utils/ownership'
 import { rehydrateVersion, versioningEnabled } from '../../../../../utils/versioning'
 
 /**
@@ -15,8 +15,6 @@ import { rehydrateVersion, versioningEnabled } from '../../../../../utils/versio
  * another's rows, which is worse than not restoring at all because it looks right.
  */
 export default defineEventHandler(async (event) => {
-  requireSession(event)
-
   if (!versioningEnabled()) {
     throw createError({
       statusCode: 404,
@@ -24,23 +22,18 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const id = getRouterParam(event, 'id')
   const versionId = getRouterParam(event, 'versionId')
-
-  if (!id || !ObjectId.isValid(id)) {
-    throw createError({ statusCode: 400, statusMessage: 'That data set could not be found.' })
-  }
 
   if (!versionId || !ObjectId.isValid(versionId)) {
     throw createError({ statusCode: 400, statusMessage: 'That upload could not be found.' })
   }
 
+  // Ownership before the restore. This route replaces every row in the data set,
+  // so without the check an id alone would let one account roll another business
+  // back to an earlier upload.
+  const dataset = await requireOwnedDataset(event, getRouterParam(event, 'id'))
+  const id = dataset._id.toHexString()
   const datasets = await datasetsCollection()
-  const dataset = await datasets.findOne({ _id: new ObjectId(id) })
-
-  if (!dataset) {
-    throw createError({ statusCode: 404, statusMessage: 'That data set could not be found.' })
-  }
 
   // Matched on both ids, so a version belonging to a different data set reads as
   // missing rather than restoring one business's rows into another's.
@@ -81,7 +74,7 @@ export default defineEventHandler(async (event) => {
   }
 
   await datasets.updateOne(
-    { _id: new ObjectId(id) },
+    { _id: dataset._id },
     {
       $set: {
         currentVersionId: versionId,

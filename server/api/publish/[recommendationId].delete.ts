@@ -18,7 +18,10 @@ async function invalidatePublicInsightCache(slug: string): Promise<void> {
 }
 
 export default defineEventHandler(async (event): Promise<{ deleted: true }> => {
-  requireSession(event)
+  // Unpublishing takes a page off the open internet, so it has to be the owner's
+  // page to take down. Scoped through the data sets, the same way the list beside
+  // it is.
+  const datasetIds = await ownedDatasetIds(event)
 
   const parsedId = idSchema.safeParse(getRouterParam(event, 'recommendationId'))
   if (!parsedId.success) {
@@ -31,7 +34,8 @@ export default defineEventHandler(async (event): Promise<{ deleted: true }> => {
 
   const insights = await publishedInsightsCollection()
   const published = await insights.findOne({
-    recommendationId: parsedId.data
+    recommendationId: parsedId.data,
+    datasetId: { $in: datasetIds }
   })
 
   if (!published) {
@@ -42,7 +46,8 @@ export default defineEventHandler(async (event): Promise<{ deleted: true }> => {
   }
 
   const result = await insights.deleteOne({
-    recommendationId: parsedId.data
+    recommendationId: parsedId.data,
+    datasetId: { $in: datasetIds }
   })
 
   if (result.deletedCount === 0) {
