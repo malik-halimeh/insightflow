@@ -221,13 +221,71 @@ edit that file.
 
 ## Product decisions
 
-These are mine to make and here they are. All four are chosen so the product never
+These are mine to make and here they are. All five are chosen so the product never
 claims more precision than it has.
 
 **No-clear-effect threshold: ±5%, inclusive at both edges.** A change of exactly
 5.0% reads as no clear effect. Small-business weekly figures move several percent on
 weather alone, so anything tighter reports noise as a result. Put the constant in
 your own module with a comment saying that.
+
+### Zero baseline: measure it, do not discard it
+
+You proposed: when the before value is zero, mark the outcome unavailable, set
+`changePercent: null`, and drop it from the scoreboard denominator.
+
+**Half of that is right, and half of it would throw away the best case this product
+has.** Taking the three parts separately:
+
+**`changePercent: null` when the before value is zero. Agreed, and required.**
+Percentage change from zero is undefined. Do not report infinity, do not substitute
+a large number, do not quietly treat the baseline as 1. Null is the honest value.
+
+**"Unavailable" is wrong.** An unavailable outcome means the product cannot tell
+what happened. Here it can: it knows the before value was zero and it knows the
+after value. What it cannot do is express that as a percentage, which is a
+statement about the format, not about the knowledge. Reserve "unavailable" for the
+two cases where the answer genuinely is not knowable: a recommendation missing
+`dimensionValue` or `expectedDirection`, and a window that has not met the
+readiness rule below.
+
+**Excluding it from the denominator is the one that would do real damage.** Think
+about which findings actually have a zero baseline. Overwhelmingly they are
+`unsold_for_days` findings, because a rule whose entire premise is "this item has
+not sold for eighteen days" has a baseline of zero almost by definition. That is
+also the rule whose advice produces the clearest result in the whole product: the
+owner promotes the dish, or moves it to the front of the counter, and it goes from
+selling nothing to selling something.
+
+Drop those from the denominator and the scoreboard stops measuring the rule family
+with the most decisive outcomes, and reports only the rules that nudge an existing
+number up or down. That is selection bias, and it is invisible in the output. The
+scoreboard would look fine and quietly mean something other than what it claims.
+
+**So: every ready outcome counts in the denominator, zero-baseline ones included.**
+
+**The rule.** When the before value is zero the ±5% threshold cannot apply, because
+there is no percentage to compare against it. Decide on the after value and the
+recommendation's `expectedDirection` instead:
+
+| before | after | expectedDirection | status |
+| --- | --- | --- | --- |
+| 0 | 0 | either | no clear effect |
+| 0 | above 0 | up | improved |
+| 0 | above 0 | down | worsened |
+
+Nothing can fall below zero on any of the three metrics, so there is no fourth row.
+A scope absent from the after-window entirely reads as zero for that scope, not as
+missing data: an item that is no longer in the file sold nothing, which is exactly
+what the measurement is asking.
+
+**One consequence for your schema, and it is a good one.** Store `beforeValue` and
+`afterValue` as absolute numbers on the outcome, alongside the nullable
+`changePercent`. Then the zero baseline needs no special field and no flag: the
+percentage is null, the two raw figures are there, and the interface can render
+"0 to 15 units sold" where a percentage would be meaningless. It also means a
+reader can always see what a percentage was computed from, which the frozen-result
+decision above makes worth having.
 
 **Missing sales dates: calculate, and warn.** Consistent with `assessQuality`, which
 already treats a gap as a warning rather than a block. Set a flag on the outcome
@@ -249,9 +307,14 @@ both are met the outcome is "not yet ready" and says which condition is outstand
 ## Milestone order
 
 Your milestones 1 and 2 are unblocked as of now. Milestone 3 can define the schema
-immediately: every semantic it depends on is settled above. Start with the two
-recommendation fields in section 1, because your engine has to populate them before
-any outcome can be recorded against a new finding.
+immediately: every semantic it depends on is settled above, the zero baseline
+included. Start with `expectedDirection` in section 1, because your engine has to
+populate it, and M5's `dimensionValue`, before any outcome can be recorded against
+a new finding.
+
+Nothing further is waiting on me. If you find another case the decisions above do
+not cover, name it as precisely as you named this one and I will answer it the same
+day.
 
 ---
 
