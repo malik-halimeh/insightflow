@@ -50,18 +50,30 @@ export default defineEventHandler(async (event) => {
   await (await datasetVersionRowsCollection()).deleteMany({ datasetId: id })
   const versions = await (await datasetVersionsCollection()).deleteMany({ datasetId: id })
 
-  // Foreign keys are stored as hex strings, not ObjectIds.
-  const [rows, recommendations, insights, outcomes] = await Promise.all([
+  /*
+    Foreign keys are stored as hex strings, not ObjectIds.
+
+    Every binding here is named for the collection it deletes from, and the four
+    are in the same order as the four results. That is not tidiness: `Promise.all`
+    binds by position, so a line inserted in the middle without moving its name
+    silently reports one collection's count under another's label. That is exactly
+    what happened when the outcome cascade was added, and naming each result after
+    its own collection is what makes the next such mistake visible on sight.
+
+    The deletions are unaffected by that class of error, which is what makes it
+    worth guarding against: the data goes correctly and only the receipt lies.
+  */
+  const [salesRows, recommendations, publishedInsights, outcomes] = await Promise.all([
     (await salesRowsCollection()).deleteMany({ datasetId: id }),
     (await recommendationsCollection()).deleteMany({ datasetId: id }),
-    // Outcomes go with the recommendations they measure. An outcome whose
-    // recommendation is gone can never be read again and would still be counted
-    // by any scoreboard that queried the collection directly.
-    (await outcomesCollection()).deleteMany({ datasetId: id }),
     // The confirmation promises that anything published from this data set comes
     // down, including its public link. Without this the page stays live on the
     // open internet after the data behind it is gone.
-    (await publishedInsightsCollection()).deleteMany({ datasetId: id })
+    (await publishedInsightsCollection()).deleteMany({ datasetId: id }),
+    // Outcomes go with the recommendations they measure. An outcome whose
+    // recommendation is gone can never be read again and would still be counted
+    // by any scoreboard that queried the collection directly.
+    (await outcomesCollection()).deleteMany({ datasetId: id })
   ])
 
   await datasets.deleteOne({ _id: existing._id })
@@ -69,9 +81,9 @@ export default defineEventHandler(async (event) => {
   return {
     deleted: {
       dataset: existing.name,
-      salesRows: rows.deletedCount,
+      salesRows: salesRows.deletedCount,
       recommendations: recommendations.deletedCount,
-      publishedInsights: insights.deletedCount,
+      publishedInsights: publishedInsights.deletedCount,
       outcomes: outcomes.deletedCount,
       uploadHistory: versions.deletedCount
     }
