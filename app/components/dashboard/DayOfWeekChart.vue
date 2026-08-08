@@ -29,7 +29,7 @@ function barWidth(value: number): string {
 </script>
 
 <template>
-  <UCard>
+  <UCard class="min-h-full">
     <template #header>
       <h2 class="text-base font-semibold">
         Revenue by day of week
@@ -43,7 +43,7 @@ function barWidth(value: number): string {
       <div v-for="day in days" :key="day.day" class="flex items-center gap-3">
         <span class="w-10 shrink-0 text-sm text-muted">{{ day.day.slice(0, 3) }}</span>
 
-        <div class="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-elevated">
+        <div class="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-elevated">
           <div class="h-full rounded-full bg-primary" :style="{ width: barWidth(day.avgRevenue) }" />
         </div>
 

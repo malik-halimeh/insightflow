@@ -23,7 +23,7 @@ if (error.value || !insight.value) {
 
 const publishedInsight = insight.value
 const pageTitle = computed(() =>
-  `${publishedInsight.displayName}: ${publishedInsight.metricLabel} — InsightFlow`
+  `${publishedInsight.displayName}: ${publishedInsight.metricLabel} | InsightFlow`
 )
 const canonicalUrl = computed(() =>
   `${siteOrigin.value}/insights/${publishedInsight.slug}`
@@ -51,7 +51,7 @@ useSeoMeta({
 
 <template>
   <article class="max-w-2xl">
-    <NuxtLink to="/insights" class="inline-flex items-center gap-2 text-sm text-primary">
+    <NuxtLink to="/insights" class="inline-flex items-center gap-2 text-sm ink-accent">
       <UIcon name="i-lucide-arrow-left" class="size-4" />
       Insight feed
     </NuxtLink>

@@ -6,7 +6,7 @@ definePageMeta({
   layout: 'app'
 })
 
-useSeoMeta({ title: 'Rules — InsightFlow' })
+useSeoMeta({ title: 'Rules | InsightFlow' })
 
 const {
   data: rules,

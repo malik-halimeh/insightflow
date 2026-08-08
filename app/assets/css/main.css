@@ -1,6 +1,89 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+@theme {
+  --color-turquoise-50: #effdfb;
+  --color-turquoise-100: #d7faf6;
+  --color-turquoise-200: #b4f4ed;
+  --color-turquoise-300: #7cebe1;
+  --color-turquoise-400: #40e0d0;
+  --color-turquoise-500: #1fc7b9;
+  --color-turquoise-600: #169f96;
+  --color-turquoise-700: #177f79;
+  --color-turquoise-800: #196560;
+  --color-turquoise-900: #195450;
+  --color-turquoise-950: #092f2e;
+}
+
+:root {
+  --ui-color-primary-50: #effdfb;
+  --ui-color-primary-100: #d7faf6;
+  --ui-color-primary-200: #b4f4ed;
+  --ui-color-primary-300: #7cebe1;
+  --ui-color-primary-400: #40e0d0;
+  --ui-color-primary-500: #1fc7b9;
+  --ui-color-primary-600: #169f96;
+  --ui-color-primary-700: #177f79;
+  --ui-color-primary-800: #196560;
+  --ui-color-primary-900: #195450;
+  --ui-color-primary-950: #092f2e;
+}
+
+/*
+  Contrast correction, measured rather than guessed. Light mode only.
+
+  Three inks fail WCAG AA as they stand, and none of the fixes changes how the
+  design looks anywhere it is already correct.
+
+  THE ACCENT AS INK
+  Turquoise 500 is the right fill and the wrong ink. Measured on white:
+
+    500  #1fc7b9   2.12:1    the brand colour
+    600  #169f96   3.26:1
+    700  #177f79   4.83:1
+    800  #196560   6.84:1    passes, and holds on the tinted chips too
+
+  The solid button is unaffected and was already right: turquoise 500 carrying
+  turquoise 950 measures 6.81:1. So the fill stays exactly as designed and only
+  `text-primary` moves, which is why this overrides the utility rather than
+  `--ui-primary`. Moving the token would drag the button down with it, and a 700
+  fill under 950 ink measures 2.97:1.
+
+  Written unlayered so it beats the Tailwind utility without !important, and
+  scoped away from `.dark`, where turquoise 500 on a dark surface is already
+  strong and darkening it would break it.
+
+  THE SEMANTIC INKS
+  Nuxt UI resolves success, error and muted to the 500 step of their palettes,
+  which fails on a white page: emerald at 2.47:1 and slate at 4.23:1. These are
+  not brand colours, so moving them a step darker changes no design decision,
+  only whether the figures can be read.
+*/
+:root:not(.dark) {
+  --ui-success: var(--ui-color-success-700);
+  --ui-error: var(--ui-color-error-700);
+  --ui-text-muted: var(--ui-color-neutral-600);
+}
+
+/*
+  Accent ink for light surfaces, applied where it is needed rather than globally.
+
+  A blanket override of `text-primary` was the obvious move and the wrong one:
+  this design puts the accent on dark sections as well as light ones, and one
+  rule cannot serve both. Darkening it everywhere fixed the tinted chips and
+  broke the step numbers on the dark band, which went from 4.17:1 to 2.95:1.
+
+  So the accent stays bright by default, exactly as designed, and this class is
+  used at the specific places it sits on white or on a pale tint.
+*/
+.ink-accent {
+  color: var(--ui-color-primary-800);
+}
+
+.dark .ink-accent {
+  color: var(--ui-color-primary-400);
+}
+
 @layer base {
   /*
     Figures line up in columns on every platform. Several system fonts render
@@ -10,5 +93,7 @@
   */
   body {
     font-variant-numeric: tabular-nums;
+    background: var(--ui-bg);
+    color: var(--ui-text);
   }
 }

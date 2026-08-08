@@ -10,7 +10,7 @@ import type { AdminProfile } from '#shared/types/admin'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 definePageMeta({ middleware: 'auth', layout: 'admin' })
-useSeoMeta({ title: 'Account settings — InsightFlow' })
+useSeoMeta({ title: 'Account settings | InsightFlow' })
 
 const toast = useToast()
 

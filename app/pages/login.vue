@@ -93,12 +93,25 @@ async function onSignUp(event: FormSubmitEvent<RegisterInput>) {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center p-6">
-    <UCard class="w-full max-w-sm">
+  <div class="grid min-h-[100dvh] bg-elevated/40 lg:grid-cols-[0.85fr_1.15fr]">
+    <aside class="hidden bg-neutral-950 p-12 text-white lg:flex lg:flex-col">
+      <NuxtLink to="/"><UiBrandMark /></NuxtLink>
+      <div class="my-auto max-w-md">
+        <p class="text-sm font-semibold text-primary">Clear decisions start with clear data</p>
+        <h2 class="mt-5 text-4xl font-semibold leading-tight tracking-tight">Your sales, translated into the next useful action.</h2>
+        <p class="mt-5 leading-7 text-neutral-400">Upload a familiar spreadsheet. InsightFlow finds the patterns worth your attention.</p>
+      </div>
+      <p class="text-xs text-neutral-400">Private workspace for approved business accounts.</p>
+    </aside>
+
+    <main class="flex items-start justify-center overflow-y-auto p-5 py-10 sm:p-10 lg:py-16">
+    <UCard class="w-full max-w-xl shadow-xl shadow-primary/5">
       <template #header>
-        <h1 class="text-lg font-semibold">
+        <NuxtLink to="/" class="mb-6 inline-flex lg:hidden"><UiBrandMark /></NuxtLink>
+        <h1 class="text-2xl font-semibold tracking-tight">
           {{ mode === 'signin' ? 'Sign in to InsightFlow' : 'Create your account' }}
         </h1>
+        <p class="mt-2 text-sm text-muted">{{ mode === 'signin' ? 'Welcome back. Continue to your workspace.' : 'Tell us about your business to request access.' }}</p>
       </template>
 
       <UTabs v-model="mode" :items="authTabs" class="mb-6" />
@@ -139,14 +152,14 @@ async function onSignUp(event: FormSubmitEvent<RegisterInput>) {
             class="w-full"
           />
           <template #hint>
-            <NuxtLink to="/forgot-password" class="text-primary hover:underline">
+            <NuxtLink to="/forgot-password" class="ink-accent hover:underline">
               Forgot password?
             </NuxtLink>
           </template>
         </UFormField>
 
         <UButton type="submit" :loading="pending" block>
-          Sign in
+          <span class="text-primary-950">Sign in</span>
         </UButton>
       </UForm>
 
@@ -188,7 +201,7 @@ async function onSignUp(event: FormSubmitEvent<RegisterInput>) {
         <UFormField label="Business size" name="businessSize">
           <USelect
             v-model="registerState.businessSize"
-            :items="BUSINESS_SIZE_OPTIONS.map(option => ({ label: `${option.label} — ${option.hint}`, value: option.value }))"
+            :items="BUSINESS_SIZE_OPTIONS.map(option => ({ label: `${option.label}, ${option.hint}`, value: option.value }))"
             class="w-full"
           />
         </UFormField>
@@ -248,7 +261,7 @@ async function onSignUp(event: FormSubmitEvent<RegisterInput>) {
         </UFormField>
 
         <UButton type="submit" :loading="pending" block>
-          Create account
+          <span class="text-primary-950">Create account</span>
         </UButton>
 
         <p class="text-xs text-muted">
@@ -256,5 +269,6 @@ async function onSignUp(event: FormSubmitEvent<RegisterInput>) {
         </p>
       </UForm>
     </UCard>
+    </main>
   </div>
 </template>

@@ -1,10 +1,7 @@
 export default defineAppConfig({
   ui: {
-    // The accent is blue, not green, so that green can mean one thing only:
-    // a number went up. In a product made of percentage changes, an accent
-    // sharing a colour with "revenue rose" would drain the signal from both.
     colors: {
-      primary: 'blue',
+      primary: 'turquoise',
       secondary: 'slate',
       success: 'emerald',
       info: 'sky',
@@ -16,7 +13,10 @@ export default defineAppConfig({
     // Defaults are set so the shortest possible markup is already correct:
     // <UButton>Save</UButton> is the primary action, <UBadge>New</UBadge> is quiet.
     button: {
-      defaultVariants: { size: 'md', color: 'primary', variant: 'solid' }
+      defaultVariants: { size: 'md', color: 'primary', variant: 'solid' },
+      compoundVariants: [
+        { color: 'primary', variant: 'solid', class: 'text-primary-950' }
+      ]
     },
 
     input: {
@@ -24,7 +24,21 @@ export default defineAppConfig({
     },
 
     badge: {
-      defaultVariants: { size: 'md', color: 'neutral', variant: 'subtle' }
+      defaultVariants: { size: 'md', color: 'neutral', variant: 'subtle' },
+      /*
+        The mirror of the button rule above. A solid badge is the accent carrying
+        dark ink and reads well; a subtle one is a 10% tint carrying the accent as
+        ink, and turquoise 500 on its own tint measures 1.95:1. Stepping the ink
+        down to 800 on light paper and up to 400 on dark clears AA without
+        touching the fill anywhere it is already correct.
+      */
+      compoundVariants: [
+        {
+          color: 'primary',
+          variant: 'subtle',
+          class: 'text-[var(--ui-color-primary-800)] dark:text-[var(--ui-color-primary-400)]'
+        }
+      ]
     },
 
     card: {

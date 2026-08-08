@@ -20,13 +20,11 @@ const columns = [
 </script>
 
 <template>
-  <div>
-    <h2 class="text-base font-semibold">
-      Every item, best to worst
-    </h2>
-    <p class="mt-1 mb-4 text-sm text-muted">
-      Sorted by how many were sold.
-    </p>
+  <UCard>
+    <template #header>
+      <h2 class="text-base font-semibold">Every item, best to worst</h2>
+      <p class="mt-1 text-sm text-muted">Sorted by how many were sold.</p>
+    </template>
 
     <UiEmptyState
       v-if="items.length === 0"
@@ -54,5 +52,5 @@ const columns = [
         {{ formatMoney(row.original.revenue) }}
       </template>
     </UTable>
-  </div>
+  </UCard>
 </template>

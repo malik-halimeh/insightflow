@@ -15,7 +15,7 @@ const selected = defineModel<string>({ required: true })
 
 const items = computed(() =>
   props.datasets.map(dataset => ({
-    label: `${dataset.name} — ${formatCount(dataset.rowCount)} rows`,
+    label: `${dataset.name}, ${formatCount(dataset.rowCount)} rows`,
     value: dataset.id
   }))
 )

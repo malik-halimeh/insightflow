@@ -1,60 +1,47 @@
 <script setup lang="ts">
 const { data: session } = await useFetch('/api/auth/session')
 
-const displayName = computed(() =>
-  session.value?.authenticated ? session.value.displayName : 'Signed out'
-)
+const displayName = computed(() => session.value?.authenticated ? session.value.displayName : 'Signed out')
 
 async function logout() {
   await $fetch('/api/auth/logout', { method: 'POST' })
-  // Full load so the cleared cookie is what the next request carries.
   await navigateTo('/login', { external: true })
 }
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col md:flex-row">
-    <aside class="md:w-56 md:shrink-0 border-b md:border-b-0 md:border-r border-default">
-      <div class="flex md:flex-col md:h-full md:gap-6 items-center md:items-stretch justify-between md:justify-start gap-3 px-4 py-3">
-        <div class="flex items-center gap-2 shrink-0">
-          <NuxtLink to="/admin" class="font-semibold tracking-tight">
-            InsightFlow
-          </NuxtLink>
-          <UBadge color="neutral" variant="subtle" size="sm">
-            Admin
-          </UBadge>
-        </div>
-
-        <nav class="flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible">
-          <NuxtLink
-            to="/admin"
-            class="flex items-center gap-2 rounded-md px-3 py-2 text-sm whitespace-nowrap text-muted hover:text-default hover:bg-elevated"
-            active-class="text-default bg-elevated"
-          >
-            <UIcon name="i-lucide-shield-check" class="size-4 shrink-0" />
+  <div class="min-h-[100dvh] bg-elevated/40 lg:grid lg:grid-cols-[280px_minmax(0,1fr)]">
+    <aside class="border-b border-default bg-neutral-950 text-white lg:min-h-[100dvh] lg:border-b-0 lg:border-r lg:border-white/10">
+      <div class="flex h-18 items-center justify-between px-5 lg:h-20 lg:border-b lg:border-white/10">
+        <NuxtLink to="/admin"><UiBrandMark /></NuxtLink>
+        <UBadge color="primary" variant="subtle">Admin</UBadge>
+      </div>
+      <div class="flex items-center justify-between gap-3 px-4 pb-4 lg:min-h-[calc(100dvh-5rem)] lg:flex-col lg:items-stretch lg:py-6">
+        <nav>
+          <NuxtLink to="/admin" class="flex items-center gap-3 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-950">
+            <UIcon name="i-lucide-shield-check" class="size-5" />
             <span>Business owners</span>
           </NuxtLink>
         </nav>
-
-        <div class="md:mt-auto flex items-center md:items-stretch md:flex-col gap-2 shrink-0">
-          <span class="hidden sm:inline text-sm text-muted truncate">{{ displayName }}</span>
-          <UButton
-            size="xs"
-            color="neutral"
-            variant="subtle"
-            icon="i-lucide-log-out"
-            @click="logout"
-          >
-            <span class="hidden sm:inline">Log out</span>
-          </UButton>
+        <div class="flex items-center gap-3 lg:mt-auto lg:border-t lg:border-white/10 lg:pt-5">
+          <UAvatar :alt="displayName" size="sm" class="bg-primary text-primary-950" />
+          <div class="hidden min-w-0 flex-1 sm:block">
+            <p class="truncate text-sm font-semibold">{{ displayName }}</p>
+            <button class="mt-1 text-xs text-neutral-400 hover:text-white" @click="logout">Log out</button>
+          </div>
         </div>
       </div>
     </aside>
 
-    <main class="flex-1 min-w-0">
-      <div class="px-4 py-6 md:px-8">
-        <slot />
-      </div>
-    </main>
+    <div class="min-w-0">
+      <header class="hidden h-20 items-center justify-between border-b border-default bg-default px-8 lg:flex">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-muted">Administration</p>
+          <p class="mt-1 text-sm">Review access and keep the workspace trustworthy.</p>
+        </div>
+        <UAvatar :alt="displayName" size="sm" class="bg-primary text-primary-950" />
+      </header>
+      <main class="mx-auto w-full max-w-[1440px] p-4 sm:p-6 lg:p-8"><slot /></main>
+    </div>
   </div>
 </template>

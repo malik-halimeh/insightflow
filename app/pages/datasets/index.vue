@@ -11,7 +11,7 @@ import type { Dataset } from '#shared/schemas'
 import { formatCount } from '#shared/format'
 
 definePageMeta({ middleware: 'auth', layout: 'app' })
-useSeoMeta({ title: 'Data sets — InsightFlow' })
+useSeoMeta({ title: 'Data sets | InsightFlow' })
 
 const {
   data: datasets,

@@ -16,7 +16,7 @@ import { BUSINESS_SIZE_OPTIONS } from '#shared/schemas'
 import type { AdminUserCounts, AdminUserSummary } from '#shared/types/admin'
 
 definePageMeta({ middleware: 'auth', layout: 'admin' })
-useSeoMeta({ title: 'Admin dashboard — InsightFlow' })
+useSeoMeta({ title: 'Admin dashboard | InsightFlow' })
 
 const toast = useToast()
 
@@ -31,7 +31,7 @@ const pending = computed(() => data.value?.items.filter(item => item.status === 
 const others = computed(() => data.value?.items.filter(item => item.status !== 'pending') ?? [])
 
 const businessSizeLabel = (size?: string) =>
-  BUSINESS_SIZE_OPTIONS.find(option => option.value === size)?.label ?? '—'
+  BUSINESS_SIZE_OPTIONS.find(option => option.value === size)?.label ?? 'Not available'
 
 const STATUS_BADGE: Record<string, { color: 'success' | 'error' | 'warning' | 'neutral', label: string }> = {
   pending: { color: 'warning', label: 'Pending review' },

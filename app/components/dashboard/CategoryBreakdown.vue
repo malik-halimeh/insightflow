@@ -13,7 +13,7 @@ defineProps<{ categories: CategoryStat[] }>()
 </script>
 
 <template>
-  <UCard>
+  <UCard class="overflow-hidden">
     <template #header>
       <h2 class="text-base font-semibold">
         Where the money comes from
@@ -24,7 +24,7 @@ defineProps<{ categories: CategoryStat[] }>()
     </template>
 
     <div class="space-y-4">
-      <div v-for="category in categories" :key="category.category">
+      <div v-for="category in categories" :key="category.category" class="rounded-lg border border-default p-4">
         <div class="flex flex-wrap items-baseline justify-between gap-x-3">
           <span class="text-sm font-medium">{{ category.category }}</span>
           <span class="text-sm text-muted">

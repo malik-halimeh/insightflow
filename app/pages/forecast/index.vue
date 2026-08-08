@@ -42,7 +42,7 @@ import type { ForecastSummary } from '#shared/types/forecast'
 import type { DatasetSummary } from '#shared/types/analytics'
 
 definePageMeta({ middleware: 'auth', layout: 'app' })
-useSeoMeta({ title: 'Forecast — InsightFlow' })
+useSeoMeta({ title: 'Forecast | InsightFlow' })
 
 const {
   data: datasets,
@@ -89,7 +89,7 @@ const accuracyCaption = computed(() => {
 })
 
 const nextDayRevenue = computed(() =>
-  forecast.value?.points[0] ? formatMoney(forecast.value.points[0].predicted) : '—'
+  forecast.value?.points[0] ? formatMoney(forecast.value.points[0].predicted) : 'Not available'
 )
 </script>
 
