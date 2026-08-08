@@ -706,6 +706,14 @@ async function seed(): Promise<void> {
 
     Matched by username rather than by position, so reordering `seedAccounts()`
     cannot quietly reassign the demo data to an admin.
+
+    The id is resolved from the database further down rather than taken from this
+    document, and that distinction is the whole bug this comment exists to prevent.
+    `buildUsers` mints a fresh ObjectId every run, but the additive branch upserts
+    users by username with `$setOnInsert: { _id }`, so an account that already
+    exists keeps the id it was created with and the freshly minted one is thrown
+    away. Using it anyway pointed two seeded data sets at a user that does not
+    exist, which is invisible to every account and looks exactly like empty data.
   */
   const demoOwnerUsername = (process.env.AUTH_USERNAME || 'owner').toLowerCase()
   const demoOwner = userDocs.find(user => user.username === demoOwnerUsername)
@@ -714,11 +722,11 @@ async function seed(): Promise<void> {
     throw new Error(`The demo owner account "${demoOwnerUsername}" was not built, so the demo data set would have no owner.`)
   }
 
-  const ownerId = demoOwner._id.toHexString()
-
   const dataset = datasetSchema.parse({
     id: datasetIdHex,
-    ownerId,
+    // Replaced below once the real owner id is known. Parsed with a placeholder
+    // only so this schema check still runs on every other field.
+    ownerId: demoOwner._id.toHexString(),
     name: 'Bella Pizza — last 8 weeks',
     businessType: 'restaurant',
     periodStart,
@@ -746,9 +754,26 @@ async function seed(): Promise<void> {
     outcomesCollection()
   ])
 
-  const seeded = await seedOutcomes(datasetIdHex, ownerId, salesRowDocs, now)
-
   const { id: dsId, ...datasetRest } = dataset
+
+  /*
+    Users are written before anything that references them, and the owner id is
+    read back from the database rather than assumed.
+
+    On a first run the two are the same. On a second `--add` run they are not: the
+    upsert below matches an existing account by username and leaves its `_id`
+    alone, so the id `buildUsers` minted this run belongs to nobody. Everything
+    stamped with it would be unreachable by the account it was meant for.
+  */
+  async function resolveOwnerId(): Promise<string> {
+    const persisted = await users.findOne({ username: demoOwnerUsername })
+
+    if (!persisted) {
+      throw new Error(`The demo owner "${demoOwnerUsername}" is not in the database after the user write.`)
+    }
+
+    return persisted._id.toHexString()
+  }
 
   if (additive) {
     const userWrites = await users.bulkWrite(userDocs.map((user) => {
@@ -766,7 +791,10 @@ async function seed(): Promise<void> {
       }
     }))
 
-    await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest } satisfies DatasetDoc)
+    const ownerId = await resolveOwnerId()
+    const seeded = await seedOutcomes(datasetIdHex, ownerId, salesRowDocs, now)
+
+    await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest, ownerId } satisfies DatasetDoc)
     await salesRows.insertMany(salesRowDocs)
     await insights.insertMany(insightDocs)
     await rules.insertMany(seeded.rules)
@@ -782,6 +810,7 @@ async function seed(): Promise<void> {
     console.log(`  Database         ${process.env.MONGODB_DB}`)
     console.log(`  Users added      ${userWrites.upsertedCount}`)
     console.log(`  Users updated    ${userWrites.matchedCount}`)
+    console.log(`  Owner            ${demoOwnerUsername}  (${ownerId})`)
     console.log(`  Data set added   1  (${dataset.name})`)
     console.log(`  Data set id      ${datasetIdHex}`)
     console.log(`  Sales rows added ${salesRowDocs.length}`)
@@ -836,7 +865,13 @@ async function seed(): Promise<void> {
   const removedCount = removed.reduce((sum, result) => sum + result.deletedCount, 0)
 
   await users.insertMany(userDocs)
-  await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest } satisfies DatasetDoc)
+
+  // Read back rather than assumed, for the same reason as the additive branch.
+  // Here the two always agree, but a single rule is easier to keep true than two.
+  const ownerId = await resolveOwnerId()
+  const seeded = await seedOutcomes(datasetIdHex, ownerId, salesRowDocs, now)
+
+  await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest, ownerId } satisfies DatasetDoc)
   await salesRows.insertMany(salesRowDocs)
   await insights.insertMany(insightDocs)
   await rules.insertMany(seeded.rules)

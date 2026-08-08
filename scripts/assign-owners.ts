@@ -52,9 +52,22 @@ async function main(): Promise<void> {
   const rules = await rulesCollection()
   const users = await usersCollection()
 
-  // `$exists: false` rather than a null check: these documents predate the field
-  // entirely, so it is absent rather than empty.
-  const orphanFilter = { ownerId: { $exists: false } }
+  /*
+    Two kinds of orphan, and only the first is obvious.
+
+    `$exists: false` catches documents written before the field existed. The
+    second kind has an `ownerId` that looks perfectly valid and points at no
+    account: a seed bug stamped records with a user id that was minted and then
+    thrown away when the upsert matched an existing username instead. Both are
+    equally invisible, because every query filters on an id no session carries.
+
+    So the real test is not "has an owner" but "has an owner who exists", which
+    needs the list of real ids to compare against.
+  */
+  const realOwnerIds = (await users.find({}, { projection: { _id: 1 } }).toArray())
+    .map(user => user._id.toHexString())
+
+  const orphanFilter = { ownerId: { $nin: realOwnerIds } }
 
   // Independent of the owner question, so it runs whether or not --to is given.
   const directionlessFilter = { expectedDirection: { $exists: false } }
