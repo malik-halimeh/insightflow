@@ -196,6 +196,17 @@ function chooseAnotherFile() {
             date, an item name, a quantity and a price. A total is optional. We
             work it out when it is missing.
           </p>
+          <UButton
+            href="/samples/insightflow-sales-sample.csv"
+            download="insightflow-sales-sample.csv"
+            external
+            color="neutral"
+            variant="subtle"
+            icon="i-lucide-download"
+            class="mt-4"
+          >
+            Download sample CSV
+          </UButton>
         </div>
 
         <UFormField label="CSV file" name="file" :error="fileError ?? undefined">

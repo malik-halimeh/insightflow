@@ -1,0 +1,1162 @@
+Date,Item,Category,Quantity,Unit Price,Revenue
+2026-05-17,Margherita Pizza,Mains,14,9.50,133.00
+2026-05-17,Pepperoni Pizza,Mains,12,11.00,132.00
+2026-05-17,Lasagne,Mains,6,12.50,75.00
+2026-05-17,Grilled Chicken,Mains,6,13.00,78.00
+2026-05-17,Garlic Bread,Sides,10,4.00,40.00
+2026-05-17,House Fries,Sides,16,3.00,48.00
+2026-05-17,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-05-17,Still Water,Drinks,6,2.00,12.00
+2026-05-17,Soft Drink,Drinks,11,2.50,27.50
+2026-05-17,House Wine (glass),Drinks,6,6.00,36.00
+2026-05-17,Tiramisu,Desserts,4,6.50,26.00
+2026-05-17,Gelato,Desserts,4,4.50,18.00
+2026-05-17,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-05-17,Chef's Special,,1,10.00,10.00
+2026-05-18,Margherita Pizza,Mains,14,9.50,133.00
+2026-05-18,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-05-18,Lasagne,Mains,7,12.50,87.50
+2026-05-18,Grilled Chicken,Mains,5,13.00,65.00
+2026-05-18,Garlic Bread,Sides,9,4.00,36.00
+2026-05-18,House Fries,Sides,16,3.00,48.00
+2026-05-18,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-05-18,Still Water,Drinks,6,2.00,12.00
+2026-05-18,Soft Drink,Drinks,11,2.50,27.50
+2026-05-18,House Wine (glass),Drinks,7,6.00,42.00
+2026-05-18,Tiramisu,Desserts,4,6.50,26.00
+2026-05-18,Gelato,Desserts,3,4.50,13.50
+2026-05-18,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-05-18,Chef's Special,,1,10.00,10.00
+2026-05-19,Margherita Pizza,Mains,13,8.55,111.15
+2026-05-19,Pepperoni Pizza,Mains,10,11.00,110.00
+2026-05-19,Lasagne,Mains,6,12.50,75.00
+2026-05-19,Grilled Chicken,Mains,5,13.00,65.00
+2026-05-19,Garlic Bread,Sides,10,4.00,40.00
+2026-05-19,House Fries,Sides,13,3.00,39.00
+2026-05-19,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-05-19,Still Water,Drinks,6,2.00,12.00
+2026-05-19,Soft Drink,Drinks,11,2.50,27.50
+2026-05-19,House Wine (glass),Drinks,6,6.00,36.00
+2026-05-19,Tiramisu,Desserts,4,6.50,26.00
+2026-05-19,Gelato,Desserts,3,4.50,13.50
+2026-05-19,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-05-19,Chef's Special,,1,10.00,10.00
+2026-05-20,Margherita Pizza,Mains,13,9.50,123.50
+2026-05-20,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-05-20,Lasagne,Mains,7,12.50,87.50
+2026-05-20,Grilled Chicken,Mains,6,13.00,78.00
+2026-05-20,Garlic Bread,Sides,10,4.00,40.00
+2026-05-20,House Fries,Sides,16,3.00,48.00
+2026-05-20,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-05-20,Still Water,Drinks,7,2.00,14.00
+2026-05-20,Soft Drink,Drinks,12,2.50,30.00
+2026-05-20,House Wine (glass),Drinks,6,6.00,36.00
+2026-05-20,Tiramisu,Desserts,4,6.50,26.00
+2026-05-20,Gelato,Desserts,3,4.50,13.50
+2026-05-20,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-05-20,Chef's Special,,1,10.00,10.00
+2026-05-21,Margherita Pizza,Mains,14,9.50,133.00
+2026-05-21,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-05-21,Lasagne,Mains,8,12.50,100.00
+2026-05-21,Grilled Chicken,Mains,6,13.00,78.00
+2026-05-21,Garlic Bread,Sides,12,4.00,48.00
+2026-05-21,House Fries,Sides,16,3.00,48.00
+2026-05-21,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-05-21,Still Water,Drinks,8,2.00,16.00
+2026-05-21,Soft Drink,Drinks,11,2.50,27.50
+2026-05-21,House Wine (glass),Drinks,7,6.00,42.00
+2026-05-21,Tiramisu,Desserts,5,6.50,32.50
+2026-05-21,Gelato,Desserts,3,4.50,13.50
+2026-05-21,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-05-21,Chef's Special,,1,10.00,10.00
+2026-05-22,Margherita Pizza,Mains,21,9.50,199.50
+2026-05-22,Pepperoni Pizza,Mains,19,11.00,209.00
+2026-05-22,Lasagne,Mains,10,12.50,125.00
+2026-05-22,Grilled Chicken,Mains,8,13.00,104.00
+2026-05-22,Garlic Bread,Sides,15,4.00,60.00
+2026-05-22,House Fries,Sides,22,3.00,66.00
+2026-05-22,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-05-22,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-05-22,Still Water,Drinks,10,2.00,20.00
+2026-05-22,Soft Drink,Drinks,16,2.50,40.00
+2026-05-22,House Wine (glass),Drinks,9,5.50,49.50
+2026-05-22,Tiramisu,Desserts,6,6.50,39.00
+2026-05-22,Gelato,Desserts,5,4.50,22.50
+2026-05-22,Roasted Pumpkin Soup,Seasonal,2,7.00,14.00
+2026-05-22,Chef's Special,,1,10.00,10.00
+2026-05-23,Margherita Pizza,Mains,20,9.50,190.00
+2026-05-23,Pepperoni Pizza,Mains,20,11.00,220.00
+2026-05-23,Lasagne,Mains,11,12.50,137.50
+2026-05-23,Grilled Chicken,Mains,9,13.00,117.00
+2026-05-23,Garlic Bread,Sides,15,4.00,60.00
+2026-05-23,House Fries,Sides,25,3.00,75.00
+2026-05-23,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-05-23,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-05-23,Still Water,Drinks,10,2.00,20.00
+2026-05-23,Soft Drink,Drinks,17,2.50,42.50
+2026-05-23,House Wine (glass),Drinks,9,6.00,54.00
+2026-05-23,Tiramisu,Desserts,6,6.50,39.00
+2026-05-23,Gelato,Desserts,5,4.50,22.50
+2026-05-23,Roasted Pumpkin Soup,Seasonal,2,7.00,14.00
+2026-05-23,Chef's Special,,1,10.00,10.00
+2026-05-24,Margherita Pizza,Mains,14,9.50,133.00
+2026-05-24,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-05-24,Lasagne,Mains,7,12.50,87.50
+2026-05-24,Grilled Chicken,Mains,7,13.00,91.00
+2026-05-24,Garlic Bread,Sides,10,4.00,40.00
+2026-05-24,House Fries,Sides,18,3.00,54.00
+2026-05-24,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-05-24,Still Water,Drinks,7,2.00,14.00
+2026-05-24,Soft Drink,Drinks,12,2.50,30.00
+2026-05-24,House Wine (glass),Drinks,7,6.00,42.00
+2026-05-24,Tiramisu,Desserts,5,6.50,32.50
+2026-05-24,Gelato,Desserts,3,4.50,13.50
+2026-05-24,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-05-24,Chef's Special,,1,10.00,10.00
+2026-05-25,Margherita Pizza,Mains,14,9.50,133.00
+2026-05-25,Pepperoni Pizza,Mains,12,11.00,132.00
+2026-05-25,Lasagne,Mains,7,12.50,87.50
+2026-05-25,Grilled Chicken,Mains,6,13.00,78.00
+2026-05-25,Garlic Bread,Sides,9,4.00,36.00
+2026-05-25,House Fries,Sides,15,3.00,45.00
+2026-05-25,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-05-25,Still Water,Drinks,7,2.00,14.00
+2026-05-25,Soft Drink,Drinks,11,2.50,27.50
+2026-05-25,House Wine (glass),Drinks,6,6.00,36.00
+2026-05-25,Tiramisu,Desserts,4,6.50,26.00
+2026-05-25,Gelato,Desserts,3,4.50,13.50
+2026-05-25,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-05-26,Margherita Pizza,Mains,13,8.55,111.15
+2026-05-26,Pepperoni Pizza,Mains,11,11.00,121.00
+2026-05-26,Lasagne,Mains,6,12.50,75.00
+2026-05-26,Grilled Chicken,Mains,6,13.00,78.00
+2026-05-26,Garlic Bread,Sides,9,4.00,36.00
+2026-05-26,House Fries,Sides,15,3.00,45.00
+2026-05-26,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-05-26,Still Water,Drinks,6,2.00,12.00
+2026-05-26,Soft Drink,Drinks,10,2.50,25.00
+2026-05-26,House Wine (glass),Drinks,6,6.00,36.00
+2026-05-26,Tiramisu,Desserts,4,6.50,26.00
+2026-05-26,Gelato,Desserts,3,4.50,13.50
+2026-05-26,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-05-26,Chef's Special,,1,10.00,10.00
+2026-05-27,Margherita Pizza,Mains,14,9.50,133.00
+2026-05-27,Pepperoni Pizza,Mains,12,11.00,132.00
+2026-05-27,Lasagne,Mains,7,12.50,87.50
+2026-05-27,Grilled Chicken,Mains,5,13.00,65.00
+2026-05-27,Garlic Bread,Sides,11,4.00,44.00
+2026-05-27,House Fries,Sides,15,3.00,45.00
+2026-05-27,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-05-27,Still Water,Drinks,6,2.00,12.00
+2026-05-27,Soft Drink,Drinks,10,2.50,25.00
+2026-05-27,House Wine (glass),Drinks,7,6.00,42.00
+2026-05-27,Tiramisu,Desserts,4,6.50,26.00
+2026-05-27,Gelato,Desserts,4,4.50,18.00
+2026-05-27,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-05-27,Chef's Special,,1,10.00,10.00
+2026-05-28,Margherita Pizza,Mains,15,9.50,142.50
+2026-05-28,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-05-28,Lasagne,Mains,8,12.50,100.00
+2026-05-28,Grilled Chicken,Mains,6,13.00,78.00
+2026-05-28,Garlic Bread,Sides,12,4.00,48.00
+2026-05-28,House Fries,Sides,18,3.00,54.00
+2026-05-28,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-05-28,Still Water,Drinks,7,2.00,14.00
+2026-05-28,Soft Drink,Drinks,13,2.50,32.50
+2026-05-28,House Wine (glass),Drinks,8,6.00,48.00
+2026-05-28,Tiramisu,Desserts,5,6.50,32.50
+2026-05-28,Gelato,Desserts,4,4.50,18.00
+2026-05-28,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-05-28,Chef's Special,,1,10.00,10.00
+2026-05-29,Margherita Pizza,Mains,21,9.50,199.50
+2026-05-29,Pepperoni Pizza,Mains,18,11.00,198.00
+2026-05-29,Lasagne,Mains,10,12.50,125.00
+2026-05-29,Grilled Chicken,Mains,9,13.00,117.00
+2026-05-29,Garlic Bread,Sides,14,4.00,56.00
+2026-05-29,House Fries,Sides,22,3.00,66.00
+2026-05-29,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-05-29,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-05-29,Still Water,Drinks,10,2.00,20.00
+2026-05-29,Soft Drink,Drinks,16,2.50,40.00
+2026-05-29,House Wine (glass),Drinks,10,5.50,55.00
+2026-05-29,Tiramisu,Desserts,6,6.50,39.00
+2026-05-29,Gelato,Desserts,5,4.50,22.50
+2026-05-29,Roasted Pumpkin Soup,Seasonal,2,7.00,14.00
+2026-05-29,Chef's Special,,1,10.00,10.00
+2026-05-30,Margherita Pizza,Mains,21,9.50,199.50
+2026-05-30,Pepperoni Pizza,Mains,17,11.00,187.00
+2026-05-30,Lasagne,Mains,10,12.50,125.00
+2026-05-30,Grilled Chicken,Mains,8,13.00,104.00
+2026-05-30,Garlic Bread,Sides,15,4.00,60.00
+2026-05-30,House Fries,Sides,24,3.00,72.00
+2026-05-30,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-05-30,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-05-30,Still Water,Drinks,10,2.00,20.00
+2026-05-30,Soft Drink,Drinks,17,2.50,42.50
+2026-05-30,House Wine (glass),Drinks,11,6.00,66.00
+2026-05-30,Tiramisu,Desserts,6,6.50,39.00
+2026-05-30,Gelato,Desserts,5,4.50,22.50
+2026-05-30,Roasted Pumpkin Soup,Seasonal,2,7.00,14.00
+2026-05-30,Chef's Special,,1,10.00,10.00
+2026-05-31,Margherita Pizza,Mains,14,9.50,133.00
+2026-05-31,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-05-31,Lasagne,Mains,7,12.50,87.50
+2026-05-31,Grilled Chicken,Mains,7,13.00,91.00
+2026-05-31,Garlic Bread,Sides,11,4.00,44.00
+2026-05-31,House Fries,Sides,16,3.00,48.00
+2026-05-31,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-05-31,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-05-31,Still Water,Drinks,7,2.00,14.00
+2026-05-31,Soft Drink,Drinks,12,2.50,30.00
+2026-05-31,House Wine (glass),Drinks,7,6.00,42.00
+2026-05-31,Tiramisu,Desserts,5,6.50,32.50
+2026-05-31,Gelato,Desserts,3,4.50,13.50
+2026-05-31,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-05-31,Chef's Special,,1,10.00,10.00
+2026-06-01,Margherita Pizza,Mains,14,9.50,133.00
+2026-06-01,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-06-01,Lasagne,Mains,6,12.50,75.00
+2026-06-01,Grilled Chicken,Mains,6,13.00,78.00
+2026-06-01,Garlic Bread,Sides,10,4.00,40.00
+2026-06-01,House Fries,Sides,17,3.00,51.00
+2026-06-01,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-01,Still Water,Drinks,6,2.00,12.00
+2026-06-01,Soft Drink,Drinks,10,2.50,25.00
+2026-06-01,House Wine (glass),Drinks,7,6.00,42.00
+2026-06-01,Tiramisu,Desserts,4,6.50,26.00
+2026-06-01,Gelato,Desserts,3,4.50,13.50
+2026-06-01,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-01,Chef's Special,,1,10.00,10.00
+2026-06-02,Margherita Pizza,Mains,13,8.55,111.15
+2026-06-02,Pepperoni Pizza,Mains,12,11.00,132.00
+2026-06-02,Lasagne,Mains,6,12.50,75.00
+2026-06-02,Grilled Chicken,Mains,5,13.00,65.00
+2026-06-02,Garlic Bread,Sides,10,4.00,40.00
+2026-06-02,House Fries,Sides,15,3.00,45.00
+2026-06-02,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-02,Still Water,Drinks,6,2.00,12.00
+2026-06-02,Soft Drink,Drinks,11,2.50,27.50
+2026-06-02,House Wine (glass),Drinks,6,6.00,36.00
+2026-06-02,Tiramisu,Desserts,4,6.50,26.00
+2026-06-02,Gelato,Desserts,3,4.50,13.50
+2026-06-02,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-02,Chef's Special,,1,10.00,10.00
+2026-06-03,Margherita Pizza,Mains,16,9.50,152.00
+2026-06-03,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-06-03,Lasagne,Mains,7,12.50,87.50
+2026-06-03,Grilled Chicken,Mains,6,13.00,78.00
+2026-06-03,Garlic Bread,Sides,10,4.00,40.00
+2026-06-03,House Fries,Sides,16,3.00,48.00
+2026-06-03,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-03,Still Water,Drinks,7,2.00,14.00
+2026-06-03,Soft Drink,Drinks,11,2.50,27.50
+2026-06-03,House Wine (glass),Drinks,7,6.00,42.00
+2026-06-03,Tiramisu,Desserts,5,6.50,32.50
+2026-06-03,Gelato,Desserts,4,4.50,18.00
+2026-06-03,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-03,Chef's Special,,1,10.00,10.00
+2026-06-04,Margherita Pizza,Mains,15,9.50,142.50
+2026-06-04,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-06-04,Lasagne,Mains,8,12.50,100.00
+2026-06-04,Grilled Chicken,Mains,7,13.00,91.00
+2026-06-04,Garlic Bread,Sides,11,4.00,44.00
+2026-06-04,House Fries,Sides,17,3.00,51.00
+2026-06-04,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-04,Still Water,Drinks,8,2.00,16.00
+2026-06-04,Soft Drink,Drinks,11,2.50,27.50
+2026-06-04,House Wine (glass),Drinks,7,6.00,42.00
+2026-06-04,Tiramisu,Desserts,5,6.50,32.50
+2026-06-04,Gelato,Desserts,4,4.50,18.00
+2026-06-04,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-04,Chef's Special,,1,10.00,10.00
+2026-06-05,Margherita Pizza,Mains,20,9.50,190.00
+2026-06-05,Pepperoni Pizza,Mains,18,11.00,198.00
+2026-06-05,Lasagne,Mains,10,12.50,125.00
+2026-06-05,Grilled Chicken,Mains,8,13.00,104.00
+2026-06-05,Garlic Bread,Sides,15,4.00,60.00
+2026-06-05,House Fries,Sides,24,3.00,72.00
+2026-06-05,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-06-05,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-06-05,Still Water,Drinks,10,2.00,20.00
+2026-06-05,Soft Drink,Drinks,16,2.50,40.00
+2026-06-05,House Wine (glass),Drinks,10,5.50,55.00
+2026-06-05,Tiramisu,Desserts,6,6.50,39.00
+2026-06-05,Gelato,Desserts,5,4.50,22.50
+2026-06-05,Roasted Pumpkin Soup,Seasonal,2,7.00,14.00
+2026-06-05,Chef's Special,,1,10.00,10.00
+2026-06-06,Margherita Pizza,Mains,21,9.50,199.50
+2026-06-06,Pepperoni Pizza,Mains,18,11.00,198.00
+2026-06-06,Lasagne,Mains,11,12.50,137.50
+2026-06-06,Grilled Chicken,Mains,9,13.00,117.00
+2026-06-06,Garlic Bread,Sides,15,4.00,60.00
+2026-06-06,House Fries,Sides,24,3.00,72.00
+2026-06-06,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-06,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-06-06,Still Water,Drinks,11,2.00,22.00
+2026-06-06,Soft Drink,Drinks,18,2.50,45.00
+2026-06-06,House Wine (glass),Drinks,11,6.00,66.00
+2026-06-06,Tiramisu,Desserts,7,6.50,45.50
+2026-06-06,Gelato,Desserts,5,4.50,22.50
+2026-06-06,Roasted Pumpkin Soup,Seasonal,2,7.00,14.00
+2026-06-06,Chef's Special,,1,10.00,10.00
+2026-06-07,Margherita Pizza,Mains,16,9.50,152.00
+2026-06-07,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-06-07,Lasagne,Mains,7,12.50,87.50
+2026-06-07,Grilled Chicken,Mains,7,13.00,91.00
+2026-06-07,Garlic Bread,Sides,11,4.00,44.00
+2026-06-07,House Fries,Sides,16,3.00,48.00
+2026-06-07,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-07,Still Water,Drinks,7,2.00,14.00
+2026-06-07,Soft Drink,Drinks,11,2.50,27.50
+2026-06-07,House Wine (glass),Drinks,8,6.00,48.00
+2026-06-07,Tiramisu,Desserts,4,6.50,26.00
+2026-06-07,Gelato,Desserts,3,4.50,13.50
+2026-06-07,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-07,Chef's Special,,1,10.00,10.00
+2026-06-08,Margherita Pizza,Mains,14,9.50,133.00
+2026-06-08,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-06-08,Lasagne,Mains,6,12.50,75.00
+2026-06-08,Grilled Chicken,Mains,6,13.00,78.00
+2026-06-08,Garlic Bread,Sides,9,4.00,36.00
+2026-06-08,House Fries,Sides,15,3.00,45.00
+2026-06-08,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-08,Still Water,Drinks,7,2.00,14.00
+2026-06-08,Soft Drink,Drinks,12,2.50,30.00
+2026-06-08,House Wine (glass),Drinks,6,6.00,36.00
+2026-06-08,Tiramisu,Desserts,4,6.50,26.00
+2026-06-08,Gelato,Desserts,3,4.50,13.50
+2026-06-08,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-08,Chef's Special,,1,10.00,10.00
+2026-06-09,Margherita Pizza,Mains,13,8.55,111.15
+2026-06-09,Pepperoni Pizza,Mains,12,11.00,132.00
+2026-06-09,Lasagne,Mains,7,12.50,87.50
+2026-06-09,Grilled Chicken,Mains,6,13.00,78.00
+2026-06-09,Garlic Bread,Sides,10,4.00,40.00
+2026-06-09,House Fries,Sides,14,3.00,42.00
+2026-06-09,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-09,Still Water,Drinks,6,2.00,12.00
+2026-06-09,Soft Drink,Drinks,10,2.50,25.00
+2026-06-09,House Wine (glass),Drinks,6,6.00,36.00
+2026-06-09,Tiramisu,Desserts,4,6.50,26.00
+2026-06-09,Gelato,Desserts,3,4.50,13.50
+2026-06-09,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-09,Chef's Special,,1,10.00,10.00
+2026-06-10,Margherita Pizza,Mains,15,9.50,142.50
+2026-06-10,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-06-10,Lasagne,Mains,7,12.50,87.50
+2026-06-10,Grilled Chicken,Mains,6,13.00,78.00
+2026-06-10,Garlic Bread,Sides,11,4.00,44.00
+2026-06-10,House Fries,Sides,18,3.00,54.00
+2026-06-10,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-10,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-06-10,Still Water,Drinks,7,2.00,14.00
+2026-06-10,Soft Drink,Drinks,12,2.50,30.00
+2026-06-10,House Wine (glass),Drinks,7,6.00,42.00
+2026-06-10,Tiramisu,Desserts,4,6.50,26.00
+2026-06-10,Gelato,Desserts,4,4.50,18.00
+2026-06-10,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-10,Chef's Special,,1,10.00,10.00
+2026-06-11,Margherita Pizza,Mains,17,9.50,161.50
+2026-06-11,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-06-11,Lasagne,Mains,7,12.50,87.50
+2026-06-11,Grilled Chicken,Mains,7,13.00,91.00
+2026-06-11,Garlic Bread,Sides,10,4.00,40.00
+2026-06-11,House Fries,Sides,18,3.00,54.00
+2026-06-11,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-11,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-06-11,Still Water,Drinks,8,2.00,16.00
+2026-06-11,Soft Drink,Drinks,13,2.50,32.50
+2026-06-11,House Wine (glass),Drinks,7,6.00,42.00
+2026-06-11,Tiramisu,Desserts,5,6.50,32.50
+2026-06-11,Gelato,Desserts,4,4.50,18.00
+2026-06-11,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-11,Chef's Special,,1,10.00,10.00
+2026-06-12,Margherita Pizza,Mains,22,9.50,209.00
+2026-06-12,Pepperoni Pizza,Mains,20,11.00,220.00
+2026-06-12,Lasagne,Mains,10,12.50,125.00
+2026-06-12,Grilled Chicken,Mains,9,13.00,117.00
+2026-06-12,Garlic Bread,Sides,14,4.00,56.00
+2026-06-12,House Fries,Sides,26,3.00,78.00
+2026-06-12,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-06-12,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-06-12,Still Water,Drinks,10,2.00,20.00
+2026-06-12,Soft Drink,Drinks,18,2.50,45.00
+2026-06-12,House Wine (glass),Drinks,10,5.50,55.00
+2026-06-12,Tiramisu,Desserts,6,6.50,39.00
+2026-06-12,Gelato,Desserts,6,4.50,27.00
+2026-06-12,Roasted Pumpkin Soup,Seasonal,2,7.00,14.00
+2026-06-12,Chef's Special,,1,10.00,10.00
+2026-06-13,Margherita Pizza,Mains,20,9.50,190.00
+2026-06-13,Pepperoni Pizza,Mains,18,11.00,198.00
+2026-06-13,Lasagne,Mains,10,12.50,125.00
+2026-06-13,Grilled Chicken,Mains,9,13.00,117.00
+2026-06-13,Garlic Bread,Sides,16,4.00,64.00
+2026-06-13,House Fries,Sides,24,3.00,72.00
+2026-06-13,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-06-13,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-06-13,Still Water,Drinks,10,2.00,20.00
+2026-06-13,Soft Drink,Drinks,16,2.50,40.00
+2026-06-13,House Wine (glass),Drinks,11,6.00,66.00
+2026-06-13,Tiramisu,Desserts,6,6.50,39.00
+2026-06-13,Gelato,Desserts,5,4.50,22.50
+2026-06-13,Roasted Pumpkin Soup,Seasonal,2,7.00,14.00
+2026-06-13,Chef's Special,,1,10.00,10.00
+2026-06-14,Margherita Pizza,Mains,15,9.50,142.50
+2026-06-14,Pepperoni Pizza,Mains,15,11.00,165.00
+2026-06-14,Lasagne,Mains,7,12.50,87.50
+2026-06-14,Grilled Chicken,Mains,6,13.00,78.00
+2026-06-14,Garlic Bread,Sides,10,4.00,40.00
+2026-06-14,House Fries,Sides,17,3.00,51.00
+2026-06-14,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-14,Still Water,Drinks,8,2.00,16.00
+2026-06-14,Soft Drink,Drinks,11,2.50,27.50
+2026-06-14,House Wine (glass),Drinks,7,6.00,42.00
+2026-06-14,Tiramisu,Desserts,4,6.50,26.00
+2026-06-14,Gelato,Desserts,4,4.50,18.00
+2026-06-14,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-14,Chef's Special,,1,10.00,10.00
+2026-06-15,Margherita Pizza,Mains,14,9.50,133.00
+2026-06-15,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-06-15,Lasagne,Mains,7,12.50,87.50
+2026-06-15,Grilled Chicken,Mains,5,13.00,65.00
+2026-06-15,Garlic Bread,Sides,10,4.00,40.00
+2026-06-15,House Fries,Sides,17,3.00,51.00
+2026-06-15,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-15,Still Water,Drinks,7,2.00,14.00
+2026-06-15,Soft Drink,Drinks,11,2.50,27.50
+2026-06-15,House Wine (glass),Drinks,7,6.00,42.00
+2026-06-15,Tiramisu,Desserts,4,6.50,26.00
+2026-06-15,Gelato,Desserts,3,4.50,13.50
+2026-06-15,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-15,Chef's Special,,1,10.00,10.00
+2026-06-16,Margherita Pizza,Mains,14,8.55,119.70
+2026-06-16,Pepperoni Pizza,Mains,11,11.00,121.00
+2026-06-16,Lasagne,Mains,6,12.50,75.00
+2026-06-16,Grilled Chicken,Mains,5,13.00,65.00
+2026-06-16,Garlic Bread,Sides,9,4.00,36.00
+2026-06-16,House Fries,Sides,16,3.00,48.00
+2026-06-16,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-16,Still Water,Drinks,6,2.00,12.00
+2026-06-16,Soft Drink,Drinks,10,2.50,25.00
+2026-06-16,House Wine (glass),Drinks,7,6.00,42.00
+2026-06-16,Tiramisu,Desserts,4,6.50,26.00
+2026-06-16,Gelato,Desserts,3,4.50,13.50
+2026-06-16,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-16,Chef's Special,,1,10.00,10.00
+2026-06-17,Margherita Pizza,Mains,15,9.50,142.50
+2026-06-17,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-06-17,Lasagne,Mains,7,12.50,87.50
+2026-06-17,Grilled Chicken,Mains,6,13.00,78.00
+2026-06-17,Garlic Bread,Sides,10,4.00,40.00
+2026-06-17,House Fries,Sides,17,3.00,51.00
+2026-06-17,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-17,Still Water,Drinks,6,2.00,12.00
+2026-06-17,Soft Drink,Drinks,11,2.50,27.50
+2026-06-17,House Wine (glass),Drinks,7,6.00,42.00
+2026-06-17,Tiramisu,Desserts,4,6.50,26.00
+2026-06-17,Gelato,Desserts,3,4.50,13.50
+2026-06-17,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-17,Chef's Special,,1,10.00,10.00
+2026-06-18,Margherita Pizza,Mains,15,9.50,142.50
+2026-06-18,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-06-18,Lasagne,Mains,8,12.50,100.00
+2026-06-18,Grilled Chicken,Mains,7,13.00,91.00
+2026-06-18,Garlic Bread,Sides,11,4.00,44.00
+2026-06-18,House Fries,Sides,18,3.00,54.00
+2026-06-18,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-18,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-06-18,Still Water,Drinks,7,2.00,14.00
+2026-06-18,Soft Drink,Drinks,13,2.50,32.50
+2026-06-18,House Wine (glass),Drinks,7,6.00,42.00
+2026-06-18,Tiramisu,Desserts,5,6.50,32.50
+2026-06-18,Gelato,Desserts,4,4.50,18.00
+2026-06-18,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-18,Chef's Special,,1,10.00,10.00
+2026-06-19,Margherita Pizza,Mains,22,9.50,209.00
+2026-06-19,Pepperoni Pizza,Mains,20,11.00,220.00
+2026-06-19,Lasagne,Mains,10,12.50,125.00
+2026-06-19,Grilled Chicken,Mains,9,13.00,117.00
+2026-06-19,Garlic Bread,Sides,14,4.00,56.00
+2026-06-19,House Fries,Sides,26,3.00,78.00
+2026-06-19,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-06-19,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-06-19,Still Water,Drinks,10,2.00,20.00
+2026-06-19,Soft Drink,Drinks,17,2.50,42.50
+2026-06-19,House Wine (glass),Drinks,10,5.50,55.00
+2026-06-19,Tiramisu,Desserts,6,6.50,39.00
+2026-06-19,Gelato,Desserts,5,4.50,22.50
+2026-06-19,Roasted Pumpkin Soup,Seasonal,2,7.00,14.00
+2026-06-19,Chef's Special,,1,10.00,10.00
+2026-06-20,Margherita Pizza,Mains,21,9.50,199.50
+2026-06-20,Pepperoni Pizza,Mains,21,11.00,231.00
+2026-06-20,Lasagne,Mains,10,12.50,125.00
+2026-06-20,Grilled Chicken,Mains,9,13.00,117.00
+2026-06-20,Garlic Bread,Sides,14,4.00,56.00
+2026-06-20,House Fries,Sides,26,3.00,78.00
+2026-06-20,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-06-20,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-06-20,Still Water,Drinks,10,2.00,20.00
+2026-06-20,Soft Drink,Drinks,17,2.50,42.50
+2026-06-20,House Wine (glass),Drinks,10,6.00,60.00
+2026-06-20,Tiramisu,Desserts,7,6.50,45.50
+2026-06-20,Gelato,Desserts,5,4.50,22.50
+2026-06-20,Roasted Pumpkin Soup,Seasonal,2,7.00,14.00
+2026-06-20,Chef's Special,,1,10.00,10.00
+2026-06-21,Margherita Pizza,Mains,17,9.50,161.50
+2026-06-21,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-06-21,Lasagne,Mains,7,12.50,87.50
+2026-06-21,Grilled Chicken,Mains,7,13.00,91.00
+2026-06-21,Garlic Bread,Sides,11,4.00,44.00
+2026-06-21,House Fries,Sides,16,3.00,48.00
+2026-06-21,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-21,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-06-21,Still Water,Drinks,7,2.00,14.00
+2026-06-21,Soft Drink,Drinks,13,2.50,32.50
+2026-06-21,House Wine (glass),Drinks,8,6.00,48.00
+2026-06-21,Tiramisu,Desserts,4,6.50,26.00
+2026-06-21,Gelato,Desserts,4,4.50,18.00
+2026-06-21,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-21,Chef's Special,,1,10.00,10.00
+2026-06-22,Margherita Pizza,Mains,15,9.50,142.50
+2026-06-22,Pepperoni Pizza,Mains,12,11.00,132.00
+2026-06-22,Lasagne,Mains,7,12.50,87.50
+2026-06-22,Grilled Chicken,Mains,6,13.00,78.00
+2026-06-22,Garlic Bread,Sides,11,4.00,44.00
+2026-06-22,House Fries,Sides,15,3.00,45.00
+2026-06-22,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-22,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-06-22,Still Water,Drinks,7,2.00,14.00
+2026-06-22,Soft Drink,Drinks,11,2.50,27.50
+2026-06-22,House Wine (glass),Drinks,7,6.00,42.00
+2026-06-22,Tiramisu,Desserts,4,6.50,26.00
+2026-06-22,Gelato,Desserts,4,4.50,18.00
+2026-06-22,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-22,Chef's Special,,1,10.00,10.00
+2026-06-23,Margherita Pizza,Mains,14,8.55,119.70
+2026-06-23,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-06-23,Lasagne,Mains,6,12.50,75.00
+2026-06-23,Grilled Chicken,Mains,6,13.00,78.00
+2026-06-23,Garlic Bread,Sides,10,4.00,40.00
+2026-06-23,House Fries,Sides,14,3.00,42.00
+2026-06-23,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-23,Still Water,Drinks,6,2.00,12.00
+2026-06-23,Soft Drink,Drinks,10,2.50,25.00
+2026-06-23,House Wine (glass),Drinks,6,6.00,36.00
+2026-06-23,Tiramisu,Desserts,4,6.50,26.00
+2026-06-23,Gelato,Desserts,3,4.50,13.50
+2026-06-23,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-24,Margherita Pizza,Mains,16,9.50,152.00
+2026-06-24,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-06-24,Lasagne,Mains,7,12.50,87.50
+2026-06-24,Grilled Chicken,Mains,6,13.00,78.00
+2026-06-24,Garlic Bread,Sides,11,4.00,44.00
+2026-06-24,House Fries,Sides,16,3.00,48.00
+2026-06-24,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-24,Still Water,Drinks,7,2.00,14.00
+2026-06-24,Soft Drink,Drinks,12,2.50,30.00
+2026-06-24,House Wine (glass),Drinks,7,6.00,42.00
+2026-06-24,Tiramisu,Desserts,4,6.50,26.00
+2026-06-24,Gelato,Desserts,3,4.50,13.50
+2026-06-24,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-24,Chef's Special,,1,10.00,10.00
+2026-06-25,Margherita Pizza,Mains,16,9.50,152.00
+2026-06-25,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-06-25,Lasagne,Mains,7,12.50,87.50
+2026-06-25,Grilled Chicken,Mains,6,13.00,78.00
+2026-06-25,Garlic Bread,Sides,12,4.00,48.00
+2026-06-25,House Fries,Sides,19,3.00,57.00
+2026-06-25,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-25,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-06-25,Still Water,Drinks,7,2.00,14.00
+2026-06-25,Soft Drink,Drinks,12,2.50,30.00
+2026-06-25,House Wine (glass),Drinks,8,6.00,48.00
+2026-06-25,Tiramisu,Desserts,5,6.50,32.50
+2026-06-25,Gelato,Desserts,4,4.50,18.00
+2026-06-25,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-25,Chef's Special,,1,10.00,10.00
+2026-06-26,Margherita Pizza,Mains,23,9.50,218.50
+2026-06-26,Pepperoni Pizza,Mains,20,11.00,220.00
+2026-06-26,Lasagne,Mains,11,12.50,137.50
+2026-06-26,Grilled Chicken,Mains,10,13.00,130.00
+2026-06-26,Garlic Bread,Sides,15,4.00,60.00
+2026-06-26,House Fries,Sides,24,3.00,72.00
+2026-06-26,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-06-26,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-06-26,Still Water,Drinks,10,2.00,20.00
+2026-06-26,Soft Drink,Drinks,17,2.50,42.50
+2026-06-26,House Wine (glass),Drinks,11,5.50,60.50
+2026-06-26,Tiramisu,Desserts,7,6.50,45.50
+2026-06-26,Gelato,Desserts,5,4.50,22.50
+2026-06-26,Roasted Pumpkin Soup,Seasonal,2,7.00,14.00
+2026-06-26,Chef's Special,,1,10.00,10.00
+2026-06-27,Margherita Pizza,Mains,21,9.50,199.50
+2026-06-27,Pepperoni Pizza,Mains,18,11.00,198.00
+2026-06-27,Lasagne,Mains,10,12.50,125.00
+2026-06-27,Grilled Chicken,Mains,9,13.00,117.00
+2026-06-27,Garlic Bread,Sides,17,4.00,68.00
+2026-06-27,House Fries,Sides,24,3.00,72.00
+2026-06-27,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-06-27,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-06-27,Still Water,Drinks,11,2.00,22.00
+2026-06-27,Soft Drink,Drinks,16,2.50,40.00
+2026-06-27,House Wine (glass),Drinks,11,6.00,66.00
+2026-06-27,Tiramisu,Desserts,7,6.50,45.50
+2026-06-27,Gelato,Desserts,6,4.50,27.00
+2026-06-27,Roasted Pumpkin Soup,Seasonal,2,7.00,14.00
+2026-06-27,Chef's Special,,1,10.00,10.00
+2026-06-28,Margherita Pizza,Mains,15,9.50,142.50
+2026-06-28,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-06-28,Lasagne,Mains,7,12.50,87.50
+2026-06-28,Grilled Chicken,Mains,6,13.00,78.00
+2026-06-28,Garlic Bread,Sides,12,4.00,48.00
+2026-06-28,House Fries,Sides,17,3.00,51.00
+2026-06-28,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-28,Still Water,Drinks,8,2.00,16.00
+2026-06-28,Soft Drink,Drinks,13,2.50,32.50
+2026-06-28,House Wine (glass),Drinks,8,6.00,48.00
+2026-06-28,Tiramisu,Desserts,5,6.50,32.50
+2026-06-28,Gelato,Desserts,4,4.50,18.00
+2026-06-28,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-28,Chef's Special,,1,10.00,10.00
+2026-06-29,Margherita Pizza,Mains,15,9.50,142.50
+2026-06-29,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-06-29,Lasagne,Mains,7,12.50,87.50
+2026-06-29,Grilled Chicken,Mains,6,13.00,78.00
+2026-06-29,Garlic Bread,Sides,10,4.00,40.00
+2026-06-29,House Fries,Sides,17,3.00,51.00
+2026-06-29,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-29,Still Water,Drinks,6,2.00,12.00
+2026-06-29,Soft Drink,Drinks,12,2.50,30.00
+2026-06-29,House Wine (glass),Drinks,7,6.00,42.00
+2026-06-29,Tiramisu,Desserts,4,6.50,26.00
+2026-06-29,Gelato,Desserts,4,4.50,18.00
+2026-06-29,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-29,Chef's Special,,1,10.00,10.00
+2026-06-30,Margherita Pizza,Mains,13,8.55,111.15
+2026-06-30,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-06-30,Lasagne,Mains,6,12.50,75.00
+2026-06-30,Grilled Chicken,Mains,6,13.00,78.00
+2026-06-30,Garlic Bread,Sides,9,4.00,36.00
+2026-06-30,House Fries,Sides,16,3.00,48.00
+2026-06-30,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-06-30,Still Water,Drinks,6,2.00,12.00
+2026-06-30,Soft Drink,Drinks,11,2.50,27.50
+2026-06-30,House Wine (glass),Drinks,7,6.00,42.00
+2026-06-30,Tiramisu,Desserts,4,6.50,26.00
+2026-06-30,Gelato,Desserts,3,4.50,13.50
+2026-06-30,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-06-30,Chef's Special,,1,10.00,10.00
+2026-07-01,Margherita Pizza,Mains,15,9.50,142.50
+2026-07-01,Pepperoni Pizza,Mains,12,11.00,132.00
+2026-07-01,Lasagne,Mains,8,12.50,100.00
+2026-07-01,Grilled Chicken,Mains,6,13.00,78.00
+2026-07-01,Garlic Bread,Sides,10,4.00,40.00
+2026-07-01,House Fries,Sides,17,3.00,51.00
+2026-07-01,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-01,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-01,Still Water,Drinks,7,2.00,14.00
+2026-07-01,Soft Drink,Drinks,11,2.50,27.50
+2026-07-01,House Wine (glass),Drinks,7,6.00,42.00
+2026-07-01,Tiramisu,Desserts,5,6.50,32.50
+2026-07-01,Gelato,Desserts,4,4.50,18.00
+2026-07-01,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-07-01,Chef's Special,,1,10.00,10.00
+2026-07-02,Margherita Pizza,Mains,16,9.50,152.00
+2026-07-02,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-07-02,Lasagne,Mains,8,12.50,100.00
+2026-07-02,Grilled Chicken,Mains,7,13.00,91.00
+2026-07-02,Garlic Bread,Sides,12,4.00,48.00
+2026-07-02,House Fries,Sides,19,3.00,57.00
+2026-07-02,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-02,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-02,Still Water,Drinks,8,2.00,16.00
+2026-07-02,Soft Drink,Drinks,12,2.50,30.00
+2026-07-02,House Wine (glass),Drinks,8,6.00,48.00
+2026-07-02,Tiramisu,Desserts,5,6.50,32.50
+2026-07-02,Gelato,Desserts,4,4.50,18.00
+2026-07-02,Roasted Pumpkin Soup,Seasonal,1,7.00,7.00
+2026-07-02,Chef's Special,,1,10.00,10.00
+2026-07-03,Margherita Pizza,Mains,24,9.50,228.00
+2026-07-03,Pepperoni Pizza,Mains,18,11.00,198.00
+2026-07-03,Lasagne,Mains,11,12.50,137.50
+2026-07-03,Grilled Chicken,Mains,10,13.00,130.00
+2026-07-03,Garlic Bread,Sides,15,4.00,60.00
+2026-07-03,House Fries,Sides,26,3.00,78.00
+2026-07-03,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-07-03,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-03,Still Water,Drinks,10,2.00,20.00
+2026-07-03,Soft Drink,Drinks,19,2.50,47.50
+2026-07-03,House Wine (glass),Drinks,11,5.50,60.50
+2026-07-03,Tiramisu,Desserts,7,6.50,45.50
+2026-07-03,Gelato,Desserts,5,4.50,22.50
+2026-07-03,Roasted Pumpkin Soup,Seasonal,2,7.00,14.00
+2026-07-03,Chef's Special,,1,10.00,10.00
+2026-07-04,Margherita Pizza,Mains,24,9.50,228.00
+2026-07-04,Pepperoni Pizza,Mains,20,11.00,220.00
+2026-07-04,Lasagne,Mains,11,12.50,137.50
+2026-07-04,Grilled Chicken,Mains,9,13.00,117.00
+2026-07-04,Garlic Bread,Sides,17,4.00,68.00
+2026-07-04,House Fries,Sides,25,3.00,75.00
+2026-07-04,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-07-04,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-04,Still Water,Drinks,10,2.00,20.00
+2026-07-04,Soft Drink,Drinks,17,2.50,42.50
+2026-07-04,House Wine (glass),Drinks,11,6.00,66.00
+2026-07-04,Tiramisu,Desserts,6,6.50,39.00
+2026-07-04,Gelato,Desserts,5,4.50,22.50
+2026-07-04,Roasted Pumpkin Soup,Seasonal,2,7.00,14.00
+2026-07-04,Chef's Special,,1,10.00,10.00
+2026-07-05,Margherita Pizza,Mains,17,9.50,161.50
+2026-07-05,Pepperoni Pizza,Mains,15,11.00,165.00
+2026-07-05,Lasagne,Mains,8,12.50,100.00
+2026-07-05,Grilled Chicken,Mains,6,13.00,78.00
+2026-07-05,Garlic Bread,Sides,12,4.00,48.00
+2026-07-05,House Fries,Sides,19,3.00,57.00
+2026-07-05,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-05,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-05,Still Water,Drinks,7,2.00,14.00
+2026-07-05,Soft Drink,Drinks,12,2.50,30.00
+2026-07-05,House Wine (glass),Drinks,8,6.00,48.00
+2026-07-05,Tiramisu,Desserts,5,6.50,32.50
+2026-07-05,Gelato,Desserts,4,4.50,18.00
+2026-07-05,Chef's Special,,1,10.00,10.00
+2026-07-06,Margherita Pizza,Mains,14,9.50,133.00
+2026-07-06,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-07-06,Lasagne,Mains,7,12.50,87.50
+2026-07-06,Grilled Chicken,Mains,6,13.00,78.00
+2026-07-06,Garlic Bread,Sides,11,4.00,44.00
+2026-07-06,House Fries,Sides,15,3.00,45.00
+2026-07-06,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-06,Still Water,Drinks,7,2.00,14.00
+2026-07-06,Soft Drink,Drinks,11,2.50,27.50
+2026-07-06,House Wine (glass),Drinks,7,6.00,42.00
+2026-07-06,Tiramisu,Desserts,4,6.50,26.00
+2026-07-06,Gelato,Desserts,4,4.50,18.00
+2026-07-06,Chef's Special,,1,10.00,10.00
+2026-07-07,Margherita Pizza,Mains,14,8.55,119.70
+2026-07-07,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-07-07,Lasagne,Mains,6,12.50,75.00
+2026-07-07,Grilled Chicken,Mains,6,13.00,78.00
+2026-07-07,Garlic Bread,Sides,10,4.00,40.00
+2026-07-07,House Fries,Sides,15,3.00,45.00
+2026-07-07,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-07,Still Water,Drinks,7,2.00,14.00
+2026-07-07,Soft Drink,Drinks,10,2.50,25.00
+2026-07-07,House Wine (glass),Drinks,7,6.00,42.00
+2026-07-07,Tiramisu,Desserts,4,6.50,26.00
+2026-07-07,Gelato,Desserts,3,4.50,13.50
+2026-07-07,Chef's Special,,1,10.00,10.00
+2026-07-08,Margherita Pizza,Mains,14,9.50,133.00
+2026-07-08,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-07-08,Lasagne,Mains,7,12.50,87.50
+2026-07-08,Grilled Chicken,Mains,6,13.00,78.00
+2026-07-08,Garlic Bread,Sides,10,4.00,40.00
+2026-07-08,House Fries,Sides,16,3.00,48.00
+2026-07-08,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-08,Still Water,Drinks,7,2.00,14.00
+2026-07-08,Soft Drink,Drinks,11,2.50,27.50
+2026-07-08,House Wine (glass),Drinks,7,6.00,42.00
+2026-07-08,Tiramisu,Desserts,4,6.50,26.00
+2026-07-08,Gelato,Desserts,4,4.50,18.00
+2026-07-08,Chef's Special,,1,10.00,10.00
+2026-07-09,Margherita Pizza,Mains,16,9.50,152.00
+2026-07-09,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-07-09,Lasagne,Mains,8,12.50,100.00
+2026-07-09,Grilled Chicken,Mains,7,13.00,91.00
+2026-07-09,Garlic Bread,Sides,12,4.00,48.00
+2026-07-09,House Fries,Sides,18,3.00,54.00
+2026-07-09,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-09,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-09,Still Water,Drinks,8,2.00,16.00
+2026-07-09,Soft Drink,Drinks,12,2.50,30.00
+2026-07-09,House Wine (glass),Drinks,8,6.00,48.00
+2026-07-09,Tiramisu,Desserts,5,6.50,32.50
+2026-07-09,Gelato,Desserts,4,4.50,18.00
+2026-07-09,Chef's Special,,1,10.00,10.00
+2026-07-10,Margherita Pizza,Mains,24,9.50,228.00
+2026-07-10,Pepperoni Pizza,Mains,20,11.00,220.00
+2026-07-10,Lasagne,Mains,11,12.50,137.50
+2026-07-10,Grilled Chicken,Mains,10,13.00,130.00
+2026-07-10,Garlic Bread,Sides,16,4.00,64.00
+2026-07-10,House Fries,Sides,27,3.00,81.00
+2026-07-10,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-07-10,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-10,Still Water,Drinks,11,2.00,22.00
+2026-07-10,Soft Drink,Drinks,17,2.50,42.50
+2026-07-10,House Wine (glass),Drinks,11,5.50,60.50
+2026-07-10,Tiramisu,Desserts,7,6.50,45.50
+2026-07-10,Gelato,Desserts,5,4.50,22.50
+2026-07-10,Chef's Special,,1,10.00,10.00
+2026-07-11,Margherita Pizza,Mains,21,9.50,199.50
+2026-07-11,Pepperoni Pizza,Mains,21,11.00,231.00
+2026-07-11,Lasagne,Mains,11,12.50,137.50
+2026-07-11,Grilled Chicken,Mains,9,13.00,117.00
+2026-07-11,Garlic Bread,Sides,16,4.00,64.00
+2026-07-11,House Fries,Sides,26,3.00,78.00
+2026-07-11,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-07-11,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-11,Still Water,Drinks,11,2.00,22.00
+2026-07-11,Soft Drink,Drinks,17,2.50,42.50
+2026-07-11,House Wine (glass),Drinks,11,6.00,66.00
+2026-07-11,Tiramisu,Desserts,7,6.50,45.50
+2026-07-11,Gelato,Desserts,6,4.50,27.00
+2026-07-11,Chef's Special,,1,10.00,10.00
+2026-07-12,Margherita Pizza,Mains,16,9.50,152.00
+2026-07-12,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-07-12,Lasagne,Mains,8,12.50,100.00
+2026-07-12,Grilled Chicken,Mains,7,13.00,91.00
+2026-07-12,Garlic Bread,Sides,12,4.00,48.00
+2026-07-12,House Fries,Sides,17,3.00,51.00
+2026-07-12,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-12,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-12,Still Water,Drinks,7,2.00,14.00
+2026-07-12,Soft Drink,Drinks,12,2.50,30.00
+2026-07-12,House Wine (glass),Drinks,7,6.00,42.00
+2026-07-12,Tiramisu,Desserts,5,6.50,32.50
+2026-07-12,Gelato,Desserts,4,4.50,18.00
+2026-07-12,Chef's Special,,1,10.00,10.00
+2026-07-13,Margherita Pizza,Mains,15,9.50,142.50
+2026-07-13,Pepperoni Pizza,Mains,12,11.00,132.00
+2026-07-13,Lasagne,Mains,7,12.50,87.50
+2026-07-13,Grilled Chicken,Mains,7,13.00,91.00
+2026-07-13,Garlic Bread,Sides,11,4.00,44.00
+2026-07-13,House Fries,Sides,16,3.00,48.00
+2026-07-13,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-13,Still Water,Drinks,7,2.00,14.00
+2026-07-13,Soft Drink,Drinks,12,2.50,30.00
+2026-07-13,House Wine (glass),Drinks,7,6.00,42.00
+2026-07-13,Tiramisu,Desserts,4,6.50,26.00
+2026-07-13,Gelato,Desserts,4,4.50,18.00
+2026-07-13,Chef's Special,,1,10.00,10.00
+2026-07-14,Margherita Pizza,Mains,14,8.55,119.70
+2026-07-14,Pepperoni Pizza,Mains,12,11.00,132.00
+2026-07-14,Lasagne,Mains,6,12.50,75.00
+2026-07-14,Grilled Chicken,Mains,6,13.00,78.00
+2026-07-14,Garlic Bread,Sides,11,4.00,44.00
+2026-07-14,House Fries,Sides,17,3.00,51.00
+2026-07-14,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-14,Still Water,Drinks,6,2.00,12.00
+2026-07-14,Soft Drink,Drinks,10,2.50,25.00
+2026-07-14,House Wine (glass),Drinks,6,6.00,36.00
+2026-07-14,Tiramisu,Desserts,4,6.50,26.00
+2026-07-14,Gelato,Desserts,4,4.50,18.00
+2026-07-14,Chef's Special,,1,10.00,10.00
+2026-07-15,Margherita Pizza,Mains,16,9.50,152.00
+2026-07-15,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-07-15,Lasagne,Mains,7,12.50,87.50
+2026-07-15,Grilled Chicken,Mains,7,13.00,91.00
+2026-07-15,Garlic Bread,Sides,11,4.00,44.00
+2026-07-15,House Fries,Sides,19,3.00,57.00
+2026-07-15,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-15,Still Water,Drinks,7,2.00,14.00
+2026-07-15,Soft Drink,Drinks,11,2.50,27.50
+2026-07-15,House Wine (glass),Drinks,7,6.00,42.00
+2026-07-15,Tiramisu,Desserts,5,6.50,32.50
+2026-07-15,Gelato,Desserts,4,4.50,18.00
+2026-07-15,Chef's Special,,1,10.00,10.00
+2026-07-16,Margherita Pizza,Mains,18,9.50,171.00
+2026-07-16,Pepperoni Pizza,Mains,15,11.00,165.00
+2026-07-16,Lasagne,Mains,7,12.50,87.50
+2026-07-16,Grilled Chicken,Mains,7,13.00,91.00
+2026-07-16,Garlic Bread,Sides,13,4.00,52.00
+2026-07-16,House Fries,Sides,17,3.00,51.00
+2026-07-16,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-16,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-16,Still Water,Drinks,8,2.00,16.00
+2026-07-16,Soft Drink,Drinks,14,2.50,35.00
+2026-07-16,House Wine (glass),Drinks,8,6.00,48.00
+2026-07-16,Tiramisu,Desserts,5,6.50,32.50
+2026-07-16,Gelato,Desserts,4,4.50,18.00
+2026-07-16,Chef's Special,,1,10.00,10.00
+2026-07-17,Margherita Pizza,Mains,22,9.50,209.00
+2026-07-17,Pepperoni Pizza,Mains,19,11.00,209.00
+2026-07-17,Lasagne,Mains,11,12.50,137.50
+2026-07-17,Grilled Chicken,Mains,10,13.00,130.00
+2026-07-17,Garlic Bread,Sides,17,4.00,68.00
+2026-07-17,House Fries,Sides,25,3.00,75.00
+2026-07-17,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-07-17,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-17,Still Water,Drinks,10,2.00,20.00
+2026-07-17,Soft Drink,Drinks,17,2.50,42.50
+2026-07-17,House Wine (glass),Drinks,10,5.50,55.00
+2026-07-17,Tiramisu,Desserts,7,6.50,45.50
+2026-07-17,Gelato,Desserts,6,4.50,27.00
+2026-07-17,Chef's Special,,1,10.00,10.00
+2026-07-18,Margherita Pizza,Mains,22,9.50,209.00
+2026-07-18,Pepperoni Pizza,Mains,22,11.00,242.00
+2026-07-18,Lasagne,Mains,10,12.50,125.00
+2026-07-18,Grilled Chicken,Mains,10,13.00,130.00
+2026-07-18,Garlic Bread,Sides,16,4.00,64.00
+2026-07-18,House Fries,Sides,27,3.00,81.00
+2026-07-18,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-07-18,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-18,Still Water,Drinks,11,2.00,22.00
+2026-07-18,Soft Drink,Drinks,19,2.50,47.50
+2026-07-18,House Wine (glass),Drinks,11,6.00,66.00
+2026-07-18,Tiramisu,Desserts,7,6.50,45.50
+2026-07-18,Gelato,Desserts,5,4.50,22.50
+2026-07-18,Chef's Special,,1,10.00,10.00
+2026-07-19,Margherita Pizza,Mains,17,9.50,161.50
+2026-07-19,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-07-19,Lasagne,Mains,8,12.50,100.00
+2026-07-19,Grilled Chicken,Mains,7,13.00,91.00
+2026-07-19,Garlic Bread,Sides,11,4.00,44.00
+2026-07-19,House Fries,Sides,19,3.00,57.00
+2026-07-19,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-19,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-19,Still Water,Drinks,8,2.00,16.00
+2026-07-19,Soft Drink,Drinks,12,2.50,30.00
+2026-07-19,House Wine (glass),Drinks,8,6.00,48.00
+2026-07-19,Tiramisu,Desserts,5,6.50,32.50
+2026-07-19,Gelato,Desserts,4,4.50,18.00
+2026-07-19,Chef's Special,,1,10.00,10.00
+2026-07-20,Margherita Pizza,Mains,16,9.50,152.00
+2026-07-20,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-07-20,Lasagne,Mains,7,12.50,87.50
+2026-07-20,Grilled Chicken,Mains,7,13.00,91.00
+2026-07-20,Garlic Bread,Sides,10,4.00,40.00
+2026-07-20,House Fries,Sides,16,3.00,48.00
+2026-07-20,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-20,Still Water,Drinks,7,2.00,14.00
+2026-07-20,Soft Drink,Drinks,12,2.50,30.00
+2026-07-20,House Wine (glass),Drinks,7,6.00,42.00
+2026-07-20,Tiramisu,Desserts,5,6.50,32.50
+2026-07-20,Gelato,Desserts,3,4.50,13.50
+2026-07-20,Chef's Special,,1,10.00,10.00
+2026-07-21,Margherita Pizza,Mains,15,8.55,128.25
+2026-07-21,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-07-21,Lasagne,Mains,6,12.50,75.00
+2026-07-21,Grilled Chicken,Mains,6,13.00,78.00
+2026-07-21,Garlic Bread,Sides,9,4.00,36.00
+2026-07-21,House Fries,Sides,16,3.00,48.00
+2026-07-21,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-21,Still Water,Drinks,7,2.00,14.00
+2026-07-21,Soft Drink,Drinks,11,2.50,27.50
+2026-07-21,House Wine (glass),Drinks,7,6.00,42.00
+2026-07-21,Tiramisu,Desserts,4,6.50,26.00
+2026-07-21,Gelato,Desserts,3,4.50,13.50
+2026-07-21,Chef's Special,,1,10.00,10.00
+2026-07-22,Margherita Pizza,Mains,17,9.50,161.50
+2026-07-22,Pepperoni Pizza,Mains,15,11.00,165.00
+2026-07-22,Lasagne,Mains,7,12.50,87.50
+2026-07-22,Grilled Chicken,Mains,7,13.00,91.00
+2026-07-22,Garlic Bread,Sides,12,4.00,48.00
+2026-07-22,House Fries,Sides,17,3.00,51.00
+2026-07-22,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-22,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-22,Still Water,Drinks,7,2.00,14.00
+2026-07-22,Soft Drink,Drinks,11,2.50,27.50
+2026-07-22,House Wine (glass),Drinks,7,6.00,42.00
+2026-07-22,Tiramisu,Desserts,5,6.50,32.50
+2026-07-22,Gelato,Desserts,4,4.50,18.00
+2026-07-22,Chef's Special,,1,10.00,10.00
+2026-07-23,Margherita Pizza,Mains,18,9.50,171.00
+2026-07-23,Pepperoni Pizza,Mains,15,11.00,165.00
+2026-07-23,Lasagne,Mains,9,12.50,112.50
+2026-07-23,Grilled Chicken,Mains,6,13.00,78.00
+2026-07-23,Garlic Bread,Sides,12,4.00,48.00
+2026-07-23,House Fries,Sides,18,3.00,54.00
+2026-07-23,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-23,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-23,Still Water,Drinks,9,2.00,18.00
+2026-07-23,Soft Drink,Drinks,13,2.50,32.50
+2026-07-23,House Wine (glass),Drinks,9,6.00,54.00
+2026-07-23,Tiramisu,Desserts,5,6.50,32.50
+2026-07-23,Gelato,Desserts,4,4.50,18.00
+2026-07-23,Chef's Special,,1,10.00,10.00
+2026-07-24,Margherita Pizza,Mains,22,9.50,209.00
+2026-07-24,Pepperoni Pizza,Mains,21,11.00,231.00
+2026-07-24,Lasagne,Mains,12,12.50,150.00
+2026-07-24,Grilled Chicken,Mains,10,13.00,130.00
+2026-07-24,Garlic Bread,Sides,16,4.00,64.00
+2026-07-24,House Fries,Sides,25,3.00,75.00
+2026-07-24,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-07-24,Beetroot & Feta Salad,Sides,1,8.50,8.50
+2026-07-24,Still Water,Drinks,11,2.00,22.00
+2026-07-24,Soft Drink,Drinks,19,2.50,47.50
+2026-07-24,House Wine (glass),Drinks,10,5.50,55.00
+2026-07-24,Tiramisu,Desserts,7,6.50,45.50
+2026-07-24,Gelato,Desserts,6,4.50,27.00
+2026-07-24,Chef's Special,,1,10.00,10.00
+2026-07-25,Margherita Pizza,Mains,31,9.50,294.50
+2026-07-25,Pepperoni Pizza,Mains,19,11.00,209.00
+2026-07-25,Lasagne,Mains,13,12.50,162.50
+2026-07-25,Grilled Chicken,Mains,10,13.00,130.00
+2026-07-25,Lunch Slice,Mains,8,5.50,44.00
+2026-07-25,Garlic Bread,Sides,17,4.00,68.00
+2026-07-25,House Fries,Sides,24,3.00,72.00
+2026-07-25,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-07-25,Still Water,Drinks,10,2.00,20.00
+2026-07-25,Soft Drink,Drinks,18,2.50,45.00
+2026-07-25,House Wine (glass),Drinks,11,6.00,66.00
+2026-07-25,Tiramisu,Desserts,6,6.50,39.00
+2026-07-25,Gelato,Desserts,5,4.50,22.50
+2026-07-25,Chef's Special,,1,10.00,10.00
+2026-07-26,Margherita Pizza,Mains,22,9.50,209.00
+2026-07-26,Pepperoni Pizza,Mains,15,11.00,165.00
+2026-07-26,Lasagne,Mains,10,12.50,125.00
+2026-07-26,Grilled Chicken,Mains,6,13.00,78.00
+2026-07-26,Lunch Slice,Mains,6,5.50,33.00
+2026-07-26,Garlic Bread,Sides,13,4.00,52.00
+2026-07-26,House Fries,Sides,19,3.00,57.00
+2026-07-26,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-26,Still Water,Drinks,7,2.00,14.00
+2026-07-26,Soft Drink,Drinks,13,2.50,32.50
+2026-07-26,House Wine (glass),Drinks,8,6.00,48.00
+2026-07-26,Tiramisu,Desserts,5,6.50,32.50
+2026-07-26,Gelato,Desserts,4,4.50,18.00
+2026-07-26,Chef's Special,,1,10.00,10.00
+2026-07-27,Margherita Pizza,Mains,21,9.50,199.50
+2026-07-27,Pepperoni Pizza,Mains,13,11.00,143.00
+2026-07-27,Lasagne,Mains,9,12.50,112.50
+2026-07-27,Grilled Chicken,Mains,6,13.00,78.00
+2026-07-27,Lunch Slice,Mains,5,5.50,27.50
+2026-07-27,Garlic Bread,Sides,11,4.00,44.00
+2026-07-27,House Fries,Sides,17,3.00,51.00
+2026-07-27,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-27,Still Water,Drinks,7,2.00,14.00
+2026-07-27,Soft Drink,Drinks,11,2.50,27.50
+2026-07-27,House Wine (glass),Drinks,7,6.00,42.00
+2026-07-27,Tiramisu,Desserts,4,6.50,26.00
+2026-07-27,Gelato,Desserts,4,4.50,18.00
+2026-07-27,Chef's Special,,1,10.00,10.00
+2026-07-29,Margherita Pizza,Mains,24,9.50,228.00
+2026-07-29,Pepperoni Pizza,Mains,15,11.00,165.00
+2026-07-29,Lasagne,Mains,8,12.50,100.00
+2026-07-29,Grilled Chicken,Mains,7,13.00,91.00
+2026-07-29,Lunch Slice,Mains,6,5.50,33.00
+2026-07-29,Garlic Bread,Sides,11,4.00,44.00
+2026-07-29,House Fries,Sides,19,3.00,57.00
+2026-07-29,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-29,Still Water,Drinks,7,2.00,14.00
+2026-07-29,Soft Drink,Drinks,13,2.50,32.50
+2026-07-29,House Wine (glass),Drinks,7,6.00,42.00
+2026-07-29,Tiramisu,Desserts,5,6.50,32.50
+2026-07-29,Gelato,Desserts,4,4.50,18.00
+2026-07-29,Chef's Special,,1,10.00,10.00
+2026-07-30,Margherita Pizza,Mains,27,9.50,256.50
+2026-07-30,Pepperoni Pizza,Mains,16,11.00,176.00
+2026-07-30,Lasagne,Mains,10,12.50,125.00
+2026-07-30,Grilled Chicken,Mains,7,13.00,91.00
+2026-07-30,Lunch Slice,Mains,6,5.50,33.00
+2026-07-30,Garlic Bread,Sides,12,4.00,48.00
+2026-07-30,House Fries,Sides,19,3.00,57.00
+2026-07-30,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-07-30,Still Water,Drinks,7,2.00,14.00
+2026-07-30,Soft Drink,Drinks,14,2.50,35.00
+2026-07-30,House Wine (glass),Drinks,8,6.00,48.00
+2026-07-30,Tiramisu,Desserts,5,6.50,32.50
+2026-07-30,Gelato,Desserts,4,4.50,18.00
+2026-07-30,Chef's Special,,1,10.00,10.00
+2026-07-31,Margherita Pizza,Mains,33,9.50,313.50
+2026-07-31,Pepperoni Pizza,Mains,21,11.00,231.00
+2026-07-31,Lasagne,Mains,12,12.50,150.00
+2026-07-31,Grilled Chicken,Mains,10,13.00,130.00
+2026-07-31,Lunch Slice,Mains,9,5.50,49.50
+2026-07-31,Garlic Bread,Sides,17,4.00,68.00
+2026-07-31,House Fries,Sides,26,3.00,78.00
+2026-07-31,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-07-31,Still Water,Drinks,10,2.00,20.00
+2026-07-31,Soft Drink,Drinks,19,2.50,47.50
+2026-07-31,House Wine (glass),Drinks,10,5.50,55.00
+2026-07-31,Tiramisu,Desserts,7,6.50,45.50
+2026-07-31,Gelato,Desserts,5,4.50,22.50
+2026-07-31,Chef's Special,,1,10.00,10.00
+2026-08-01,Margherita Pizza,Mains,36,9.50,342.00
+2026-08-01,Pepperoni Pizza,Mains,19,11.00,209.00
+2026-08-01,Lasagne,Mains,12,12.50,150.00
+2026-08-01,Grilled Chicken,Mains,10,13.00,130.00
+2026-08-01,Lunch Slice,Mains,8,5.50,44.00
+2026-08-01,Garlic Bread,Sides,16,4.00,64.00
+2026-08-01,House Fries,Sides,26,3.00,78.00
+2026-08-01,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-08-01,Still Water,Drinks,11,2.00,22.00
+2026-08-01,Soft Drink,Drinks,18,2.50,45.00
+2026-08-01,House Wine (glass),Drinks,12,6.00,72.00
+2026-08-01,Tiramisu,Desserts,7,6.50,45.50
+2026-08-01,Gelato,Desserts,6,4.50,27.00
+2026-08-01,Chef's Special,,1,10.00,10.00
+2026-08-02,Margherita Pizza,Mains,26,9.50,247.00
+2026-08-02,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-08-02,Lasagne,Mains,9,12.50,112.50
+2026-08-02,Grilled Chicken,Mains,7,13.00,91.00
+2026-08-02,Lunch Slice,Mains,6,5.50,33.00
+2026-08-02,Garlic Bread,Sides,12,4.00,48.00
+2026-08-02,House Fries,Sides,19,3.00,57.00
+2026-08-02,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-08-02,Still Water,Drinks,8,2.00,16.00
+2026-08-02,Soft Drink,Drinks,13,2.50,32.50
+2026-08-02,House Wine (glass),Drinks,8,6.00,48.00
+2026-08-02,Tiramisu,Desserts,5,6.50,32.50
+2026-08-02,Gelato,Desserts,4,4.50,18.00
+2026-08-02,Chef's Special,,1,10.00,10.00
+2026-08-04,Margherita Pizza,Mains,22,8.55,188.10
+2026-08-04,Pepperoni Pizza,Mains,12,11.00,132.00
+2026-08-04,Lasagne,Mains,8,12.50,100.00
+2026-08-04,Grilled Chicken,Mains,6,13.00,78.00
+2026-08-04,Lunch Slice,Mains,5,5.50,27.50
+2026-08-04,Garlic Bread,Sides,10,4.00,40.00
+2026-08-04,House Fries,Sides,17,3.00,51.00
+2026-08-04,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-08-04,Still Water,Drinks,7,2.00,14.00
+2026-08-04,Soft Drink,Drinks,12,2.50,30.00
+2026-08-04,House Wine (glass),Drinks,7,6.00,42.00
+2026-08-04,Tiramisu,Desserts,4,6.50,26.00
+2026-08-04,Gelato,Desserts,3,4.50,13.50
+2026-08-04,Chef's Special,,1,10.00,10.00
+2026-08-05,Margherita Pizza,Mains,24,9.50,228.00
+2026-08-05,Pepperoni Pizza,Mains,14,11.00,154.00
+2026-08-05,Lasagne,Mains,10,12.50,125.00
+2026-08-05,Grilled Chicken,Mains,7,13.00,91.00
+2026-08-05,Lunch Slice,Mains,6,5.50,33.00
+2026-08-05,Garlic Bread,Sides,12,4.00,48.00
+2026-08-05,House Fries,Sides,19,3.00,57.00
+2026-08-05,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-08-05,Still Water,Drinks,8,2.00,16.00
+2026-08-05,Soft Drink,Drinks,13,2.50,32.50
+2026-08-05,House Wine (glass),Drinks,8,6.00,48.00
+2026-08-05,Tiramisu,Desserts,5,6.50,32.50
+2026-08-05,Gelato,Desserts,3,4.50,13.50
+2026-08-05,Chef's Special,,1,10.00,10.00
+2026-08-06,Margherita Pizza,Mains,26,9.50,247.00
+2026-08-06,Pepperoni Pizza,Mains,16,11.00,176.00
+2026-08-06,Lasagne,Mains,9,12.50,112.50
+2026-08-06,Grilled Chicken,Mains,7,13.00,91.00
+2026-08-06,Lunch Slice,Mains,6,5.50,33.00
+2026-08-06,Garlic Bread,Sides,13,4.00,52.00
+2026-08-06,House Fries,Sides,20,3.00,60.00
+2026-08-06,"Olive, Herb & Feta Flatbread",Sides,1,7.50,7.50
+2026-08-06,Still Water,Drinks,8,2.00,16.00
+2026-08-06,Soft Drink,Drinks,12,2.50,30.00
+2026-08-06,House Wine (glass),Drinks,8,6.00,48.00
+2026-08-06,Tiramisu,Desserts,5,6.50,32.50
+2026-08-06,Gelato,Desserts,4,4.50,18.00
+2026-08-06,Chef's Special,,1,10.00,10.00
+2026-08-07,Margherita Pizza,Mains,32,9.50,304.00
+2026-08-07,Pepperoni Pizza,Mains,20,11.00,220.00
+2026-08-07,Lasagne,Mains,13,12.50,162.50
+2026-08-07,Grilled Chicken,Mains,9,13.00,117.00
+2026-08-07,Lunch Slice,Mains,9,5.50,49.50
+2026-08-07,Garlic Bread,Sides,16,4.00,64.00
+2026-08-07,House Fries,Sides,26,3.00,78.00
+2026-08-07,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-08-07,Still Water,Drinks,12,2.00,24.00
+2026-08-07,Soft Drink,Drinks,19,2.50,47.50
+2026-08-07,House Wine (glass),Drinks,12,5.50,66.00
+2026-08-07,Tiramisu,Desserts,6,6.50,39.00
+2026-08-07,Gelato,Desserts,6,4.50,27.00
+2026-08-07,Chef's Special,,1,10.00,10.00
+2026-08-08,Margherita Pizza,Mains,35,9.50,332.50
+2026-08-08,Pepperoni Pizza,Mains,21,11.00,231.00
+2026-08-08,Lasagne,Mains,14,12.50,175.00
+2026-08-08,Grilled Chicken,Mains,10,13.00,130.00
+2026-08-08,Lunch Slice,Mains,8,5.50,44.00
+2026-08-08,Garlic Bread,Sides,16,4.00,64.00
+2026-08-08,House Fries,Sides,27,3.00,81.00
+2026-08-08,"Olive, Herb & Feta Flatbread",Sides,2,7.50,15.00
+2026-08-08,Still Water,Drinks,11,2.00,22.00
+2026-08-08,Soft Drink,Drinks,19,2.50,47.50
+2026-08-08,House Wine (glass),Drinks,10,6.00,60.00
+2026-08-08,Tiramisu,Desserts,7,6.50,45.50
+2026-08-08,Gelato,Desserts,5,4.50,22.50
+2026-08-08,Chef's Special,,1,10.00,10.00

@@ -7,9 +7,11 @@
     "dev": "nuxt dev",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "generate:sample-csv": "tsx scripts/generate-presentation-csv.ts",
     "seed": "tsx scripts/seed.ts",
     "seed:presentation": "tsx scripts/seed-presentation.ts",
     "verify:presentation-data": "tsx scripts/verify-presentation-data.ts",
+    "verify:sample-csv": "tsx --tsconfig .nuxt/tsconfig.json scripts/verify-presentation-csv.ts",
     "verify": "tsx scripts/verify-release.ts",
     "typecheck": "nuxt typecheck"
   },
