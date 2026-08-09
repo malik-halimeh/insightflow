@@ -6,9 +6,8 @@
  * Cached with SWR (see routeRules in nuxt.config.ts) so the homepage stays
  * fast while still reflecting real data.
  */
-import type { HomeInsight, HomeOutcomeStory, HomeStats } from '#shared/types/home'
+import type { HomeInsight, HomeStats } from '#shared/types/home'
 import {
-  outcomesCollection,
   publishedInsightsCollection,
   usersCollection,
   type PublishedInsightDoc
@@ -27,50 +26,23 @@ function asHomeInsight(insight: PublishedInsightDoc): HomeInsight {
 }
 
 export default defineEventHandler(async (): Promise<HomeStats> => {
-  const [insights, outcomes, users] = await Promise.all([
+  const [insights, users] = await Promise.all([
     publishedInsightsCollection(),
-    outcomesCollection(),
     usersCollection()
   ])
 
-  const [insightCount, businessCount, recentDocs, publishedRecommendationIds] = await Promise.all([
+  const [insightCount, businessCount, recentDocs] = await Promise.all([
     insights.countDocuments({}),
     users.countDocuments({ role: 'business_owner', status: 'approved' }),
-    insights.find({}).sort({ publishedAt: -1 }).limit(3).toArray(),
-    insights.distinct('recommendationId', { recommendationId: { $ne: null } })
+    insights.find({}).sort({ publishedAt: -1 }).limit(3).toArray()
   ])
 
-  const recommendationIds = publishedRecommendationIds.filter(
-    (recommendationId): recommendationId is string => typeof recommendationId === 'string'
-  )
-  const completedOutcome = recommendationIds.length > 0
-    ? await outcomes.find({
-        recommendationId: { $in: recommendationIds },
-        status: { $in: ['improved', 'no_clear_effect', 'worsened'] },
-        completedAt: { $ne: null }
-      }).sort({ completedAt: -1 }).limit(1).next()
-    : null
-  const outcomeInsight = completedOutcome
-    ? await insights.findOne({ recommendationId: completedOutcome.recommendationId })
-    : null
-  const outcomeStory: HomeOutcomeStory | null = completedOutcome
-    && completedOutcome.status !== 'pending'
-    && outcomeInsight
-    ? {
-        caption: outcomeInsight.caption,
-        metricLabel: outcomeInsight.metricLabel,
-        metricValue: outcomeInsight.metricValue,
-        outcomeStatus: completedOutcome.status,
-        observedChangePercent: completedOutcome.changePercent
-      }
-    : null
   const recentInsights = recentDocs.map(asHomeInsight)
 
   return {
     insightCount,
     businessCount,
     latestInsight: recentInsights[0] ?? null,
-    recentInsights,
-    outcomeStory
+    recentInsights
   }
 })

@@ -23,15 +23,14 @@ const csvPath = resolve(repositoryRoot, 'public', 'samples', PRESENTATION_SAMPLE
 const sourceLines = buildPresentationSalesLines()
 const expectedCsv = buildPresentationSampleCsv(sourceLines)
 const actualCsv = await readFile(csvPath, 'utf8')
-const normalizedCsv = actualCsv.replace(/\r\n?/g, '\n')
 
-check(normalizedCsv === expectedCsv, 'The committed sample CSV does not match the deterministic generator.')
+check(actualCsv === expectedCsv, 'The committed sample CSV does not match the deterministic generator.')
 check(
-  normalizedCsv.startsWith(`${PRESENTATION_SAMPLE_CSV_HEADER.join(',')}\n`),
+  actualCsv.startsWith(`${PRESENTATION_SAMPLE_CSV_HEADER.join(',')}\n`),
   'The sample CSV header changed.'
 )
 
-const { rows, report } = readSalesRows(normalizedCsv)
+const { rows, report } = readSalesRows(actualCsv)
 check(report.total === sourceLines.length, `Expected ${sourceLines.length} rows, received ${report.total}.`)
 check(report.valid === sourceLines.length, `Only ${report.valid} of ${sourceLines.length} rows passed the upload parser.`)
 check(report.invalid === 0 && report.problems.length === 0, 'The sample CSV contains invalid upload rows.')
@@ -56,4 +55,4 @@ console.log('Presentation sample CSV verification passed.')
 console.log(`Rows: ${report.valid}`)
 console.log(`Invalid: ${report.invalid}`)
 console.log(`Period: ${report.periodStart} to ${report.periodEnd}`)
-console.log(`Digest: ${presentationSampleCsvDigest(normalizedCsv)}`)
+console.log(`Digest: ${presentationSampleCsvDigest(actualCsv)}`)

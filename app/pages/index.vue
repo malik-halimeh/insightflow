@@ -9,8 +9,7 @@ const { data: homeStats, status: homeStatsStatus } = await useFetch<HomeStats>('
     insightCount: 0,
     businessCount: 0,
     latestInsight: null,
-    recentInsights: [],
-    outcomeStory: null
+    recentInsights: []
   })
 })
 const { data: session, status: sessionStatus } = await useFetch('/api/auth/session', { server: false })
@@ -63,12 +62,6 @@ const productJourney = [
     description: 'Optionally share a sanitized finding while private business totals stay hidden.'
   }
 ]
-
-const outcomeStatusLabels = {
-  improved: 'Improved',
-  no_clear_effect: 'No clear effect',
-  worsened: 'Worsened'
-} as const
 
 const workspaceComparison = [
   {
@@ -325,27 +318,17 @@ const faqs = [
           <p class="mt-4 max-w-xl text-lg leading-8 text-muted">Outcome tracking compares the next sales period with the earlier one. It records an observed result, not proof that the recommendation caused it.</p>
         </div>
 
-        <USkeleton v-if="homeStatsLoading" class="h-64 w-full rounded-2xl" />
-        <UCard v-else-if="homeStats.outcomeStory" class="border-l-4 border-l-primary">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <p class="text-xs font-semibold uppercase tracking-wide text-muted">Published outcome story</p>
-            <UBadge color="neutral" variant="subtle">{{ outcomeStatusLabels[homeStats.outcomeStory.outcomeStatus] }}</UBadge>
-          </div>
-          <p class="mt-5 text-2xl font-semibold tracking-tight">{{ homeStats.outcomeStory.caption }}</p>
-          <div class="mt-5 grid gap-5 sm:grid-cols-2">
-            <UiChangeIndicator :value="homeStats.outcomeStory.metricValue" :label="homeStats.outcomeStory.metricLabel" />
-            <UiChangeIndicator
-              v-if="homeStats.outcomeStory.observedChangePercent !== null"
-              :value="homeStats.outcomeStory.observedChangePercent"
-              label="Observed change after the action"
-            />
-            <p v-else class="text-sm leading-6 text-muted">The earlier value was zero, so an observed percentage change is not available.</p>
-          </div>
-        </UCard>
-        <UCard v-else>
-          <p class="font-semibold">No completed published outcome yet</p>
-          <p class="mt-2 text-sm leading-6 text-muted">A story will appear here after a published recommendation has a completed measurement.</p>
-        </UCard>
+        <figure class="overflow-hidden rounded-2xl border border-default bg-default">
+          <img
+            src="/images/product/recommendations-outcomes.png"
+            alt="InsightFlow private recommendations workspace showing the outcome scoreboard and recommendation cards"
+            class="aspect-[36/25] w-full object-cover object-top"
+          >
+          <figcaption class="border-t border-default p-6">
+            <p class="font-semibold">Private outcome workspace</p>
+            <p class="mt-2 text-sm leading-6 text-muted">This fictional presentation workspace shows improved, unchanged, worsened, and pending outcomes without publishing an owner's private measurements.</p>
+          </figcaption>
+        </figure>
       </div>
     </section>
 

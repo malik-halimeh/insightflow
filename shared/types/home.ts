@@ -1,4 +1,4 @@
-import type { OutcomeStatus, PublishedInsight } from '../schemas'
+import type { PublishedInsight } from '../schemas'
 
 export type HomeInsight = Pick<PublishedInsight,
   | 'slug'
@@ -10,14 +10,6 @@ export type HomeInsight = Pick<PublishedInsight,
   | 'publishedAt'
 >
 
-export interface HomeOutcomeStory {
-  caption: string
-  metricLabel: string
-  metricValue: number
-  outcomeStatus: Exclude<OutcomeStatus, 'pending'>
-  observedChangePercent: number | null
-}
-
 /**
  * The shape returned by GET /api/home-stats — live counts read from MongoDB
  * for the public landing page. Not a stored record, so it has no Zod schema
@@ -28,5 +20,4 @@ export interface HomeStats {
   businessCount: number
   latestInsight: HomeInsight | null
   recentInsights: HomeInsight[]
-  outcomeStory: HomeOutcomeStory | null
 }
