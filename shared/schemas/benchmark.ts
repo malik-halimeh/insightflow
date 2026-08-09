@@ -1,8 +1,13 @@
 import { z } from 'zod'
+import { businessTypeSchema } from './dataset'
+import { dimensionSchema, metricSchema, ruleOperatorSchema } from './rule'
 
 export const benchmarkSchema = z.object({
-  metric: z.string().min(1, 'Please say what this benchmark measures.'),
-  dimension: z.string().min(1, 'Please say how this benchmark is grouped.'),
+  businessType: businessTypeSchema,
+  metric: metricSchema,
+  dimension: dimensionSchema,
+  dimensionValue: z.string().min(1, 'Please say which group this benchmark represents.'),
+  operator: ruleOperatorSchema,
   aggregateValue: z.number({ error: 'Please provide the benchmark as a number.' }),
   contributorCount: z
     .number()

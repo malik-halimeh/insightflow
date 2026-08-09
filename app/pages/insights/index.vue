@@ -6,6 +6,8 @@ useSeoMeta({
   description: 'Plain-language sales findings shared by small businesses.'
 })
 
+const benchmarksEnabled = useRuntimeConfig().public.benchmarksEnabled
+
 const { data: insights, status, error } = await useFetch('/api/insights', {
   default: (): PublishedInsight[] => []
 })
@@ -16,7 +18,18 @@ const { data: insights, status, error } = await useFetch('/api/insights', {
     <UiPageHeader
       title="Insight feed"
       description="What small businesses learned from their own sales."
-    />
+    >
+      <template v-if="benchmarksEnabled" #actions>
+        <UButton
+          to="/insights/benchmarks"
+          color="neutral"
+          variant="subtle"
+          icon="i-lucide-chart-no-axes-combined"
+        >
+          Anonymous benchmarks
+        </UButton>
+      </template>
+    </UiPageHeader>
 
     <!--
       States the rule rather than leaving a reader to notice the gap. Without this

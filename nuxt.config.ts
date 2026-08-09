@@ -83,7 +83,8 @@ export default defineNuxtConfig({
     benchmarksEnabled: process.env.BENCHMARKS_ENABLED === 'true',
 
     public: {
-      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || ''
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || '',
+      benchmarksEnabled: process.env.BENCHMARKS_ENABLED === 'true'
     }
   }
 })

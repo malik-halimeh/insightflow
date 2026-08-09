@@ -17,6 +17,8 @@ definePageMeta({
 
 useSeoMeta({ title: 'Recommendations | InsightFlow' })
 
+const benchmarksEnabled = useRuntimeConfig().public.benchmarksEnabled
+
 const {
   data: recommendations,
   status,
@@ -343,7 +345,11 @@ async function unpublish(recommendationId: string) {
           @publish="publish"
           @unpublish="unpublish"
           @follow="follow"
-        />
+        >
+          <template v-if="benchmarksEnabled" #benchmarkComparison="{ recommendation }">
+            <InsightsBenchmarkComparison :recommendation="recommendation" />
+          </template>
+        </RecommendationsRecommendationCard>
       </div>
     </section>
   </div>

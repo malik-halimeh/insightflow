@@ -381,7 +381,7 @@
         speech: [
           'A public page is a product boundary of its own. It is not private data with the login removed. The public insight feed exposes only deliberately published findings, never the owner\'s raw sales rows or private totals. Its server-rendered HTML makes the content useful without an account, while route-level caching gives controlled freshness.',
           'The benchmark design adds two more protections. It aggregates only eligible published information, and it suppresses a result when fewer than five contributors support it. That minimum must be enforced inside the endpoint before data is returned. Hiding a value only in the interface would not protect it from a direct API request.',
-          'This slide therefore connects rendering, caching, and privacy. Our current evidence is the shared benchmark contract and the public-data design; we will describe the full feature as complete only when its endpoint and page are implemented and tested. That honesty is part of making the public boundary explicit and trustworthy.'
+          'This slide therefore connects rendering, caching, and privacy. Our evidence is the shared benchmark contract, the public aggregate endpoint, the server-rendered benchmark page, and the private comparison widget. The empty state is also honest: if fewer than five contributors support a group, the endpoint returns no benchmark rather than weakening the privacy floor.'
         ]
       },
       {
