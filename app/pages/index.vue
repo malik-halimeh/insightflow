@@ -52,6 +52,29 @@ const features = [
   }
 ]
 
+const workspaceComparison = [
+  {
+    label: 'Audience',
+    workspace: 'Only the signed-in business owner',
+    publicFeed: 'Anyone browsing the public insight feed'
+  },
+  {
+    label: 'Values',
+    workspace: 'Private sales totals and operational detail',
+    publicFeed: 'Sanitized percentage changes and plain-language context'
+  },
+  {
+    label: 'Actions',
+    workspace: 'Upload data, analyze patterns, and decide what to do next',
+    publicFeed: 'Browse useful patterns and learn from other businesses'
+  },
+  {
+    label: 'Sharing',
+    workspace: 'The owner chooses whether a finding is published',
+    publicFeed: 'Only the approved public finding is discoverable'
+  }
+]
+
 const guestSteps = [
   { title: 'Create your account', description: 'Tell us a little about your business.' },
   { title: 'Get approved', description: 'A short review keeps the workspace trustworthy.' },
@@ -182,6 +205,67 @@ const faqs = [
           <h3 class="mt-8 text-xl font-semibold">{{ feature.title }}</h3>
           <p class="mt-3 max-w-md text-sm leading-6 text-muted">{{ feature.description }}</p>
         </article>
+      </div>
+    </section>
+
+    <section class="border-y border-default bg-elevated/40">
+      <div class="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+        <div class="max-w-2xl">
+          <p class="text-sm font-semibold text-primary-700 dark:text-primary-300">Private by design</p>
+          <h2 class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">One finding, two deliberate views</h2>
+          <p class="mt-4 text-lg leading-8 text-muted">
+            Your workspace keeps the full business picture private. Publishing creates a separate public view with only the relative change and context you choose to share.
+          </p>
+        </div>
+
+        <div class="mt-12 grid gap-8 lg:grid-cols-2">
+          <figure class="overflow-hidden rounded-2xl border border-default bg-default">
+            <img
+              src="/images/product/dashboard-overview.png"
+              alt="InsightFlow private dashboard showing revenue totals, sales metrics, and weekday patterns"
+              class="aspect-[36/25] w-full object-cover object-top"
+            >
+            <figcaption class="border-t border-default p-6">
+              <p class="font-semibold">Private owner workspace</p>
+              <p class="mt-2 text-sm leading-6 text-muted">Absolute sales values stay inside the authenticated workspace where the owner can analyze and act on them.</p>
+            </figcaption>
+          </figure>
+
+          <figure class="overflow-hidden rounded-2xl border border-default bg-default">
+            <img
+              src="/images/product/public-insight.png"
+              alt="InsightFlow public insight showing a percentage change without absolute sales totals"
+              class="aspect-[36/25] w-full object-cover object-top"
+            >
+            <figcaption class="border-t border-default p-6">
+              <p class="font-semibold">Public insight feed</p>
+              <p class="mt-2 text-sm leading-6 text-muted">Public pages show a sanitized percentage and plain-language caption, never the private totals behind the finding.</p>
+            </figcaption>
+          </figure>
+        </div>
+
+        <dl class="mt-8 overflow-hidden rounded-2xl border border-default bg-default">
+          <div class="hidden grid-cols-[0.35fr_1fr_1fr] gap-6 border-b border-default bg-elevated/60 px-6 py-4 text-sm font-semibold lg:grid">
+            <span>Difference</span>
+            <span>Owner workspace</span>
+            <span>Public insight</span>
+          </div>
+          <div
+            v-for="item in workspaceComparison"
+            :key="item.label"
+            class="grid gap-4 border-b border-default px-6 py-5 last:border-b-0 lg:grid-cols-[0.35fr_1fr_1fr] lg:gap-6"
+          >
+            <dt class="font-semibold">{{ item.label }}</dt>
+            <dd class="text-sm leading-6 text-muted">
+              <span class="mb-1 block font-medium text-highlighted lg:hidden">Owner workspace</span>
+              {{ item.workspace }}
+            </dd>
+            <dd class="text-sm leading-6 text-muted">
+              <span class="mb-1 block font-medium text-highlighted lg:hidden">Public insight</span>
+              {{ item.publicFeed }}
+            </dd>
+          </div>
+        </dl>
       </div>
     </section>
 
