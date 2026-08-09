@@ -5,15 +5,15 @@
   generic confirmation regardless of whether an account exists (the server
   behaves the same way; see server/api/auth/forgot-password.post.ts).
 
-  No auth middleware here on purpose, same reasoning as /login: gating this
-  page would send a signed-out person into a redirect loop.
+  Guest middleware keeps this available to signed-out visitors and redirects an
+  existing session to its role-appropriate workspace.
 -->
 
 <script setup lang="ts">
 import { forgotPasswordSchema, type ForgotPasswordInput } from '#shared/schemas'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
-definePageMeta({ layout: false })
+definePageMeta({ layout: false, middleware: 'guest' })
 useSeoMeta({ title: 'Reset your password | InsightFlow' })
 
 const state = reactive<ForgotPasswordInput>({ email: '' })

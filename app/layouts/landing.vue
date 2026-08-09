@@ -10,41 +10,15 @@ const workspaceLink = computed(() =>
 const workspaceLabel = computed(() =>
   session.value?.authenticated === true && session.value.role === 'admin' ? 'Admin dashboard' : 'Dashboard'
 )
-
-async function logout() {
-  await $fetch('/api/auth/logout', { method: 'POST' })
-  await navigateTo('/login', { external: true })
-}
 </script>
 
 <template>
   <div class="min-h-[100dvh] bg-default">
-    <header class="sticky top-0 z-50 border-b border-default bg-default/95 backdrop-blur">
-      <div class="mx-auto flex h-18 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <NuxtLink to="/" aria-label="InsightFlow home">
-          <UiBrandMark />
-        </NuxtLink>
-
-        <nav class="flex items-center gap-3 text-sm sm:gap-5">
-          <NuxtLink to="/insights" class="hidden text-muted transition hover:text-default sm:inline">
-            Insight feed
-          </NuxtLink>
-
-          <UButton v-if="isAuthenticated" :to="workspaceLink" icon="i-lucide-layout-dashboard" class="text-primary-950">
-            {{ workspaceLabel }}
-          </UButton>
-          <template v-else-if="sessionReady">
-            <NuxtLink to="/login" class="text-muted transition hover:text-default">
-              Sign in
-            </NuxtLink>
-            <UButton to="/login?mode=signup" class="text-primary-950">
-              Get started
-            </UButton>
-          </template>
-          <USkeleton v-else class="h-9 w-24" />
-        </nav>
-      </div>
-    </header>
+    <UiSiteHeader
+      :session="session"
+      :pending="!sessionReady"
+      show-signup
+    />
 
     <main>
       <slot />
@@ -69,7 +43,6 @@ async function logout() {
               <li><NuxtLink to="/insights" class="hover:text-primary">Insight feed</NuxtLink></li>
               <template v-if="isAuthenticated">
                 <li><NuxtLink :to="workspaceLink" class="hover:text-primary">{{ workspaceLabel }}</NuxtLink></li>
-                <li><button class="hover:text-primary" @click="logout">Log out</button></li>
               </template>
               <template v-else-if="sessionReady">
                 <li><NuxtLink to="/login" class="hover:text-primary">Sign in</NuxtLink></li>

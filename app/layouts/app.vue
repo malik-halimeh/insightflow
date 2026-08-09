@@ -1,36 +1,22 @@
 <script setup lang="ts">
-import type { DropdownMenuItem } from '@nuxt/ui'
-
-const links = [
+const config = useRuntimeConfig()
+const links = computed(() => [
   { to: '/dashboard', label: 'Dashboard', icon: 'i-lucide-layout-dashboard' },
   { to: '/datasets', label: 'Data sets', icon: 'i-lucide-table' },
-  { to: '/recommendations', label: 'Recommendations', icon: 'i-lucide-lightbulb' }
-]
+  { to: '/recommendations', label: 'Recommendations', icon: 'i-lucide-lightbulb' },
+  ...(config.public.forecastEnabled
+    ? [{ to: '/forecast', label: 'Forecast', icon: 'i-lucide-trending-up' }]
+    : [])
+])
 
 const route = useRoute()
 const mobileOpen = ref(false)
-const { data: session } = await useFetch('/api/auth/session')
+const { data: session, status: sessionStatus } = await useFetch('/api/auth/session')
+const sessionPending = computed(() => ['idle', 'pending'].includes(sessionStatus.value))
 
 const displayName = computed(() =>
   session.value?.authenticated ? session.value.displayName : 'Signed out'
 )
-const accountItems = computed<DropdownMenuItem[][]>(() => [
-  [
-    {
-      label: displayName.value,
-      icon: 'i-lucide-user',
-      type: 'label'
-    }
-  ],
-  [
-    { label: 'Home', icon: 'i-lucide-house', to: '/' },
-    { label: 'Insight feed', icon: 'i-lucide-newspaper', to: '/insights' }
-  ],
-  [
-    { label: 'Log out', icon: 'i-lucide-log-out', color: 'error', onSelect: logout }
-  ]
-])
-
 watch(() => route.fullPath, () => {
   mobileOpen.value = false
 })
@@ -48,7 +34,7 @@ async function logout() {
 <template>
   <div class="min-h-[100dvh] bg-elevated/40 lg:grid lg:grid-cols-[264px_minmax(0,1fr)]">
     <aside class="hidden border-r border-white/10 bg-neutral-950 text-white lg:sticky lg:top-0 lg:flex lg:h-[100dvh] lg:flex-col">
-      <div class="flex h-20 shrink-0 items-center border-b border-white/10 px-6">
+      <div class="flex h-18 shrink-0 items-center border-b border-white/10 px-6">
         <NuxtLink to="/" aria-label="InsightFlow home">
           <UiBrandMark />
         </NuxtLink>
@@ -101,44 +87,14 @@ async function logout() {
     </aside>
 
     <div class="min-w-0">
-      <header class="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-default bg-default/95 px-4 backdrop-blur lg:h-20 lg:px-8">
-        <div class="flex items-center gap-3 lg:hidden">
-          <UButton
-            color="neutral"
-            variant="ghost"
-            icon="i-lucide-menu"
-            aria-label="Open navigation"
-            @click="mobileOpen = true"
-          />
-          <NuxtLink to="/" aria-label="InsightFlow home">
-            <UiBrandMark />
-          </NuxtLink>
-        </div>
-
-        <div class="hidden lg:block">
-          <p class="text-xs font-semibold uppercase tracking-wider text-muted">
-            Business intelligence
-          </p>
-          <p class="mt-1 text-sm text-default">
-            Turn sales data into clear decisions.
-          </p>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <UButton to="/" color="neutral" variant="ghost" icon="i-lucide-house" class="hidden sm:flex">
-            Home
-          </UButton>
-          <UButton to="/insights" color="neutral" variant="ghost" icon="i-lucide-newspaper" class="hidden sm:flex">
-            Insight feed
-          </UButton>
-          <UDropdownMenu :items="accountItems" :content="{ align: 'end' }">
-            <UButton color="neutral" variant="ghost" trailing-icon="i-lucide-chevron-down" aria-label="Open account menu">
-              <UAvatar :alt="displayName" size="sm" class="bg-primary text-primary-950" />
-              <span class="hidden max-w-36 truncate sm:inline">{{ displayName }}</span>
-            </UButton>
-          </UDropdownMenu>
-        </div>
-      </header>
+      <UiSiteHeader
+        :session="session"
+        :pending="sessionPending"
+        :contained="false"
+        hide-desktop-brand
+        show-navigation-toggle
+        @open-navigation="mobileOpen = true"
+      />
 
       <main class="mx-auto w-full max-w-[1560px] p-4 sm:p-6 lg:p-8">
         <slot />

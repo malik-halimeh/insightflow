@@ -1,12 +1,8 @@
 <script setup lang="ts">
-const { data: session } = await useFetch('/api/auth/session')
+const { data: session, status: sessionStatus } = await useFetch('/api/auth/session')
+const sessionPending = computed(() => ['idle', 'pending'].includes(sessionStatus.value))
 
 const displayName = computed(() => session.value?.authenticated ? session.value.displayName : 'Signed out')
-
-async function logout() {
-  await $fetch('/api/auth/logout', { method: 'POST' })
-  await navigateTo('/login', { external: true })
-}
 </script>
 
 <template>
@@ -27,20 +23,19 @@ async function logout() {
           <UAvatar :alt="displayName" size="sm" class="bg-primary text-primary-950" />
           <div class="hidden min-w-0 flex-1 sm:block">
             <p class="truncate text-sm font-semibold">{{ displayName }}</p>
-            <button class="mt-1 text-xs text-neutral-400 hover:text-white" @click="logout">Log out</button>
+            <p class="mt-1 text-xs text-neutral-400">Administrator</p>
           </div>
         </div>
       </div>
     </aside>
 
     <div class="min-w-0">
-      <header class="hidden h-20 items-center justify-between border-b border-default bg-default px-8 lg:flex">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-wider text-muted">Administration</p>
-          <p class="mt-1 text-sm">Review access and keep the workspace trustworthy.</p>
-        </div>
-        <UAvatar :alt="displayName" size="sm" class="bg-primary text-primary-950" />
-      </header>
+      <UiSiteHeader
+        :session="session"
+        :pending="sessionPending"
+        :contained="false"
+        hide-desktop-brand
+      />
       <main class="mx-auto w-full max-w-[1440px] p-4 sm:p-6 lg:p-8"><slot /></main>
     </div>
   </div>

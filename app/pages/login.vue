@@ -8,9 +8,9 @@ import {
 } from '#shared/schemas'
 import type { FormSubmitEvent, TabsItem } from '@nuxt/ui'
 
-// No auth middleware here on purpose: gating the login page would send anyone who
-// is signed out into a redirect loop.
-definePageMeta({ layout: false })
+// Guest middleware leaves signed-out visitors here and redirects an existing
+// session to its role-appropriate workspace.
+definePageMeta({ layout: false, middleware: 'guest' })
 
 // One sign-in form for every account — there is deliberately no "Business owner"
 // / "Admin" choice on this page. The server identifies the account by username or

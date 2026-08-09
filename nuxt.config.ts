@@ -70,6 +70,7 @@ export default defineNuxtConfig({
 
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || '',
+      forecastEnabled: process.env.FORECAST_ENABLED === 'true',
       benchmarksEnabled: process.env.BENCHMARKS_ENABLED === 'true'
     }
   }
