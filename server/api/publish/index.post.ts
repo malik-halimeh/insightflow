@@ -36,7 +36,7 @@ function isDuplicateSlugError(error: unknown): boolean {
 }
 
 export default defineEventHandler(async (event): Promise<PublishedInsight> => {
-  requireSession(event)
+  const session = requireSession(event)
 
   const parsed = publishedInsightCreateSchema.safeParse(await readBody(event))
   if (!parsed.success) {
@@ -98,6 +98,10 @@ export default defineEventHandler(async (event): Promise<PublishedInsight> => {
       caption: parsed.data.caption,
       metricLabel: `${METRIC_LABELS[recommendation.metric]} by ${DIMENSION_LABELS[recommendation.dimension]}`,
       metricValue: recommendation.changePercent,
+      metric: recommendation.metric,
+      dimension: recommendation.dimension,
+      dimensionValue: recommendation.dimensionValue ?? null,
+      operator: recommendation.operator ?? null,
       hideAbsoluteNumbers: parsed.data.hideAbsoluteNumbers,
       businessType: dataset.businessType,
       recommendationId: parsed.data.recommendationId,
@@ -110,7 +114,8 @@ export default defineEventHandler(async (event): Promise<PublishedInsight> => {
     try {
       await insights.insertOne({
         _id: new ObjectId(insightId),
-        ...document
+        ...document,
+        contributorId: session.userId
       })
 
       setResponseStatus(event, 201)
