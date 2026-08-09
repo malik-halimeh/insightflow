@@ -31,25 +31,11 @@ export default defineNuxtConfig({
     '/dashboard/**': { ssr: false },
     '/datasets/**': { ssr: false },
     '/recommendations/**': { ssr: false },
-    /**
-     * Private and per-owner like the rest of the workspace — but this rule is doing
-     * more than matching its neighbours.
-     *
-     * Every private page in this project fetches with a plain `useFetch`, which only
-     * works because these routes never render on the server: in the browser the
-     * session cookie travels automatically. Server-side, a plain `useFetch` does not
-     * forward it (that is what `useRequestFetch` is for — see app/middleware/auth.ts).
-     *
-     * So without this line the forecast page would render on the server, call its
-     * endpoint with no cookie, get a 401, and the surrounding app layout — which
-     * fetches the session the same way — would render "Signed out" beside it.
-     */
+    
     '/forecast/**': { ssr: false },
-    // Private like the rest of the workspace, and never worth rendering on the
-    // server: nothing here should ever reach a cache or a search engine.
+
     '/admin/**': { ssr: false },
-    // Public homepage figures, cached so the landing page stays fast while still
-    // reflecting real data. Nothing here is account-specific.
+    
     '/api/home-stats': { swr: 300 },
     '/api/**': { cors: true }
   },
