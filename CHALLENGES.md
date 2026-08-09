@@ -15,6 +15,21 @@ else's entry.
 
 ---
 
+## 2026-08-10
+
+**Codex (on M1's behalf) - presentation PR mixed valuable landing work with two contract regressions**
+
+- **Blocked:** PR #34 added the agreed screenshots, private/public comparison, and
+  recent insight cards, but its last commit normalized line endings before checking
+  the sample CSV, and its landing endpoint read private outcome measurements without
+  a separate publication-consent field.
+- **Fixed:** Restored exact byte-for-byte CSV verification and kept the outcome story
+  visual by using the fictional private-workspace screenshot instead of querying the
+  outcomes collection. Typecheck, both deterministic presentation verifiers, the full
+  production build, and the corrected landing page all passed.
+
+---
+
 ## 2026-08-09
 
 **Codex (on M1's behalf) - presentation data needed reproducibility and safe ownership boundaries**

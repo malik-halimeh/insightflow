@@ -6,9 +6,24 @@
  * Cached with SWR (see routeRules in nuxt.config.ts) so the homepage stays
  * fast while still reflecting real data.
  */
-import { publishedInsightSchema } from '#shared/schemas'
-import type { HomeStats } from '#shared/types/home'
-import { publishedInsightsCollection, usersCollection } from '../utils/db'
+import type { HomeInsight, HomeStats } from '#shared/types/home'
+import {
+  publishedInsightsCollection,
+  usersCollection,
+  type PublishedInsightDoc
+} from '../utils/db'
+
+function asHomeInsight(insight: PublishedInsightDoc): HomeInsight {
+  return {
+    slug: insight.slug,
+    displayName: insight.displayName,
+    caption: insight.caption,
+    metricLabel: insight.metricLabel,
+    metricValue: insight.metricValue,
+    businessType: insight.businessType,
+    publishedAt: insight.publishedAt
+  }
+}
 
 export default defineEventHandler(async (): Promise<HomeStats> => {
   const [insights, users] = await Promise.all([
@@ -16,18 +31,18 @@ export default defineEventHandler(async (): Promise<HomeStats> => {
     usersCollection()
   ])
 
-  const [insightCount, businessCount, latestDocs] = await Promise.all([
+  const [insightCount, businessCount, recentDocs] = await Promise.all([
     insights.countDocuments({}),
     users.countDocuments({ role: 'business_owner', status: 'approved' }),
-    insights.find({}).sort({ publishedAt: -1 }).limit(1).toArray()
+    insights.find({}).sort({ publishedAt: -1 }).limit(3).toArray()
   ])
 
-  const latestInsight = latestDocs[0]
-    ? publishedInsightSchema.parse({
-        id: latestDocs[0]._id.toHexString(),
-        ...latestDocs[0]
-      })
-    : null
+  const recentInsights = recentDocs.map(asHomeInsight)
 
-  return { insightCount, businessCount, latestInsight }
+  return {
+    insightCount,
+    businessCount,
+    latestInsight: recentInsights[0] ?? null,
+    recentInsights
+  }
 })
