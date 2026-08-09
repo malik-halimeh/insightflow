@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="A timed, click-by-click Nuxt and Vue live demo script for every InsightFlow team member.">
+  <title>InsightFlow Nuxt and Vue Member Live Runbook</title>
+  <style>
+    :root {
+      --page: #e9edf2;
+      --surface: #f8fafc;
+      --surface-strong: #fbfcfe;
+      --ink: #111827;
+      --muted: #5e6978;
+      --line: #aeb7c3;
+      --line-strong: #111827;
+      --accent: #e34424;
+      --accent-ink: #9e2d17;
+      --accent-soft: #f9d9d1;
+      --code: #dce3ea;
+      --header: rgba(233, 237, 242, 0.94);
+      --success: #176b45;
+      --success-soft: #d7eadf;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --page: #11161d;
+        --surface: #171e27;
+        --surface-strong: #1c2530;
+        --ink: #f2f5f8;
+        --muted: #aeb8c4;
+        --line: #3b4654;
+        --line-strong: #e5e9ef;
+        --accent: #ff6848;
+        --accent-ink: #ff9b84;
+        --accent-soft: #47251f;
+        --code: #222d39;
+        --header: rgba(17, 22, 29, 0.94);
+        --success: #7bd4a5;
+        --success-soft: #173c2a;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      background: var(--page);
+      color: var(--ink);
+      font-family: "Segoe UI", Arial, sans-serif;
+      line-height: 1.55;
+    }
+
+    button, input { font: inherit; }
+    button { color: inherit; }
+    a { color: inherit; }
+    button:focus-visible, a:focus-visible, input:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .masthead {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      border-bottom: 2px solid var(--line-strong);
+      background: var(--header);
+      backdrop-filter: blur(12px);
+    }
+
+    .masthead-inner {
+      width: min(1280px, calc(100% - 32px));
+      min-height: 72px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) auto;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .identity { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .monogram {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border: 2px solid var(--line-strong);
+      background: var(--accent);
+      color: #f8fafc;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+    .identity-copy { min-width: 0; }
+    .identity-copy strong { display: block; font-size: 0.92rem; letter-spacing: 0.03em; }
+    .identity-copy span { display: block; overflow: hidden; color: var(--muted); font-size: 0.76rem; text-overflow: ellipsis; white-space: nowrap; }
+
+    .clock {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .clock-output {
+      min-width: 84px;
+      padding: 8px 10px;
+      border: 2px solid var(--line-strong);
+      background: var(--surface-strong);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 1rem;
+      font-weight: 800;
+      text-align: center;
+    }
+    .clock-output.over { border-color: var(--accent); color: var(--accent-ink); }
+    .clock button, .filter, .copy-button {
+      min-height: 38px;
+      border: 1px solid var(--line-strong);
+      border-radius: 0;
+      background: var(--surface-strong);
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 750;
+    }
+    .clock button { padding: 7px 11px; }
+    .clock button:hover, .filter:hover, .copy-button:hover { background: var(--accent-soft); }
+
+    main {
+      width: min(1280px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 64px 0 96px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+      gap: 56px;
+      align-items: end;
+      padding-bottom: 42px;
+      border-bottom: 2px solid var(--line-strong);
+    }
+    .hero-label {
+      margin: 0 0 18px;
+      color: var(--accent-ink);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+    h1 {
+      max-width: 900px;
+      margin: 0;
+      font-size: clamp(2.75rem, 7vw, 6.4rem);
+      line-height: 0.94;
+      letter-spacing: -0.065em;
+    }
+    .hero-copy {
+      max-width: 720px;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: 1.08rem;
+    }
+
+    .pace-card {
+      border: 2px solid var(--line-strong);
+      background: var(--surface-strong);
+    }
+    .pace-card .pace-top {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line-strong);
+      background: var(--accent);
+      color: #f8fafc;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .pace-card .pace-body { padding: 22px; }
+    .pace-card strong { display: block; font-size: 3.1rem; line-height: 1; letter-spacing: -0.06em; }
+    .pace-card p { margin: 12px 0 0; color: var(--muted); font-size: 0.9rem; }
+
+    .preflight {
+      display: grid;
+      grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+      gap: 36px;
+      padding: 46px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .section-title { margin: 0; font-size: clamp(1.7rem, 3.5vw, 3rem); line-height: 1; letter-spacing: -0.045em; }
+    .section-intro { margin: 14px 0 0; color: var(--muted); }
+    .checklist { display: grid; gap: 1px; border: 1px solid var(--line-strong); background: var(--line-strong); }
+    .check-row {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      padding: 14px;
+      background: var(--surface-strong);
+    }
+    .check-row input { width: 19px; height: 19px; margin: 2px 0 0; accent-color: var(--accent); }
+    .check-row strong { display: block; font-size: 0.9rem; }
+    .check-row span { display: block; margin-top: 3px; color: var(--muted); font-size: 0.82rem; }
+    code {
+      padding: 0.1em 0.35em;
+      background: var(--code);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.9em;
+    }
+
+    .filters-wrap {
+      position: sticky;
+      top: 73px;
+      z-index: 20;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line-strong);
+      background: var(--page);
+    }
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      border: 1px solid var(--line-strong);
+    }
+    .filter {
+      padding: 10px 8px;
+      border-width: 0 1px 0 0;
+      white-space: nowrap;
+    }
+    .filter:last-child { border-right: 0; }
+    .filter[aria-pressed="true"] { background: var(--accent); color: #f8fafc; }
+
+    .runbook { display: grid; gap: 32px; padding-top: 32px; }
+    .member {
+      border: 2px solid var(--line-strong);
+      background: var(--surface);
+    }
+    .member[hidden] { display: none; }
+    .member-head {
+      display: grid;
+      grid-template-columns: 160px minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: end;
+      padding: 24px;
+      border-bottom: 2px solid var(--line-strong);
+      background: var(--surface-strong);
+    }
+    .member-id {
+      color: var(--accent-ink);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .member h2 { margin: 5px 0 0; font-size: clamp(1.8rem, 4vw, 3.3rem); line-height: 1; letter-spacing: -0.05em; }
+    .member-role { max-width: 750px; margin: 10px 0 0; color: var(--muted); font-size: 0.92rem; }
+    .time-box { text-align: right; }
+    .time-box strong { display: block; font-family: Consolas, "Courier New", monospace; font-size: 1.35rem; }
+    .time-box span { color: var(--muted); font-size: 0.75rem; }
+    .copy-button { padding: 8px 11px; align-self: start; }
+
+    .ownership {
+      display: grid;
+      grid-template-columns: 160px minmax(0, 1fr);
+      gap: 24px;
+      padding: 15px 24px;
+      border-bottom: 1px solid var(--line);
+      background: var(--code);
+      font-size: 0.8rem;
+    }
+    .ownership strong { font-family: Consolas, "Courier New", monospace; text-transform: uppercase; }
+
+    .cues { padding: 0 24px 8px; }
+    .cue {
+      display: grid;
+      grid-template-columns: 112px minmax(0, 0.88fr) minmax(0, 1.12fr);
+      gap: 24px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .cue:last-child { border-bottom: 0; }
+    .cue-time {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--accent-ink);
+    }
+    .cue h3 {
+      margin: 0 0 8px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .cue-do, .cue-say { min-width: 0; }
+    .cue-do p, .cue-say p { margin: 0; font-size: 0.94rem; }
+    .cue-do p { font-weight: 650; }
+    .cue-say {
+      padding-left: 20px;
+      border-left: 3px solid var(--accent);
+    }
+
+    .branch {
+      margin: 0 24px 24px;
+      border: 1px solid var(--line-strong);
+      background: var(--surface-strong);
+    }
+    .branch-title {
+      margin: 0;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line-strong);
+      background: var(--accent-soft);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .branch-grid { display: grid; grid-template-columns: 1fr 1fr; }
+    .branch-option { padding: 16px; }
+    .branch-option + .branch-option { border-left: 1px solid var(--line); }
+    .branch-option strong { display: block; color: var(--accent-ink); font-size: 0.85rem; }
+    .branch-option p { margin: 7px 0 0; font-size: 0.86rem; }
+
+    .handoff {
+      display: grid;
+      grid-template-columns: 160px minmax(0, 1fr);
+      gap: 24px;
+      padding: 16px 24px;
+      border-top: 2px solid var(--line-strong);
+      background: var(--accent);
+      color: #f8fafc;
+    }
+    .handoff strong { font-family: Consolas, "Courier New", monospace; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; }
+    .handoff p { margin: 0; font-weight: 700; }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      padding-top: 34px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    .footer strong { color: var(--ink); }
+
+    .copied { background: var(--success-soft) !important; color: var(--success) !important; }
+
+    @media (max-width: 980px) {
+      .hero, .preflight { grid-template-columns: 1fr; gap: 30px; }
+      .pace-card { max-width: 440px; }
+      .filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .filter:nth-child(3) { border-right: 0; }
+      .filter:nth-child(-n+3) { border-bottom: 1px solid var(--line-strong); }
+      .member-head { grid-template-columns: 120px minmax(0, 1fr); }
+      .member-head .copy-button { grid-column: 1 / -1; justify-self: start; }
+      .ownership { grid-template-columns: 120px minmax(0, 1fr); }
+      .cue { grid-template-columns: 88px 1fr; }
+      .cue-say { grid-column: 2; margin-top: 2px; }
+      .handoff { grid-template-columns: 120px minmax(0, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+      .masthead-inner { width: min(100% - 20px, 1280px); grid-template-columns: 1fr; gap: 8px; padding: 10px 0; }
+      .identity-copy span { display: none; }
+      .clock { justify-content: space-between; }
+      .clock-output { flex: 1; }
+      main { width: min(100% - 20px, 1280px); padding-top: 42px; }
+      .filters-wrap { top: 115px; }
+      .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .filter { border-bottom: 1px solid var(--line-strong); }
+      .filter:nth-child(2n) { border-right: 0; }
+      .filter:nth-last-child(-n+2) { border-bottom: 0; }
+      .member-head { grid-template-columns: 1fr; gap: 12px; padding: 19px; }
+      .time-box { text-align: left; }
+      .ownership, .handoff { grid-template-columns: 1fr; gap: 6px; padding: 14px 18px; }
+      .cues { padding: 0 18px 6px; }
+      .cue { grid-template-columns: 1fr; gap: 9px; }
+      .cue-say { grid-column: auto; padding: 14px 0 0; border-top: 3px solid var(--accent); border-left: 0; }
+      .branch { margin: 0 18px 18px; }
+      .branch-grid { grid-template-columns: 1fr; }
+      .branch-option + .branch-option { border-top: 1px solid var(--line); border-left: 0; }
+      .footer { flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+
+    @media print {
+      :root {
+        --page: #fbfbfb;
+        --surface: #fbfbfb;
+        --surface-strong: #fdfdfd;
+        --ink: #111111;
+        --muted: #444444;
+        --line: #999999;
+        --line-strong: #111111;
+        --accent: #c63b20;
+        --accent-ink: #8c2815;
+        --accent-soft: #f5ddd7;
+        --code: #eeeeee;
+      }
+      .masthead, .filters-wrap, .copy-button { display: none !important; }
+      main { width: 100%; padding: 0; }
+      .hero { padding-bottom: 20px; }
+      .preflight { padding: 24px 0; }
+      .member { display: block !important; break-before: page; }
+      .cue, .branch, .handoff { break-inside: avoid; }
+      .footer { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div class="identity">
+        <div class="monogram" aria-hidden="true">IF</div>
+        <div class="identity-copy">
+          <strong>Nuxt + Vue live runbook</strong>
+          <span>Five members, five owned features, ten minutes maximum</span>
+        </div>
+      </div>
+      <div class="clock" aria-label="Rehearsal timer">
+        <output class="clock-output" id="clockOutput" aria-live="polite">00:00</output>
+        <button id="clockToggle" type="button">Start</button>
+        <button id="clockReset" type="button">Reset</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="pageTitle">
+      <div>
+        <p class="hero-label">Live product proof / ownership edition</p>
+        <h1 id="pageTitle">Five owners. Five proofs.</h1>
+        <p class="hero-copy">Every presenter gets one continuous, click-by-click sequence. Follow the Do column exactly and speak the Say column naturally.</p>
+      </div>
+      <aside class="pace-card" aria-label="Presentation pace">
+        <div class="pace-top">Hard limit per member</div>
+        <div class="pace-body">
+          <strong>2:00</strong>
+          <p>Target 1:50. The final ten seconds are reserved for the named handoff.</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="preflight" aria-labelledby="preflightTitle">
+      <div>
+        <h2 class="section-title" id="preflightTitle">Prepare the exact demo state.</h2>
+        <p class="section-intro">Complete this once before the audience arrives. Do not seed, upload, restore, or publish during the talk unless a cue explicitly says to.</p>
+      </div>
+      <div class="checklist">
+        <label class="check-row">
+          <input type="checkbox" data-check="render-flags">
+          <span><strong>Render flags are live</strong><span>In the InsightFlow Web Service, confirm <code>FORECAST_ENABLED</code>, <code>VERSIONING_ENABLED</code>, <code>OUTCOMES_ENABLED</code>, and <code>BENCHMARKS_ENABLED</code> are all <code>true</code>. Complete a rebuild and deploy.</span></span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" data-check="owner-session">
+          <span><strong>Presentation owner is signed in</strong><span>Open <a href="https://insightflow.onrender.com/login">https://insightflow.onrender.com/login</a>, enter the approved presentation owner credentials, press <b>Sign in</b>, and confirm the Dashboard opens.</span></span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" data-check="dataset-ready">
+          <span><strong>Bella Pizza data is visible</strong><span>Click <b>Data sets</b> in the left sidebar. Confirm the table contains <b>Bella Pizza · presentation workspace</b> with 1,161 rows.</span></span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" data-check="outcomes-ready">
+          <span><strong>Outcome examples are visible</strong><span>Click <b>Recommendations</b>. Press <b>Ctrl+F</b>, search for <b>Margherita Pizza needs a clearer menu position</b>, press <b>Esc</b>, and confirm its card has <b>View outcome</b>.</span></span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" data-check="benchmark-ready">
+          <span><strong>Benchmark state is known</strong><span>At the bottom of the left sidebar, click <b>Insights</b>. On the Insight feed page, click <b>Anonymous benchmarks</b> in the top-right page actions. Note whether aggregate cards appear or the page says <b>Not enough published data yet</b>. Mohammad has an exact script for either valid state.</span></span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" data-check="screen-ready">
+          <span><strong>Screen sharing is clean</strong><span>Close notifications, hide bookmarks, set browser zoom to 90%, open VS Code and the live website, and keep passwords, Render secrets, terminals, and local <code>.env</code> files off screen.</span></span>
+        </label>
+      </div>
+    </section>
+
+    <nav class="filters-wrap" aria-label="Filter runbook by member">
+      <div class="filters">
+        <button class="filter" type="button" data-filter="all" aria-pressed="true">Full run</button>
+        <button class="filter" type="button" data-filter="malik" aria-pressed="false">Malik</button>
+        <button class="filter" type="button" data-filter="sumayya" aria-pressed="false">Sumayya</button>
+        <button class="filter" type="button" data-filter="yasser" aria-pressed="false">Yasser</button>
+        <button class="filter" type="button" data-filter="dalaa" aria-pressed="false">Dalaa</button>
+        <button class="filter" type="button" data-filter="mohammad" aria-pressed="false">Mohammad</button>
+      </div>
+    </nav>
+
+    <section class="runbook" aria-label="Member live demo scripts">
+      <article class="member" id="malik" data-member="malik">
+        <header class="member-head">
+          <div>
+            <div class="member-id">M1 / platform layer</div>
+            <h2>Malik</h2>
+            <p class="member-role">Nuxt application boundaries, runtime configuration, protected rendering rules, forecast contract and engine, versioning backend, and shared forecast chart.</p>
+          </div>
+          <div class="time-box"><strong>1:50</strong><span>Target delivery</span></div>
+          <button class="copy-button" type="button" data-copy="malik">Copy Say script</button>
+        </header>
+        <div class="ownership"><strong>Owned evidence</strong><span><code>nuxt.config.ts</code>, <code>shared/types/forecast.ts</code>, <code>shared/schemas/datasetVersion.ts</code>, <code>server/utils/forecast.ts</code>, <code>server/utils/versioning.ts</code>, <code>server/api/forecast</code>, and <code>UiForecastBandChart</code>.</span></div>
+        <div class="cues">
+          <section class="cue">
+            <div class="cue-time">0:00 - 0:25</div>
+            <div class="cue-do"><h3>Do</h3><p>Share VS Code. Press <b>Ctrl+P</b>, type <code>nuxt.config.ts</code>, and press <b>Enter</b>. Press <b>Ctrl+F</b>, type <code>forecastEnabled</code>, and point to the four exact-string feature flags and the <code>/forecast/**</code> route rule.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“My work starts with the application boundary. Nuxt gives our Vue components a layout, route rules, middleware, server handlers, and runtime configuration in one repository. Coming from MERN, the shift was from wiring a React SPA to an API by hand to choosing where each Nuxt route is rendered and protected.”</p></div>
+          </section>
+          <section class="cue">
+            <div class="cue-time">0:25 - 0:58</div>
+            <div class="cue-do"><h3>Do</h3><p>Press <b>Ctrl+P</b>, type <code>server/utils/forecast.ts</code>, and press <b>Enter</b>. Press <b>Ctrl+F</b>, search for <code>REQUIRED_DAYS</code>, then search for <code>forecastForward</code>. Point to the 28-day requirement and the exported forecast function.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“The same boundary continues into the forecast engine. The server owns the calculation and returns a typed response; the Vue page only presents the result. It requires at least 28 active days, reports typical error, and returns an honest insufficient-data state instead of inventing a line.”</p></div>
+          </section>
+          <section class="cue">
+            <div class="cue-time">0:58 - 1:32</div>
+            <div class="cue-do"><h3>Do</h3><p>Press <b>Alt+Tab</b> to the live site. Click <b>Forecast</b> in the left sidebar. In the selector at the top right of the Forecast page, choose <b>Bella Pizza · presentation workspace</b>. Point to <b>Typical accuracy</b> and then the shaded forecast band.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“This proves the full Nuxt return path: a Vue interaction selects an owner dataset, a protected Nitro endpoint calculates the response, and the interface renders typed cards and a shared chart. The browser never becomes the source of truth for private business data.”</p></div>
+          </section>
+          <section class="cue">
+            <div class="cue-time">1:32 - 1:50</div>
+            <div class="cue-do"><h3>Do</h3><p>Click <b>Data sets</b> in the left sidebar and stop on the table. Do not open a row. Turn to Sumayya.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“The next feature begins at the data boundary: a Vue form sends a CSV through a Nitro preview route, then the owner can inspect the result before importing. Sumayya will show that upload flow and the version history built on top of it.”</p></div>
+          </section>
+        </div>
+        <div class="handoff"><strong>Handoff</strong><p>Leave the browser on Data sets. Sumayya starts without navigating backward.</p></div>
+      </article>
+
+      <article class="member" id="sumayya" data-member="sumayya">
+        <header class="member-head">
+          <div>
+            <div class="member-id">M2 / version history</div>
+            <h2>Sumayya</h2>
+            <p class="member-role">The Vue data-set workflow, shared upload validation, quality states, version history, restore action, loading state, empty state, and ready state.</p>
+          </div>
+          <div class="time-box"><strong>1:45</strong><span>Target delivery</span></div>
+          <button class="copy-button" type="button" data-copy="sumayya">Copy Say script</button>
+        </header>
+        <div class="ownership"><strong>Owned evidence</strong><span><code>app/pages/datasets/new.vue</code>, <code>app/pages/datasets/[id]/history.vue</code>, and the owner-facing dataset endpoints under <code>server/api/datasets</code>, built against M1's version contract.</span></div>
+        <div class="cues">
+          <section class="cue">
+            <div class="cue-time">0:00 - 0:28</div>
+            <div class="cue-do"><h3>Do</h3><p>Click <b>Data sets</b> in the left sidebar, then click <b>Add a data set</b>. Point to <b>Download sample CSV</b>, the <b>CSV file</b> input, and <b>Check the file</b>. Do not import a new dataset during the presentation. Click <b>Data sets</b> again, click <b>Bella Pizza · presentation workspace</b>, then click <b>Version History</b>.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“I own the data-set surface. The Vue form uses the shared create schema, sends the preview action with $fetch, and shows what will import before anything is saved. The history page then reads the version route and keeps loading, error, empty, and ready states explicit.”</p></div>
+          </section>
+          <section class="cue">
+            <div class="cue-time">0:28 - 0:58</div>
+            <div class="cue-do"><h3>Do</h3><p>Move the pointer across the table headers in this order: <b>Version</b>, <b>Upload date</b>, <b>Period</b>, <b>Rows</b>, <b>Rejected</b>, and <b>Data quality</b>. Point at one quality badge.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“Each row exposes the server’s quality result: accepted rows, rejected rows, dates, duplicates, and thin-data warnings. Vue renders that typed response; it does not copy the business rules into a second browser implementation. That is the same shared-contract discipline we learned when moving from a MERN client and API.”</p></div>
+          </section>
+          <section class="cue">
+            <div class="cue-time">0:58 - 1:28</div>
+            <div class="cue-do"><h3>Do</h3><p>Find <b>Version 1</b>. In that row, click <b>Restore</b>. Keep the modal open and point to the sentence beginning <b>Restoring version 1 changes</b>. Do not press Confirm restore.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“Restore is a Nuxt user action, so the page sends a POST request instead of pretending a local state change is enough. The server updates the current rows and metadata together, then Vue refreshes the page only after success. I will cancel so the prepared account stays unchanged.”</p></div>
+          </section>
+          <section class="cue">
+            <div class="cue-time">1:28 - 1:45</div>
+            <div class="cue-do"><h3>Do</h3><p>Click <b>Cancel</b> in the restore modal. Click <b>Forecast</b> in the left sidebar and turn to Yasser.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“I will cancel so the prepared data stays unchanged. Yasser will now show how Vue’s reactive selector and components turn the same server-owned data into dashboard and forecast decisions.”</p></div>
+          </section>
+        </div>
+        <div class="handoff"><strong>Handoff</strong><p>Leave the Forecast page open with Bella Pizza selected.</p></div>
+      </article>
+
+      <article class="member" id="yasser" data-member="yasser">
+        <header class="member-head">
+          <div>
+            <div class="member-id">M3 / forecast interface</div>
+            <h2>Yasser</h2>
+            <p class="member-role">The dashboard analytics surface, reactive data-set selection, complete forecast page, metric cards, loading and failure states, chart boundary, and honest thin-data behavior.</p>
+          </div>
+          <div class="time-box"><strong>1:45</strong><span>Target delivery</span></div>
+          <button class="copy-button" type="button" data-copy="yasser">Copy Say script</button>
+        </header>
+        <div class="ownership"><strong>Owned evidence</strong><span><code>app/pages/dashboard</code>, <code>app/components/dashboard</code>, <code>app/pages/forecast/index.vue</code>, and the dashboard data-set selector reused as the page's reactive control.</span></div>
+        <div class="cues">
+          <section class="cue">
+            <div class="cue-time">0:00 - 0:25</div>
+            <div class="cue-do"><h3>Do</h3><p>At the top-right of the Forecast page, click the data set selector once, click <b>Bella Pizza · presentation workspace</b>, and then click outside the selector to close it.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“I built the Vue interface that turns a typed forecast response into an owner-facing decision. The selector is reactive: changing the selected dataset changes the endpoint key, refreshes the response, and updates only the interface that depends on that selection.”</p></div>
+          </section>
+          <section class="cue">
+            <div class="cue-time">0:25 - 0:55</div>
+            <div class="cue-do"><h3>Do</h3><p>Point from left to right across <b>Forecast horizon</b>, <b>Typical accuracy</b>, and <b>Predicted revenue, next day</b>. Pause over Typical accuracy.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“These Vue metric cards answer three different questions: how far ahead we predict, how close held-back predictions were, and what the next day is expected to produce. Accuracy is not decoration; it is the honesty metric that helps the owner judge confidence.”</p></div>
+          </section>
+          <section class="cue">
+            <div class="cue-time">0:55 - 1:25</div>
+            <div class="cue-do"><h3>Do</h3><p>Move down to <b>Revenue: recent history and forecast</b>. Trace the recent actual line with the pointer, then trace the forecast center and the surrounding band without clicking.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“The chart places actual revenue beside a future range. The band avoids false certainty. Because the chart touches browser-only rendering, the component sits inside ClientOnly with a skeleton fallback. The page still owns loading, error, empty, ready, and insufficient-data states.”</p></div>
+          </section>
+          <section class="cue">
+            <div class="cue-time">1:25 - 1:45</div>
+            <div class="cue-do"><h3>Do</h3><p>Click <b>Recommendations</b> in the left sidebar and turn to Dalaa.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“If a dataset has fewer than 28 active days, Vue renders the exact insufficient-data state instead of a misleading chart. Dalaa will now show how a recommendation crosses the Nitro boundary and returns as an observed outcome.”</p></div>
+          </section>
+        </div>
+        <div class="handoff"><strong>Handoff</strong><p>Leave Recommendations open at the top of the page.</p></div>
+      </article>
+
+      <article class="member" id="dalaa" data-member="dalaa">
+        <header class="member-head">
+          <div>
+            <div class="member-id">M4 / outcome loop</div>
+            <h2>Dalaa</h2>
+            <p class="member-role">Recommendation rules, follow action, publishing controls, outcome schema, equal-window measurement, readiness rules, verdicts, scoreboard, and outcome page.</p>
+          </div>
+          <div class="time-box"><strong>1:55</strong><span>Target delivery</span></div>
+          <button class="copy-button" type="button" data-copy="dalaa">Copy Say script</button>
+        </header>
+        <div class="ownership"><strong>Owned evidence</strong><span><code>app/pages/recommendations</code>, <code>app/components/recommendations</code>, <code>shared/schemas/outcome.ts</code>, <code>server/utils/outcomes.ts</code>, <code>server/api/outcomes</code>, publishing controls, scoreboard, and <code>app/pages/recommendations/[id]/outcome.vue</code>.</span></div>
+        <div class="cues">
+          <section class="cue">
+            <div class="cue-time">0:00 - 0:30</div>
+            <div class="cue-do"><h3>Do</h3><p>Press <b>Ctrl+F</b>, type <b>Margherita Pizza needs a clearer menu position</b>, press <b>Enter</b>, then press <b>Esc</b>. In that recommendation card, click <b>View outcome</b>.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“I built the recommendation outcome loop. The Vue card exposes I followed this and View outcome, while the Nitro endpoint freezes the recommendation snapshot, followed date, and baseline window. The browser can request the action, but it cannot rewrite the server-owned starting point.”</p></div>
+          </section>
+          <section class="cue">
+            <div class="cue-time">0:30 - 1:02</div>
+            <div class="cue-do"><h3>Do</h3><p>On the Outcome page, point to the verdict badge, then point left to right across <b>Two weeks before</b>, <b>Two weeks after</b>, and <b>Observed change</b>.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“The outcome is calculated on the server after fourteen calendar days and enough distinct sales dates. The Vue page renders the verdict, but the measurement rules stay in shared types and server logic. The result can be improved, worsened, or no clear effect.”</p></div>
+          </section>
+          <section class="cue">
+            <div class="cue-time">1:02 - 1:35</div>
+            <div class="cue-do"><h3>Do</h3><p>Scroll until <b>Equal comparison windows</b> is visible. Point to the Before card and the After card. Continue slightly downward until the alert <b>This is an observed comparison</b> is visible.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“The two windows are equal and do not overlap. The response keeps upload references, row counts, and distinct dates for inspection. Most importantly, the UI says observed comparison. It measures what followed the action without claiming causation.”</p></div>
+          </section>
+          <section class="cue">
+            <div class="cue-time">1:35 - 1:55</div>
+            <div class="cue-do"><h3>Do</h3><p>At the bottom of the left sidebar, click the button labeled <b>Insights</b>. Wait until the <b>Insight feed</b> page title appears, then turn to Mohammad.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“That honest wording is the point of the feature. Mohammad will now show how a selected finding leaves the authenticated Nuxt surface and becomes useful publicly without exposing private totals.”</p></div>
+          </section>
+        </div>
+        <div class="handoff"><strong>Handoff</strong><p>Leave the public Insight feed at the top, with Anonymous benchmarks visible.</p></div>
+      </article>
+
+      <article class="member" id="mohammad" data-member="mohammad">
+        <header class="member-head">
+          <div>
+            <div class="member-id">M5 / public learning</div>
+            <h2>Mohammad</h2>
+            <p class="member-role">The server-rendered insight feed, benchmark schema and endpoint, five-contributor privacy floor, public benchmark page, and private benchmark comparison.</p>
+          </div>
+          <div class="time-box"><strong>1:50</strong><span>Target delivery</span></div>
+          <button class="copy-button" type="button" data-copy="mohammad">Copy Say script</button>
+        </header>
+        <div class="ownership"><strong>Owned evidence</strong><span><code>shared/schemas/benchmark.ts</code>, <code>server/api/benchmarks/index.get.ts</code>, <code>app/pages/insights/benchmarks.vue</code>, and <code>InsightsBenchmarkComparison</code>.</span></div>
+        <div class="cues">
+          <section class="cue">
+            <div class="cue-time">0:00 - 0:25</div>
+            <div class="cue-do"><h3>Do</h3><p>At the top of Insight feed, point to the shield message beginning <b>Everyone here shares what changed</b>. Then click <b>Anonymous benchmarks</b> in the top-right page actions.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“I own the public learning surface. A published finding is a deliberate branch from the private workspace. The feed shares what changed, but never what a business earns. Nuxt server-renders this route so a visitor and a search engine receive useful HTML without an account.”</p></div>
+          </section>
+          <section class="cue">
+            <div class="cue-time">0:25 - 1:04</div>
+            <div class="cue-do"><h3>Do</h3><p>On Anonymous benchmarks, point first to <b>Anonymous aggregates only</b>. Then use the matching data-state instruction in the box below. Do not improvise a number.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“The Nitro benchmark endpoint reads published insights only, keeps one eligible value per contributor and comparable group, and refuses to return a group with fewer than five contributors. The privacy floor is enforced before the response leaves the server, so it cannot be bypassed by calling the API directly.”</p></div>
+          </section>
+        </div>
+        <aside class="branch" aria-label="Benchmark state scripts">
+          <h3 class="branch-title">Use exactly one benchmark state</h3>
+          <div class="branch-grid">
+            <div class="branch-option"><strong>If benchmark cards appear</strong><p><b>Do:</b> Point to the percentage on the first card, then its footer beginning <b>Based on</b>. <b>Say:</b> “This is an aggregate across a qualifying group. The contributor count is visible, but no business name or individual result is returned.”</p></div>
+            <div class="branch-option"><strong>If “Not enough published data yet” appears</strong><p><b>Do:</b> Point directly to that heading. <b>Say:</b> “This waiting state proves the privacy floor is active. The product chooses no benchmark over a weak aggregate that could expose a small group.”</p></div>
+          </div>
+        </aside>
+        <div class="cues">
+          <section class="cue">
+            <div class="cue-time">1:04 - 1:32</div>
+            <div class="cue-do"><h3>Do</h3><p>Click <b>Insight feed</b> at the top right. In the first published insight card, click <b>Read insight</b>. Point to the percentage and the sentence stating that actual figures are hidden.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“The public detail page keeps a narrow typed contract: display name, business type, caption, percentage change, and publication time. Raw rows, ownership, notes, and absolute takings stay inside the authenticated Nuxt workspace.”</p></div>
+          </section>
+          <section class="cue">
+            <div class="cue-time">1:32 - 1:50</div>
+            <div class="cue-do"><h3>Do</h3><p>Scroll back to the insight heading. Stop moving the pointer, face the audience, and finish without opening another page.</p></div>
+            <div class="cue-say"><h3>Say</h3><p>“Together, Vue gives us the reactive interface and Nuxt gives us the application boundary: routing, rendering, server handlers, validation, and privacy in one coherent flow. That completes our live demonstration.”</p></div>
+          </section>
+        </div>
+        <div class="handoff"><strong>Finish</strong><p>Stop the timer, leave the public insight visible, and invite questions.</p></div>
+      </article>
+    </section>
+
+    <footer class="footer">
+      <span><strong>Rehearsal rule:</strong> reset the timer for every person and stop at 1:50 even if a page loads slowly.</span>
+      <span>Prepared from the implemented Nuxt routes, Vue components, and current interface labels.</span>
+    </footer>
+  </main>
+
+  <script>
+    const filters = [...document.querySelectorAll('[data-filter]')];
+    const members = [...document.querySelectorAll('[data-member]')];
+    const checkboxes = [...document.querySelectorAll('[data-check]')];
+    const clockOutput = document.getElementById('clockOutput');
+    const clockToggle = document.getElementById('clockToggle');
+    const clockReset = document.getElementById('clockReset');
+
+    let running = false;
+    let elapsedSeconds = 0;
+    let intervalId = null;
+
+    function applyFilter(member) {
+      filters.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.filter === member)));
+      members.forEach(section => { section.hidden = member !== 'all' && section.dataset.member !== member; });
+      const target = member === 'all' ? document.querySelector('.runbook') : document.getElementById(member);
+      if (member !== 'all') history.replaceState(null, '', `#${member}`);
+      else history.replaceState(null, '', location.pathname + location.search);
+      target?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    }
+
+    filters.forEach(button => button.addEventListener('click', () => applyFilter(button.dataset.filter)));
+
+    function renderClock() {
+      const minutes = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0');
+      const seconds = String(elapsedSeconds % 60).padStart(2, '0');
+      clockOutput.textContent = `${minutes}:${seconds}`;
+      clockOutput.classList.toggle('over', elapsedSeconds >= 120);
+    }
+
+    clockToggle.addEventListener('click', () => {
+      running = !running;
+      clockToggle.textContent = running ? 'Pause' : 'Start';
+      if (running) {
+        intervalId = window.setInterval(() => {
+          elapsedSeconds += 1;
+          renderClock();
+        }, 1000);
+      } else {
+        window.clearInterval(intervalId);
+        intervalId = null;
+      }
+    });
+
+    clockReset.addEventListener('click', () => {
+      running = false;
+      elapsedSeconds = 0;
+      window.clearInterval(intervalId);
+      intervalId = null;
+      clockToggle.textContent = 'Start';
+      renderClock();
+    });
+
+    checkboxes.forEach(checkbox => {
+      const key = `insightflow-runbook:${checkbox.dataset.check}`;
+      checkbox.checked = localStorage.getItem(key) === 'true';
+      checkbox.addEventListener('change', () => localStorage.setItem(key, String(checkbox.checked)));
+    });
+
+    document.querySelectorAll('[data-copy]').forEach(button => {
+      button.addEventListener('click', async () => {
+        const section = document.getElementById(button.dataset.copy);
+        const lines = [...section.querySelectorAll('.cue-say p, .branch-option p')]
+          .map(element => element.textContent.trim().replace(/^“|”$/g, ''));
+        await navigator.clipboard.writeText(lines.join('\n\n'));
+        const original = button.textContent;
+        button.textContent = 'Copied';
+        button.classList.add('copied');
+        window.setTimeout(() => {
+          button.textContent = original;
+          button.classList.remove('copied');
+        }, 1400);
+      });
+    });
+
+    const initialMember = location.hash.slice(1).toLowerCase();
+    if (members.some(section => section.dataset.member === initialMember)) applyFilter(initialMember);
+  </script>
+</body>
+</html>
