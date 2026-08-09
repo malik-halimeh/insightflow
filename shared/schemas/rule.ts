@@ -18,6 +18,12 @@ export type Metric = z.infer<typeof metricSchema>
 export type Dimension = z.infer<typeof dimensionSchema>
 export type RuleOperator = z.infer<typeof ruleOperatorSchema>
 
+export const expectedDirectionSchema = z.enum(['up', 'down'], {
+  error: 'Please choose whether the number should go up or down.'
+})
+
+export type ExpectedDirection = z.infer<typeof expectedDirectionSchema>
+
 export const ruleSchema = z.object({
   id: idSchema,
 
@@ -40,6 +46,8 @@ export const ruleSchema = z.object({
   operator: ruleOperatorSchema,
   threshold: z.number().positive('The threshold must be more than zero.'),
   advice: z.string().min(10, 'Please write at least 10 characters of advice.'),
+  /** Which way the metric should move if the advice works. */
+  expectedDirection: expectedDirectionSchema,
   enabled: z.boolean()
 })
 

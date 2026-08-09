@@ -8,19 +8,30 @@ import {
   publishedInsightsCollection,
   recommendationsCollection,
   salesRowsCollection,
+  outcomesCollection,
+  rulesCollection,
   usersCollection,
   type DatasetDoc,
+  type OutcomeDoc,
   type PublishedInsightDoc,
+  type RecommendationDoc,
+  type RuleDoc,
   type SalesRowDoc,
   type UserDoc
 } from '../server/utils/db'
 import { hashPassword } from '../server/utils/password'
+import { evaluateRule } from '../server/utils/rules'
 import { writeVersion } from '../server/utils/versioning'
 import {
+  OUTCOME_NO_CLEAR_EFFECT_PERCENT,
+  OUTCOME_WINDOW_DAYS,
   datasetSchema,
+  outcomeSchema,
   publishedInsightSchema,
+  ruleSchema,
   salesRowSchema,
-  userSchema
+  userSchema,
+  type SalesRow
 } from '../shared/schemas'
 
 // Nitro loads .env by itself; a standalone script does not. A missing file is not
@@ -464,6 +475,217 @@ async function seedVersions(datasetId: string, rows: SalesRowDoc[]): Promise<str
   return current?.id ?? null
 }
 
+/**
+ * Gives the demo owner a saved rule, the findings that rule really produces, and
+ * three outcomes measured from the seeded sales.
+ *
+ * The findings come from `evaluateRule`, not from hand-written strings. The
+ * recommendations route upserts on title, metric and dimension, so a hand-written
+ * title that drifted from what the engine produces would leave the seeded outcome
+ * pointing at a recommendation nobody can reach, and a duplicate finding beside
+ * it. Running the engine here means the seed cannot drift from it.
+ *
+ * The before and after values are summed from the seeded rows rather than
+ * invented, so the verdicts are real: whatever the generated data says happened
+ * either side of the follow date is what the outcome records. Every outcome is
+ * parsed through `outcomeSchema` before it is written, which means its
+ * cross-field rules police this function as well.
+ */
+export async function seedOutcomes(
+  datasetId: string,
+  ownerId: string,
+  rows: SalesRowDoc[],
+  now: string
+): Promise<{ rules: RuleDoc[], recommendations: RecommendationDoc[], outcomes: OutcomeDoc[] }> {
+  /*
+    Two rules, because one is not enough to fill the screen honestly.
+
+    The weekday rule alone produces two findings, and the generated trading is
+    stable week to week by construction, so both measure as no clear effect. True,
+    and a dull thing to hand M4 as the only state their interface ever renders.
+    The item rule adds findings whose fortnight-to-fortnight quantities are small
+    and jittery, which produces real movement in both directions without any
+    number here being invented.
+  */
+  const ruleDefinitions = [
+    {
+      name: 'Quiet days',
+      metric: 'revenue',
+      dimension: 'dayOfWeek',
+      operator: 'below_average_by',
+      threshold: 15,
+      advice: 'Run an offer on this day, or move a member of staff to a busier shift.',
+      expectedDirection: 'up',
+      enabled: true
+    },
+    {
+      name: 'Low-selling items',
+      metric: 'quantity',
+      dimension: 'item',
+      operator: 'below_average_by',
+      threshold: 70,
+      advice: 'Move this to the top of the menu for a fortnight, or take it off.',
+      expectedDirection: 'up',
+      enabled: true
+    }
+  ]
+
+  const rules = ruleDefinitions.map(definition => ruleSchema.parse({
+    id: new ObjectId().toHexString(),
+    ownerId,
+    ...definition
+  }))
+
+  const ruleDocs: RuleDoc[] = rules.map(({ id, ...rest }) => ({ _id: new ObjectId(id), ...rest }))
+
+  const salesRows: SalesRow[] = rows.map(({ _id, ...row }) => ({ id: _id.toHexString(), ...row }))
+  const findings = rules.flatMap(rule =>
+    evaluateRule(salesRows, rule).map(finding => ({ finding, ruleId: rule.id }))
+  )
+
+  if (findings.length === 0) {
+    // The generated data always has a quiet Tuesday and a slow salad, so this
+    // means the generator or the engine has changed. Better to say so than to
+    // seed nothing quietly.
+    throw new Error('The seeded sales produced no findings for the demo rules.')
+  }
+
+  const recommendationDocs: RecommendationDoc[] = findings.map(({ finding, ruleId }) => ({
+    _id: new ObjectId(),
+    datasetId,
+    ruleId,
+    ...finding,
+    createdAt: now
+  }))
+
+  /*
+    The follow date sits four weeks back, so both fourteen-day windows land inside
+    the eight weeks of seeded trading. Measuring against a window that runs past
+    the end of the data would report a fortnight that never happened.
+  */
+  const lastDate = rows.reduce((latest, row) => (row.date > latest ? row.date : latest), rows[0]!.date)
+  const dayBefore = (date: string, days: number) =>
+    new Date(new Date(`${date}T00:00:00Z`).getTime() - days * 86_400_000).toISOString().slice(0, 10)
+
+  const followedDate = dayBefore(lastDate, OUTCOME_WINDOW_DAYS)
+  const beforeStart = dayBefore(followedDate, OUTCOME_WINDOW_DAYS)
+
+  /** Monday is 0, matching summary.get.ts and the rules engine. */
+  const weekdayOf = (date: string) => (new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7
+  const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+  /*
+    The same grouping the engine used to find the finding in the first place. If
+    this measured revenue while the rule counted units, the outcome would be
+    answering a different question from the one the owner was asked.
+  */
+  function scopeMatches(row: SalesRowDoc, dimension: string, value: string): boolean {
+    if (dimension === 'dayOfWeek') return WEEKDAYS[weekdayOf(row.date)] === value
+    if (dimension === 'item') return row.itemName === value
+    if (dimension === 'category') return (row.category ?? 'Uncategorised') === value
+    return false
+  }
+
+  function metricOf(scoped: SalesRowDoc[], metric: string): number {
+    if (metric === 'quantity') return scoped.reduce((sum, row) => sum + row.quantity, 0)
+    if (metric === 'orders') return scoped.length
+    return Math.round(scoped.reduce((sum, row) => sum + row.revenue, 0) * 100) / 100
+  }
+
+  function windowFor(from: string, to: string, dimension: string, dimensionValue: string, metric: string) {
+    const inWindow = rows.filter(row => row.date >= from && row.date < to)
+    const scoped = inWindow.filter(row => scopeMatches(row, dimension, dimensionValue))
+    const dates = new Set(inWindow.map(row => row.date))
+
+    return {
+      value: metricOf(scoped, metric),
+      window: {
+        periodStart: from,
+        periodEnd: dayBefore(to, 1),
+        sourceRowCount: inWindow.length,
+        distinctSalesDates: dates.size,
+        missingSalesDates: OUTCOME_WINDOW_DAYS - dates.size,
+        datasetVersionId: null
+      }
+    }
+  }
+
+  // One outcome per finding, capped at four: enough for the list and the
+  // scoreboard without burying the recommendations page in demo rows.
+  const measured = recommendationDocs.slice(0, 4)
+
+  const outcomes: OutcomeDoc[] = measured.map((recommendation, index) => {
+    const dimensionValue = recommendation.dimensionValue!
+    /*
+      Both windows are half-open: from the start date up to but not including the
+      end. `followedDate` is fourteen days before the last day of data, so the
+      after window is exactly followedDate through the day before the last, and
+      the last day itself is left out rather than making a fifteenth.
+    */
+    const before = windowFor(beforeStart, followedDate, recommendation.dimension, dimensionValue, recommendation.metric)
+    const after = windowFor(followedDate, lastDate, recommendation.dimension, dimensionValue, recommendation.metric)
+
+    /*
+      The first one stays pending, and the rest are measured.
+
+      Pending rather than measured because it is the realistic state for a finding
+      the owner has only just acted on, and first rather than last because the item
+      findings sort after the weekday ones. Leaving the last one pending would put
+      the only finding with jittery fortnight-to-fortnight quantities into the slot
+      that never gets a verdict, and every measured outcome would then come from
+      the deliberately stable weekday data and read "no clear effect".
+    */
+    const pending = index === 0
+
+    const changePercent = before.value === 0
+      ? null
+      : Math.round(((after.value - before.value) / before.value) * 1000) / 10
+
+    const status = pending
+      ? 'pending'
+      : before.value === 0
+        ? after.value === 0 ? 'no_clear_effect' : 'improved'
+        : changePercent !== null && Math.abs(changePercent) <= OUTCOME_NO_CLEAR_EFFECT_PERCENT
+          ? 'no_clear_effect'
+          : (changePercent ?? 0) > 0 ? 'improved' : 'worsened'
+
+    const outcome = outcomeSchema.parse({
+      id: new ObjectId().toHexString(),
+      recommendationId: recommendation._id.toHexString(),
+      datasetId,
+      followedDate,
+      note: index === 0 ? 'Ran a two-for-one on mains and moved one server to Friday.' : null,
+      windowDays: OUTCOME_WINDOW_DAYS,
+      recommendation: {
+        title: recommendation.title,
+        body: recommendation.body,
+        action: recommendation.action,
+        metric: recommendation.metric,
+        dimension: recommendation.dimension,
+        dimensionValue,
+        operator: recommendation.operator!,
+        expectedDirection: recommendation.expectedDirection!,
+        recommendationCreatedAt: recommendation.createdAt
+      },
+      beforeWindow: before.window,
+      beforeValue: before.value,
+      afterWindow: pending ? null : after.window,
+      afterValue: pending ? null : after.value,
+      changePercent: pending ? null : changePercent,
+      hasMissingSalesDates: pending ? false : after.window.missingSalesDates > 0,
+      status,
+      completedAt: pending ? null : now,
+      createdAt: now,
+      updatedAt: now
+    })
+
+    const { id, ...rest } = outcome
+    return { _id: new ObjectId(id), ...rest }
+  })
+
+  return { rules: ruleDocs, recommendations: recommendationDocs, outcomes }
+}
+
 async function seed(): Promise<void> {
   const additive = process.argv.includes('--add')
   const now = new Date().toISOString()
@@ -484,6 +706,14 @@ async function seed(): Promise<void> {
 
     Matched by username rather than by position, so reordering `seedAccounts()`
     cannot quietly reassign the demo data to an admin.
+
+    The id is resolved from the database further down rather than taken from this
+    document, and that distinction is the whole bug this comment exists to prevent.
+    `buildUsers` mints a fresh ObjectId every run, but the additive branch upserts
+    users by username with `$setOnInsert: { _id }`, so an account that already
+    exists keeps the id it was created with and the freshly minted one is thrown
+    away. Using it anyway pointed two seeded data sets at a user that does not
+    exist, which is invisible to every account and looks exactly like empty data.
   */
   const demoOwnerUsername = (process.env.AUTH_USERNAME || 'owner').toLowerCase()
   const demoOwner = userDocs.find(user => user.username === demoOwnerUsername)
@@ -492,12 +722,12 @@ async function seed(): Promise<void> {
     throw new Error(`The demo owner account "${demoOwnerUsername}" was not built, so the demo data set would have no owner.`)
   }
 
-  const ownerId = demoOwner._id.toHexString()
-
   const dataset = datasetSchema.parse({
     id: datasetIdHex,
-    ownerId,
-    name: 'Bella Pizza, last 8 weeks',
+    // Replaced below once the real owner id is known. Parsed with a placeholder
+    // only so this schema check still runs on every other field.
+    ownerId: demoOwner._id.toHexString(),
+    name: 'Bella Pizza — last 8 weeks',
     businessType: 'restaurant',
     periodStart,
     periodEnd,
@@ -514,15 +744,36 @@ async function seed(): Promise<void> {
     additive ? datasetIdHex : undefined
   )
 
-  const [users, datasets, salesRows, insights, recommendations] = await Promise.all([
+  const [users, datasets, salesRows, insights, recommendations, rules, outcomes] = await Promise.all([
     usersCollection(),
     datasetsCollection(),
     salesRowsCollection(),
     publishedInsightsCollection(),
-    recommendationsCollection()
+    recommendationsCollection(),
+    rulesCollection(),
+    outcomesCollection()
   ])
 
   const { id: dsId, ...datasetRest } = dataset
+
+  /*
+    Users are written before anything that references them, and the owner id is
+    read back from the database rather than assumed.
+
+    On a first run the two are the same. On a second `--add` run they are not: the
+    upsert below matches an existing account by username and leaves its `_id`
+    alone, so the id `buildUsers` minted this run belongs to nobody. Everything
+    stamped with it would be unreachable by the account it was meant for.
+  */
+  async function resolveOwnerId(): Promise<string> {
+    const persisted = await users.findOne({ username: demoOwnerUsername })
+
+    if (!persisted) {
+      throw new Error(`The demo owner "${demoOwnerUsername}" is not in the database after the user write.`)
+    }
+
+    return persisted._id.toHexString()
+  }
 
   if (additive) {
     const userWrites = await users.bulkWrite(userDocs.map((user) => {
@@ -540,23 +791,33 @@ async function seed(): Promise<void> {
       }
     }))
 
-    await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest } satisfies DatasetDoc)
+    const ownerId = await resolveOwnerId()
+    const seeded = await seedOutcomes(datasetIdHex, ownerId, salesRowDocs, now)
+
+    await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest, ownerId } satisfies DatasetDoc)
     await salesRows.insertMany(salesRowDocs)
     await insights.insertMany(insightDocs)
+    await rules.insertMany(seeded.rules)
+    await recommendations.insertMany(seeded.recommendations)
+    await outcomes.insertMany(seeded.outcomes)
 
     const currentVersionId = await seedVersions(datasetIdHex, salesRowDocs)
     await datasets.updateOne({ _id: new ObjectId(dsId) }, { $set: { currentVersionId } })
 
     console.log('')
-    console.log('  Additive seed complete. Nothing was deleted')
+    console.log('  Additive seed complete — nothing was deleted')
     console.log('  ──────────────────────────────────────────────')
     console.log(`  Database         ${process.env.MONGODB_DB}`)
     console.log(`  Users added      ${userWrites.upsertedCount}`)
     console.log(`  Users updated    ${userWrites.matchedCount}`)
+    console.log(`  Owner            ${demoOwnerUsername}  (${ownerId})`)
     console.log(`  Data set added   1  (${dataset.name})`)
     console.log(`  Data set id      ${datasetIdHex}`)
     console.log(`  Sales rows added ${salesRowDocs.length}`)
     console.log(`  Insights added   ${insightDocs.length}`)
+    console.log(`  Rules added      ${seeded.rules.length}`)
+    console.log(`  Findings added   ${seeded.recommendations.length}`)
+    console.log(`  Outcomes added   ${seeded.outcomes.length}`)
     console.log(`  Upload history   2 versions`)
     printSeedDetails(salesRowDocs, periodStart, periodEnd)
     return
@@ -576,18 +837,26 @@ async function seed(): Promise<void> {
     salesRows: await salesRows.countDocuments(),
     publishedInsights: await insights.countDocuments(),
     recommendations: await recommendations.countDocuments(),
+    rules: await rules.countDocuments(),
+    outcomes: await outcomes.countDocuments(),
     datasetVersions: await versions.countDocuments(),
     datasetVersionRows: await versionRows.countDocuments()
   })
 
   // Wiping first is what makes a second run replace the demo rather than double it.
-  // `rules` is left untouched: rules are configuration, not part of this demo.
+  // `rules` is now in the list: the demo owns one, and the seeded outcomes measure
+  // the findings it produces, so leaving it behind would strand them.
   const removed = await Promise.all([
     users.deleteMany({}),
     datasets.deleteMany({}),
     salesRows.deleteMany({}),
     insights.deleteMany({}),
     recommendations.deleteMany({}),
+    rules.deleteMany({}),
+    // Outcomes measure recommendations that are about to be replaced. A surviving
+    // outcome would point at a finding that no longer exists and still be counted
+    // by the scoreboard.
+    outcomes.deleteMany({}),
     // Upload history belongs to the data sets being replaced, so it goes with them.
     // Leaving it would offer restore buttons pointing at rows that no longer exist.
     versions.deleteMany({}),
@@ -596,9 +865,18 @@ async function seed(): Promise<void> {
   const removedCount = removed.reduce((sum, result) => sum + result.deletedCount, 0)
 
   await users.insertMany(userDocs)
-  await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest } satisfies DatasetDoc)
+
+  // Read back rather than assumed, for the same reason as the additive branch.
+  // Here the two always agree, but a single rule is easier to keep true than two.
+  const ownerId = await resolveOwnerId()
+  const seeded = await seedOutcomes(datasetIdHex, ownerId, salesRowDocs, now)
+
+  await datasets.insertOne({ _id: new ObjectId(dsId), ...datasetRest, ownerId } satisfies DatasetDoc)
   await salesRows.insertMany(salesRowDocs)
   await insights.insertMany(insightDocs)
+  await rules.insertMany(seeded.rules)
+  await recommendations.insertMany(seeded.recommendations)
+  await outcomes.insertMany(seeded.outcomes)
 
   const currentVersionId = await seedVersions(datasetIdHex, salesRowDocs)
   await datasets.updateOne({ _id: new ObjectId(dsId) }, { $set: { currentVersionId } })
@@ -613,6 +891,9 @@ async function seed(): Promise<void> {
   console.log(`  Data sets        1  (${dataset.name})`)
   console.log(`  Sales rows       ${salesRowDocs.length}`)
   console.log(`  Insights         ${insightDocs.length}`)
+  console.log(`  Rules            ${seeded.rules.length}`)
+  console.log(`  Findings         ${seeded.recommendations.length}`)
+  console.log(`  Outcomes         ${seeded.outcomes.length}  (${seeded.outcomes.map(o => o.status).join(', ')})`)
   console.log(`  Upload history   2 versions`)
   printSeedDetails(salesRowDocs, periodStart, periodEnd)
 }

@@ -16,7 +16,7 @@
  * business owner who lands there is sent back to their dashboard, and an admin
  * who opens `/dashboard`, `/datasets` or `/recommendations` is sent to `/admin`
  * instead of a workspace that holds no data for them. Neither redirect is the
- * actual protection. `requireAdmin` on the server is, and this only decides which
+ * actual protection — `requireAdmin` on the server is. This only decides which
  * page someone sees.
  */
 export default defineNuxtRouteMiddleware(async (to) => {

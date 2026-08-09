@@ -24,7 +24,7 @@ import { formatCount, formatMoney } from '#shared/format'
 import type { AnalyticsSummary, DatasetSummary } from '#shared/types/analytics'
 
 definePageMeta({ middleware: 'auth', layout: 'app' })
-useSeoMeta({ title: 'Dashboard - InsightFlow' })
+useSeoMeta({ title: 'Dashboard | InsightFlow' })
 
 /** Four weeks of trading days. Below this, comparisons are hidden rather than guessed. */
 const MINIMUM_DAYS_FOR_TRENDS = 28
@@ -62,8 +62,8 @@ const loading = computed(() =>
 
 const enoughHistory = computed(() => (summary.value?.activeDays ?? 0) >= MINIMUM_DAYS_FOR_TRENDS)
 
-const bestSeller = computed(() => summary.value?.topItems[0]?.itemName ?? '-')
-const worstSeller = computed(() => summary.value?.topItems.at(-1)?.itemName ?? '-')
+const bestSeller = computed(() => summary.value?.topItems[0]?.itemName ?? 'Not available')
+const worstSeller = computed(() => summary.value?.topItems.at(-1)?.itemName ?? 'Not available')
 </script>
 
 <template>
@@ -107,10 +107,10 @@ const worstSeller = computed(() => summary.value?.topItems.at(-1)?.itemName ?? '
 
     <!-- Loading -->
     <div v-else-if="loading" class="space-y-8">
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <USkeleton v-for="card in 5" :key="card" class="h-28 w-full" />
       </div>
-      <div class="grid gap-4 lg:grid-cols-2">
+      <div class="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
         <USkeleton class="h-64 w-full" />
         <USkeleton class="h-64 w-full" />
       </div>

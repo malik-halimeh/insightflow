@@ -13,7 +13,7 @@ if (error.value || !dataset.value) {
   throw createError({ statusCode: 404, statusMessage: 'That data set could not be found.' })
 }
 
-useSeoMeta({ title: () => `${dataset.value?.name ?? 'Data set'} — InsightFlow` })
+useSeoMeta({ title: () => `${dataset.value?.name ?? 'Data set'} | InsightFlow` })
 
 const { data: rows, refresh: refreshRows } = await useFetch<SalesRow[]>(`/api/datasets/${id}/rows`, {
   default: (): SalesRow[] => []

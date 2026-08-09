@@ -115,7 +115,7 @@ function tryAgain() {
 
     <footer class="border-t border-default">
       <div class="mx-auto w-full max-w-4xl px-4 py-4 text-sm text-muted">
-        InsightFlow. Sales insights for small businesses.
+        InsightFlow, sales insights for small businesses.
       </div>
     </footer>
   </div>

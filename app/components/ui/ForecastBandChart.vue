@@ -148,7 +148,7 @@ const lastDate = computed(() => props.points[props.points.length - 1]?.date ?? '
 
       <polyline
         :points="actualLine"
-        class="stroke-current text-primary"
+        class="stroke-current ink-accent"
         fill="none"
         stroke-width="2"
         stroke-linejoin="round"
@@ -157,7 +157,7 @@ const lastDate = computed(() => props.points[props.points.length - 1]?.date ?? '
 
       <polyline
         :points="forecastLine"
-        class="stroke-current text-primary"
+        class="stroke-current ink-accent"
         fill="none"
         stroke-width="2"
         stroke-linejoin="round"

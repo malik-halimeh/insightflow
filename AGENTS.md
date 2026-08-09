@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 Standing brief for every session in this repository. Read it before writing any code.
 

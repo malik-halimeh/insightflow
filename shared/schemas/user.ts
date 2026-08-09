@@ -46,7 +46,7 @@ export type BusinessSize = z.infer<typeof businessSizeSchema>
 
 export const BUSINESS_SIZE_OPTIONS: { value: BusinessSize, label: string, hint: string }[] = [
   { value: 'small', label: 'Small', hint: 'Fewer than 10 people' },
-  { value: 'medium', label: 'Medium', hint: '10 to 50 people' },
+  { value: 'medium', label: 'Medium', hint: '10–50 people' },
   { value: 'large', label: 'Large', hint: 'More than 50 people' }
 ]
 

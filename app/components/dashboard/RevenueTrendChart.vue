@@ -55,7 +55,7 @@ const lastDate = computed(() => props.points[props.points.length - 1]?.date ?? '
 </script>
 
 <template>
-  <UCard>
+  <UCard class="min-h-full">
     <template #header>
       <h2 class="text-base font-semibold">
         Revenue over time
@@ -68,7 +68,7 @@ const lastDate = computed(() => props.points[props.points.length - 1]?.date ?? '
     <svg
       v-if="points.length > 1"
       :viewBox="`0 0 ${WIDTH} ${HEIGHT}`"
-      class="w-full"
+      class="mt-2 w-full"
       role="img"
       :aria-label="`Revenue for each day from ${firstDate} to ${lastDate}`"
     >
@@ -87,9 +87,9 @@ const lastDate = computed(() => props.points[props.points.length - 1]?.date ?? '
 
       <polyline
         :points="linePoints"
-        class="stroke-current text-primary"
+        class="stroke-current ink-accent"
         fill="none"
-        stroke-width="2"
+        stroke-width="3"
         stroke-linejoin="round"
         stroke-linecap="round"
       />

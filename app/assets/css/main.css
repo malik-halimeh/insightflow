@@ -1,168 +1,87 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
-/*
-  The whole visual language, set in one place.
-
-  Every page in this project styles through tokens rather than hardcoded colours,
-  so what is defined here reaches all fourteen routes, including the four other
-  members' pages, without opening a single page file.
-*/
-
 @theme {
-  /*
-    Two families, each doing one job.
-
-    Outfit carries the display sizes: geometric, warm, confident at scale. The
-    audience is people who run a café or a shop, so the headline voice should read
-    as friendly competence rather than developer tooling.
-
-    Geist carries everything else, chosen for its numerals. This product is made
-    almost entirely of figures in columns, and Geist draws a 1 the same width as
-    a 0, which is what stops a table shifting sideways as it re-sorts.
-
-    Both are self-hosted at build by @nuxt/fonts, which ships inside @nuxt/ui.
-    No CDN link, no layout shift, no added dependency.
-  */
-  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-display: 'Outfit', 'Geist', ui-sans-serif, system-ui, sans-serif;
-
-  /*
-    One radius, and everything else derived from it by Nuxt UI (0.5x for small
-    controls, 1.5x and 2x for cards and modals). Raised from the default so
-    surfaces read as considered objects rather than boxes, and set once so no
-    component can drift.
-  */
-  --ui-radius: 0.625rem;
+  --color-turquoise-50: #effdfb;
+  --color-turquoise-100: #d7faf6;
+  --color-turquoise-200: #b4f4ed;
+  --color-turquoise-300: #7cebe1;
+  --color-turquoise-400: #40e0d0;
+  --color-turquoise-500: #1fc7b9;
+  --color-turquoise-600: #169f96;
+  --color-turquoise-700: #177f79;
+  --color-turquoise-800: #196560;
+  --color-turquoise-900: #195450;
+  --color-turquoise-950: #092f2e;
 }
 
-/*
-  The light palette, pinned to the exact values it was specified in.
-
-    #FAFAFA  zinc 50    page background
-    #FFFFFF  white      card surface, set on the card in app.config
-    #09090B  zinc 950   primary text
-    #D97706  amber 600  primary accent
-    #FEF3C7  amber 100  muted accent, applied through .surface-accent below
-    #E4E4E7  zinc 200   borders and dividers
-
-  Four of the six are already where Nuxt UI puts them once the palettes are named
-  amber and zinc in app.config, so only two are restated here.
-
-  The background is the interesting one. Nuxt UI has a single `--ui-bg` that means
-  both "the page" and "a default surface", and this palette pulls those apart:
-  #FAFAFA behind, #FFFFFF on top. Moving `--ui-bg` to zinc 50 moves both, and the
-  card goes with it. So `--ui-bg` stays white, which is what a card, an input and
-  a popover should be, and the page alone is painted zinc 50 on the body below.
-
-  Three inks are moved off the 500 step at the same time, for contrast rather
-  than for brand. Measured against the surfaces this product actually paints
-  them on, the 500 step is a fine fill and a poor ink:
-
-    --ui-success (emerald 500) on the page      2.47:1
-    --ui-error (rose 500) on the page           3.75:1
-    --ui-text-muted (zinc 500) on a tinted card 4.41:1
-
-  Fixing them at the token means it holds on the eleven pages nobody opened to
-  make this change, and for components that have not been written yet.
-
-  Light mode only. The palette was given as a light-mode palette, and the dark
-  scheme is left on Nuxt UI's own dark values, which already clear AA by painting
-  light ink on dark paper. Darkening them there would break it.
-
-  The `:not(.dark)` is load-bearing rather than defensive. Nuxt UI puts its dark
-  values on `.dark`, which sits on the same html element `:root` matches, at the
-  same specificity. A bare `:root` here therefore wins on source order and
-  applies these light-mode inks in dark mode too, which measures at 2.2:1 on a
-  dark surface. Excluding `.dark` is what keeps the two modes apart.
-*/
-/*
-  The accent ramp, pinned to the values the palette was written in.
-
-  Tailwind 4 redefined amber in OKLCH and the deep end swung orange. Its 600 is
-  #E17100 and its 700 is #BB4D00, where the palette specifies #D97706 and reads
-  as amber rather than as burnt orange. Naming the palette "amber" in app.config
-  therefore gets the right family and the wrong colour, so the five steps this
-  design actually paints are restated here:
-
-    100  #FEF3C7  the muted accent, given
-    200  #FDE68A  its hairline
-    400  #FBBF24  accent text on dark paper
-    600  #D97706  the accent, given
-    700  #B45309  accent text on light paper
-
-  Set on :root rather than in the light-only block below, because these are raw
-  palette values rather than mode-dependent tokens: the brand band paints 600 in
-  both modes, and only which of 400 and 700 gets used changes.
-*/
 :root {
-  --ui-color-primary-100: #FEF3C7;
-  --ui-color-primary-200: #FDE68A;
-  --ui-color-primary-400: #FBBF24;
-  --ui-color-primary-600: #D97706;
-  --ui-color-primary-700: #B45309;
+  --ui-color-primary-50: #effdfb;
+  --ui-color-primary-100: #d7faf6;
+  --ui-color-primary-200: #b4f4ed;
+  --ui-color-primary-300: #7cebe1;
+  --ui-color-primary-400: #40e0d0;
+  --ui-color-primary-500: #1fc7b9;
+  --ui-color-primary-600: #169f96;
+  --ui-color-primary-700: #177f79;
+  --ui-color-primary-800: #196560;
+  --ui-color-primary-900: #195450;
+  --ui-color-primary-950: #092f2e;
 }
 
-:root:not(.dark),
-.light {
-  --ui-primary: var(--ui-color-primary-600);
-  --ui-text-highlighted: var(--ui-color-neutral-950);
+/*
+  Contrast correction, measured rather than guessed. Light mode only.
+
+  Three inks fail WCAG AA as they stand, and none of the fixes changes how the
+  design looks anywhere it is already correct.
+
+  THE ACCENT AS INK
+  Turquoise 500 is the right fill and the wrong ink. Measured on white:
+
+    500  #1fc7b9   2.12:1    the brand colour
+    600  #169f96   3.26:1
+    700  #177f79   4.83:1
+    800  #196560   6.84:1    passes, and holds on the tinted chips too
+
+  The solid button is unaffected and was already right: turquoise 500 carrying
+  turquoise 950 measures 6.81:1. So the fill stays exactly as designed and only
+  `text-primary` moves, which is why this overrides the utility rather than
+  `--ui-primary`. Moving the token would drag the button down with it, and a 700
+  fill under 950 ink measures 2.97:1.
+
+  Written unlayered so it beats the Tailwind utility without !important, and
+  scoped away from `.dark`, where turquoise 500 on a dark surface is already
+  strong and darkening it would break it.
+
+  THE SEMANTIC INKS
+  Nuxt UI resolves success, error and muted to the 500 step of their palettes,
+  which fails on a white page: emerald at 2.47:1 and slate at 4.23:1. These are
+  not brand colours, so moving them a step darker changes no design decision,
+  only whether the figures can be read.
+*/
+:root:not(.dark) {
   --ui-success: var(--ui-color-success-700);
   --ui-error: var(--ui-color-error-700);
   --ui-text-muted: var(--ui-color-neutral-600);
 }
 
 /*
-  The page, as distinct from a surface. Nuxt UI's base layer applies `bg-default`
-  to the body; this overrides that one element and leaves every card, input and
-  popover on the white it should be. Unlayered, so it beats the layered utility
-  without needing !important, and scoped away from dark for the same reason as
-  the block above.
+  Accent ink for light surfaces, applied where it is needed rather than globally.
+
+  A blanket override of `text-primary` was the obvious move and the wrong one:
+  this design puts the accent on dark sections as well as light ones, and one
+  rule cannot serve both. Darkening it everywhere fixed the tinted chips and
+  broke the step numbers on the dark band, which went from 4.17:1 to 2.95:1.
+
+  So the accent stays bright by default, exactly as designed, and this class is
+  used at the specific places it sits on white or on a pale tint.
 */
-:root:not(.dark) body {
-  background-color: var(--ui-color-neutral-50);
-}
-
-/*
-  Two inks and one surface, for the three things the accent has to do.
-
-  Amber is a light hue, which is the whole reason it needs this. A single
-  `text-primary` cannot both sit on the accent and be the accent:
-
-    .on-accent      ink for anything filled with the accent. Dark in both modes,
-                    because the accent is light in both: amber 600 in light,
-                    amber 400 in dark. White on amber 600 is 3.18:1 and fails.
-                    The palette's own #09090B on it is 6.25:1.
-
-    .ink-accent     the accent used as text. Amber 600 on the page is 3.05:1,
-                    which is under AA for anything below display size, so this
-                    steps down to amber 700 on light paper and up to amber 400 on
-                    dark. Both clear 4.8:1.
-
-    .surface-accent the muted accent, #FEF3C7, as a tinted panel with a matching
-                    hairline. Fixed cream would glare on a dark page, so dark mode
-                    gets a low-alpha wash of the same hue instead.
-*/
-.on-accent {
-  color: var(--ui-color-neutral-950);
-}
-
 .ink-accent {
-  color: var(--ui-color-primary-700);
+  color: var(--ui-color-primary-800);
 }
 
 .dark .ink-accent {
   color: var(--ui-color-primary-400);
-}
-
-.surface-accent {
-  background-color: var(--ui-color-primary-100);
-  border-color: var(--ui-color-primary-200);
-}
-
-.dark .surface-accent {
-  background-color: color-mix(in oklab, var(--ui-color-primary-400) 12%, transparent);
-  border-color: color-mix(in oklab, var(--ui-color-primary-400) 26%, transparent);
 }
 
 @layer base {
@@ -174,122 +93,7 @@
   */
   body {
     font-variant-numeric: tabular-nums;
-  }
-
-  /*
-    Display type is tighter than body type at every size. Setting it on the
-    elements rather than asking each page to remember a class means the five of us
-    cannot drift apart on it.
-  */
-  h1, h2, h3 {
-    font-family: var(--font-display);
-    letter-spacing: -0.02em;
-
-    /*
-      The palette's #09090B is the primary text colour, but body copy at zinc 700
-      is the right weight for reading and Nuxt UI already sets that. So the deep
-      charcoal goes where "primary text" actually means primary: the headings.
-      Doing it on the elements keeps it out of every page file.
-    */
-    color: var(--ui-text-highlighted);
-  }
-}
-
-/*
-  A figure printed at display size, used wherever a number is the message rather
-  than a cell in a table: the landing page statistics band, the industry tiles,
-  the lead card on the insight feed.
-
-  Tighter than the heading rule above because these are three or four glyphs, not
-  a sentence, and at that length loose tracking reads as a gap rather than as air.
-*/
-.figure {
-  font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 1;
-}
-
-/*
-  Motion, at intensity 5: still CSS only, still no library, still nothing that
-  runs per frame. What changed from 3 is that entrances now arrive in sequence
-  and bars draw themselves, because a page about figures that never moves reads
-  as a printout.
-
-  Four behaviours, each motivated:
-
-  - rise-in and reveal carry hierarchy. Content lifts as it enters, so the reader
-    is told what has just arrived rather than finding it already there.
-  - reveal staggers its children by shifting the scroll range rather than by
-    adding a delay, because a scroll-driven animation has no clock to delay
-    against. The sequence is therefore the reader's own scrolling, which is the
-    only honest way to stagger without JavaScript.
-  - bar-grow tells a bar chart's story in the order the data has: from zero, to
-    the value, left to right.
-  - :active press gives a physical acknowledgement to a click that may be about
-    to upload a file or delete a data set.
-
-  Everything collapses to nothing under prefers-reduced-motion, which is why the
-  whole block is gated rather than each rule individually overridden.
-*/
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .rise-in,
-    .reveal > * {
-      animation: rise-in linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 55%;
-    }
-
-    .reveal > *:nth-child(2) { animation-range: entry 6% entry 61%; }
-    .reveal > *:nth-child(3) { animation-range: entry 12% entry 67%; }
-    .reveal > *:nth-child(4) { animation-range: entry 18% entry 73%; }
-    .reveal > *:nth-child(n+5) { animation-range: entry 24% entry 79%; }
-
-    .bar-grow {
-      transform-origin: left center;
-      animation: bar-grow linear both;
-      animation-timeline: view();
-      animation-range: entry 15% entry 75%;
-    }
-  }
-
-  @keyframes rise-in {
-    from {
-      opacity: 0;
-      transform: translateY(1rem);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  @keyframes bar-grow {
-    from {
-      transform: scaleX(0);
-    }
-    to {
-      transform: scaleX(1);
-    }
-  }
-
-  /*
-    Hover lift, for surfaces that are themselves a link or a tile. Transform and
-    shadow only, so it stays on the compositor, and applied by class rather than
-    to every card, because a card holding a form should not move under the cursor.
-  */
-  .lift {
-    transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms ease;
-  }
-
-  .lift:hover {
-    transform: translateY(-3px);
-  }
-
-  /* A press should feel like a press. Transform only. */
-  button:active:not(:disabled),
-  a[role="button"]:active {
-    transform: translateY(1px);
+    background: var(--ui-bg);
+    color: var(--ui-text);
   }
 }

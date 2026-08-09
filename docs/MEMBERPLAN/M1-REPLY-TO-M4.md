@@ -164,19 +164,66 @@ fixes above. It needs no dependency, it runs with `npx tsx scripts/<name>.ts`, a
 it is honest about what it checked. `scripts/` is mine, so send me the file and I
 will land it.
 
-### 5. What I owe you once your schema is stable
+### 5. What I owe you once your schema is stable: delivered
 
-Confirmed, all four, and none of them are large. Send me the merged
-`shared/schemas/outcome.ts` and I will deliver in one pass:
+All of it is on `main`. Pull before you start Milestone 5.
 
-- the barrel export in `shared/schemas/index.ts`
+- `export * from './outcome'` in `shared/schemas/index.ts`
 - `OutcomeDoc` and `outcomesCollection()` in `server/utils/db.ts`
-- indexes in `server/utils/indexes.ts`: unique on `recommendationId`, plus
-  `datasetId` and `status` for the queries your list page will make
-- seeded examples in `scripts/seed.ts`, covering improved, worsened, no clear
-  effect, and not yet ready
+- three indexes in `server/utils/indexes.ts`: **unique** on `recommendationId`,
+  plus `datasetId + createdAt` for your list and `status + datasetId` for the
+  readiness sweep
+- the outcome cascade in `server/api/datasets/[id].delete.ts`, reported as
+  `outcomes` in the response
+- the `expectedDirection` migration, folded into `scripts/assign-owners.ts` so
+  there is one command to run rather than two
+- seeded rules, findings and outcomes in `scripts/seed.ts`
 
-I am not writing them against a draft. One stable schema, one pass.
+**The unique index is doing real work, so do not remove it.** A recommendation is
+followed once. Without it, an owner who double-clicks "Record outcome", or whose
+browser retries a request whose response it never saw, gets two outcomes against
+one finding and both are counted by the scoreboard. Catch the duplicate-key error
+and return the existing record; a `findOne` then `insertOne` cannot close that
+window, because there is always a gap between the two where a second request fits.
+
+**On the seed.** The findings come from `evaluateRule`, not from hand-written
+strings, because your route upserts on title, metric and dimension: a seeded title
+that drifted from what your engine produces would leave the seeded outcome pointing
+at a recommendation nobody can reach, with a duplicate finding beside it. The before
+and after values are summed from the seeded rows rather than invented, so the
+verdicts are whatever the data really did. It currently produces one pending, one
+no-clear-effect and one worsened.
+
+Two things came out of building it that you should know:
+
+**Your `superRefine` caught a bug in my seed.** My after-window was fifteen days
+wide, which made `missingSalesDates` negative, and the parse refused it. That is the
+schema doing exactly what it should.
+
+**`server/utils/rules.ts` had a latent import bug and I fixed one line.** It
+imported `formatCount` and `formatPercentChange` from `#shared/format`. Every other
+import in that file is `import type`, which TypeScript erases, so the alias never
+had to resolve at runtime. Those two are values, so it did, and Nitro can resolve
+`#shared/*` while a plain Node process started by tsx cannot. Importing anything
+from that module into a script failed with `ERR_PACKAGE_IMPORT_NOT_DEFINED`. It is
+now a relative path, matching the note at the top of `db.ts`. **This will bite you
+in Milestone 5** if your calculation module imports a value through the alias and
+anything outside Nitro ever loads it.
+
+### 6. Milestone 5: the calculation module is yours
+
+`server/utils/outcomes.ts`, and it is **M4's**, not mine. I have written the
+carve-out into CLAUDE.md beside the existing one for `server/api/datasets/versions/**`,
+so it is a rule rather than a favour.
+
+The reasoning: that module is the measurement itself, and the measurement changes
+whenever a product decision about outcomes changes. Those decisions are yours, so a
+file M1 owned would block you on me every time one moved. It cannot go under
+`server/api/outcomes/` instead, because Nitro registers every file in that tree as
+a route and a helper module would quietly become an endpoint.
+
+The rest of `server/utils/` stays mine. If you need something from it that does not
+exist yet, ask rather than adding it.
 
 ## Versioning semantics for outcome measurement
 
@@ -221,13 +268,71 @@ edit that file.
 
 ## Product decisions
 
-These are mine to make and here they are. All four are chosen so the product never
+These are mine to make and here they are. All five are chosen so the product never
 claims more precision than it has.
 
 **No-clear-effect threshold: ±5%, inclusive at both edges.** A change of exactly
 5.0% reads as no clear effect. Small-business weekly figures move several percent on
 weather alone, so anything tighter reports noise as a result. Put the constant in
 your own module with a comment saying that.
+
+### Zero baseline: measure it, do not discard it
+
+You proposed: when the before value is zero, mark the outcome unavailable, set
+`changePercent: null`, and drop it from the scoreboard denominator.
+
+**Half of that is right, and half of it would throw away the best case this product
+has.** Taking the three parts separately:
+
+**`changePercent: null` when the before value is zero. Agreed, and required.**
+Percentage change from zero is undefined. Do not report infinity, do not substitute
+a large number, do not quietly treat the baseline as 1. Null is the honest value.
+
+**"Unavailable" is wrong.** An unavailable outcome means the product cannot tell
+what happened. Here it can: it knows the before value was zero and it knows the
+after value. What it cannot do is express that as a percentage, which is a
+statement about the format, not about the knowledge. Reserve "unavailable" for the
+two cases where the answer genuinely is not knowable: a recommendation missing
+`dimensionValue` or `expectedDirection`, and a window that has not met the
+readiness rule below.
+
+**Excluding it from the denominator is the one that would do real damage.** Think
+about which findings actually have a zero baseline. Overwhelmingly they are
+`unsold_for_days` findings, because a rule whose entire premise is "this item has
+not sold for eighteen days" has a baseline of zero almost by definition. That is
+also the rule whose advice produces the clearest result in the whole product: the
+owner promotes the dish, or moves it to the front of the counter, and it goes from
+selling nothing to selling something.
+
+Drop those from the denominator and the scoreboard stops measuring the rule family
+with the most decisive outcomes, and reports only the rules that nudge an existing
+number up or down. That is selection bias, and it is invisible in the output. The
+scoreboard would look fine and quietly mean something other than what it claims.
+
+**So: every ready outcome counts in the denominator, zero-baseline ones included.**
+
+**The rule.** When the before value is zero the ±5% threshold cannot apply, because
+there is no percentage to compare against it. Decide on the after value and the
+recommendation's `expectedDirection` instead:
+
+| before | after | expectedDirection | status |
+| --- | --- | --- | --- |
+| 0 | 0 | either | no clear effect |
+| 0 | above 0 | up | improved |
+| 0 | above 0 | down | worsened |
+
+Nothing can fall below zero on any of the three metrics, so there is no fourth row.
+A scope absent from the after-window entirely reads as zero for that scope, not as
+missing data: an item that is no longer in the file sold nothing, which is exactly
+what the measurement is asking.
+
+**One consequence for your schema, and it is a good one.** Store `beforeValue` and
+`afterValue` as absolute numbers on the outcome, alongside the nullable
+`changePercent`. Then the zero baseline needs no special field and no flag: the
+percentage is null, the two raw figures are there, and the interface can render
+"0 to 15 units sold" where a percentage would be meaningless. It also means a
+reader can always see what a percentage was computed from, which the frozen-result
+decision above makes worth having.
 
 **Missing sales dates: calculate, and warn.** Consistent with `assessQuality`, which
 already treats a gap as a warning rather than a block. Set a flag on the outcome
@@ -249,9 +354,14 @@ both are met the outcome is "not yet ready" and says which condition is outstand
 ## Milestone order
 
 Your milestones 1 and 2 are unblocked as of now. Milestone 3 can define the schema
-immediately: every semantic it depends on is settled above. Start with the two
-recommendation fields in section 1, because your engine has to populate them before
-any outcome can be recorded against a new finding.
+immediately: every semantic it depends on is settled above, the zero baseline
+included. Start with `expectedDirection` in section 1, because your engine has to
+populate it, and M5's `dimensionValue`, before any outcome can be recorded against
+a new finding.
+
+Nothing further is waiting on me. If you find another case the decisions above do
+not cover, name it as precisely as you named this one and I will answer it the same
+day.
 
 ---
 

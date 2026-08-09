@@ -1,7 +1,7 @@
 <!--
   OWNER: M1
 
-  Second half of the reset flow, reached only via the link emailed by
+  Second half of the reset flow — reached only via the link emailed by
   forgot-password.vue. The token lives in the query string and travels to the
   server exactly once, on submit; see server/api/auth/reset-password.post.ts
   for what makes a token valid.
@@ -12,7 +12,7 @@ import { resetPasswordSchema, type ResetPasswordInput } from '#shared/schemas'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 definePageMeta({ layout: false })
-useSeoMeta({ title: 'Set a new password - InsightFlow' })
+useSeoMeta({ title: 'Set a new password | InsightFlow' })
 
 const route = useRoute()
 const token = typeof route.query.token === 'string' ? route.query.token : ''
@@ -41,14 +41,9 @@ async function onSubmit(event: FormSubmitEvent<ResetPasswordInput>) {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center px-4 py-12 sm:px-6">
-    <div class="w-full max-w-sm">
-      <NuxtLink to="/" class="flex items-center gap-2 font-semibold tracking-tight">
-        <span class="flex size-7 items-center justify-center rounded-md bg-primary on-accent">
-          <UIcon name="i-lucide-chart-column" class="size-4" />
-        </span>
-        InsightFlow
-      </NuxtLink>
+  <div class="flex min-h-[100dvh] items-center justify-center bg-elevated/40 px-4 py-12 sm:px-6">
+    <UCard class="w-full max-w-md shadow-xl shadow-primary/5">
+      <NuxtLink to="/"><UiBrandMark /></NuxtLink>
 
       <div class="mt-6">
         <h1 class="text-2xl font-semibold tracking-tight">
@@ -103,7 +98,7 @@ async function onSubmit(event: FormSubmitEvent<ResetPasswordInput>) {
         </UFormField>
 
         <UButton type="submit" :loading="pending" block>
-          Reset password
+          <span class="text-primary-950">Reset password</span>
         </UButton>
       </UForm>
 
@@ -112,6 +107,6 @@ async function onSubmit(event: FormSubmitEvent<ResetPasswordInput>) {
           Continue to sign in
         </NuxtLink>
       </p>
-    </div>
+    </UCard>
   </div>
 </template>

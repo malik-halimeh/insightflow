@@ -12,20 +12,23 @@ defineProps<{
 </script>
 
 <template>
-  <UCard>
-    <p class="text-xs text-muted">
-      {{ label }}
-    </p>
+  <UCard class="relative overflow-hidden">
+    <div class="absolute inset-y-0 left-0 w-1 bg-primary" />
+    <div class="pl-1">
+      <p class="text-xs font-semibold uppercase tracking-wide text-muted">
+        {{ label }}
+      </p>
 
-    <p class="mt-1 text-2xl font-semibold">
-      {{ value }}
-    </p>
+      <p class="mt-2 text-2xl font-semibold tracking-tight">
+        {{ value }}
+      </p>
 
-    <UiChangeIndicator
-      v-if="change !== undefined"
-      :value="change"
-      :label="changeLabel"
-      class="mt-2"
-    />
+      <UiChangeIndicator
+        v-if="change !== undefined"
+        :value="change"
+        :label="changeLabel"
+        class="mt-3"
+      />
+    </div>
   </UCard>
 </template>

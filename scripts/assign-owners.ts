@@ -1,25 +1,33 @@
 /**
- * Gives every existing data set and rule an owner.
+ * Brings records written before Phase 2 up to the current contracts.
  *
- * Per-owner scoping keys every read on `ownerId`. Records written before that
- * field existed have none, so after the change they are invisible to every
- * account: they are not lost, but nothing in the product can reach them.
+ * Two migrations, both idempotent, both only ever touching documents that are
+ * missing the field in question:
  *
- * This assigns them once. Run it after deploying the scoping change and before
- * anyone signs in expecting to see their data.
+ *   1. `ownerId` on data sets and rules. Per-owner scoping keys every read on it,
+ *      so a record without one is invisible to every account. Not lost, but
+ *      unreachable.
  *
- *   npx tsx scripts/assign-owners.ts --to <username>     assign to one account
- *   npx tsx scripts/assign-owners.ts --dry-run           report, change nothing
+ *   2. `expectedDirection` on rules. Outcome tracking needs to know which way a
+ *      number should move for the advice to have worked, and `ruleSchema` now
+ *      requires it, so a rule without one throws when the engine parses it.
  *
- * Idempotent: it only ever touches documents with no `ownerId`, so running it
- * twice is harmless and running it after new data has been created correctly
- * does nothing.
+ * Run after deploying, before anyone signs in expecting to see their data.
  *
- * WHY IT ASKS RATHER THAN GUESSES
+ *   npx tsx scripts/assign-owners.ts                   report what needs doing
+ *   npx tsx scripts/assign-owners.ts --to <username>   assign owners and migrate
+ *   npx tsx scripts/assign-owners.ts --dry-run --to x  report, change nothing
+ *
+ * WHY THE OWNER IS ASKED FOR AND THE DIRECTION IS NOT
  * There is no record of who uploaded what, because until now nothing was owned.
- * Any rule this script could invent for splitting the existing data between
- * accounts would be a guess, and a wrong guess hands one business another's
- * takings. Naming the account makes that one decision explicit and auditable.
+ * Any rule this script could invent for splitting existing data between accounts
+ * would be a guess, and a wrong guess hands one business another's takings.
+ *
+ * The direction has a safe default and the owner can see and change it on the
+ * rule form. Almost all advice in this product is about lifting something that is
+ * underperforming, so every existing rule becomes 'up'. Where that is wrong, the
+ * rule is visibly wrong on a screen the author already visits, rather than
+ * silently wrong in a measurement nobody can audit.
  */
 import {
   closeMongoClient,
@@ -44,15 +52,44 @@ async function main(): Promise<void> {
   const rules = await rulesCollection()
   const users = await usersCollection()
 
-  // `$exists: false` rather than a null check: these documents predate the field
-  // entirely, so it is absent rather than empty.
-  const orphanFilter = { ownerId: { $exists: false } }
+  /*
+    Two kinds of orphan, and only the first is obvious.
+
+    `$exists: false` catches documents written before the field existed. The
+    second kind has an `ownerId` that looks perfectly valid and points at no
+    account: a seed bug stamped records with a user id that was minted and then
+    thrown away when the upsert matched an existing username instead. Both are
+    equally invisible, because every query filters on an id no session carries.
+
+    So the real test is not "has an owner" but "has an owner who exists", which
+    needs the list of real ids to compare against.
+  */
+  const realOwnerIds = (await users.find({}, { projection: { _id: 1 } }).toArray())
+    .map(user => user._id.toHexString())
+
+  const orphanFilter = { ownerId: { $nin: realOwnerIds } }
+
+  // Independent of the owner question, so it runs whether or not --to is given.
+  const directionlessFilter = { expectedDirection: { $exists: false } }
 
   const orphanDatasets = await datasets.countDocuments(orphanFilter)
   const orphanRules = await rules.countDocuments(orphanFilter)
+  const directionlessRules = await rules.countDocuments(directionlessFilter)
 
-  console.log(`  Data sets with no owner   ${orphanDatasets}`)
-  console.log(`  Rules with no owner       ${orphanRules}`)
+  console.log(`  Data sets with no owner        ${orphanDatasets}`)
+  console.log(`  Rules with no owner            ${orphanRules}`)
+  console.log(`  Rules with no direction        ${directionlessRules}`)
+
+  // Done first and unconditionally. It needs no decision from anyone, and until
+  // it has run the rules engine throws on every rule it reads.
+  if (directionlessRules > 0 && !dryRun) {
+    const migrated = await rules.updateMany(
+      directionlessFilter,
+      { $set: { expectedDirection: 'up' } }
+    )
+    console.log(`\n  Set expectedDirection to "up" on ${migrated.modifiedCount} rule(s).`)
+    console.log('  Check any rule whose advice is meant to bring a number down.')
+  }
 
   if (orphanDatasets === 0 && orphanRules === 0) {
     console.log('\n  Nothing to assign. Every data set and rule already has an owner.')
@@ -85,7 +122,8 @@ async function main(): Promise<void> {
   const ownerId = owner._id.toHexString()
 
   if (dryRun) {
-    console.log(`\n  Dry run. Would assign ${orphanDatasets} data set(s) and ${orphanRules} rule(s) to ${owner.username}.`)
+    console.log(`\n  Dry run. Would assign ${orphanDatasets} data set(s) and ${orphanRules} rule(s) to ${owner.username},`)
+    console.log(`  and set expectedDirection to "up" on ${directionlessRules} rule(s).`)
     return
   }
 

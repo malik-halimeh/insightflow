@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import type {
-  PublishedInsight,
-  PublishedInsightCreate,
-  Recommendation
+import {
+  outcomeSummarySchema,
+  type Outcome,
+  type OutcomeCreate,
+  type OutcomeListResponse,
+  type OutcomeSummary,
+  type PublishedInsight,
+  type PublishedInsightCreate,
+  type Recommendation
 } from '#shared/schemas'
 
 definePageMeta({
@@ -10,7 +15,7 @@ definePageMeta({
   layout: 'app'
 })
 
-useSeoMeta({ title: 'Recommendations - InsightFlow' })
+useSeoMeta({ title: 'Recommendations | InsightFlow' })
 
 const {
   data: recommendations,
@@ -30,15 +35,63 @@ const {
   default: (): PublishedInsight[] => []
 })
 
+const {
+  data: outcomeResponse,
+  status: outcomeStatus,
+  error: outcomeLoadError,
+  refresh: refreshOutcomes
+} = await useFetch('/api/outcomes', {
+  default: (): OutcomeListResponse => ({
+    outcomes: [],
+    scoreboard: {
+      total: 0,
+      completed: 0,
+      pending: 0,
+      improved: 0,
+      noClearEffect: 0,
+      worsened: 0,
+      improvementRate: null
+    }
+  })
+})
+
 const publishingId = ref<string | null>(null)
 const unpublishingId = ref<string | null>(null)
+const followingId = ref<string | null>(null)
 const actionErrors = ref<Record<string, string | null>>({})
+const outcomeActionErrors = ref<Record<string, string | null>>({})
 
 const publishedByRecommendation = computed(() => new Map(
   publishedInsights.value.flatMap(insight =>
     insight.recommendationId ? [[insight.recommendationId, insight] as const] : []
   )
 ))
+
+const outcomesByRecommendation = computed(() => new Map(
+  outcomeResponse.value.outcomes.map(outcome => [outcome.recommendationId, outcome] as const)
+))
+
+const outcomesDisabled = computed(() => {
+  const message = messageFrom(outcomeLoadError.value, '')
+  return errorStatusCode(outcomeLoadError.value) === 404
+    && message.includes('not switched on')
+})
+
+const outcomeLoadFailed = computed(
+  () => Boolean(outcomeLoadError.value) && !outcomesDisabled.value
+)
+
+function errorStatusCode(error: unknown): number | null {
+  if (!error || typeof error !== 'object') return null
+
+  const response = error as {
+    statusCode?: number
+    status?: number
+    data?: { statusCode?: number }
+  }
+
+  return response.data?.statusCode ?? response.statusCode ?? response.status ?? null
+}
 
 function messageFrom(error: unknown, fallback: string): string {
   if (error && typeof error === 'object') {
@@ -51,6 +104,61 @@ function messageFrom(error: unknown, fallback: string): string {
   }
 
   return fallback
+}
+
+function asOutcomeSummary(outcome: Outcome): OutcomeSummary {
+  return outcomeSummarySchema.parse({
+    id: outcome.id,
+    recommendationId: outcome.recommendationId,
+    datasetId: outcome.datasetId,
+    followedDate: outcome.followedDate,
+    note: outcome.note,
+    status: outcome.status,
+    title: outcome.recommendation.title,
+    metric: outcome.recommendation.metric,
+    dimension: outcome.recommendation.dimension,
+    dimensionValue: outcome.recommendation.dimensionValue,
+    expectedDirection: outcome.recommendation.expectedDirection,
+    beforeValue: outcome.beforeValue,
+    afterValue: outcome.afterValue,
+    changePercent: outcome.changePercent,
+    hasMissingSalesDates: outcome.hasMissingSalesDates,
+    createdAt: outcome.createdAt,
+    updatedAt: outcome.updatedAt
+  })
+}
+
+async function follow(input: OutcomeCreate) {
+  followingId.value = input.recommendationId
+  outcomeActionErrors.value[input.recommendationId] = null
+  let saved = false
+
+  try {
+    const outcome = await $fetch<Outcome>('/api/outcomes', {
+      method: 'POST',
+      body: input
+    })
+    const summary = asOutcomeSummary(outcome)
+
+    outcomeResponse.value.outcomes = [
+      summary,
+      ...outcomeResponse.value.outcomes.filter(
+        item => item.recommendationId !== summary.recommendationId
+      )
+    ]
+    saved = true
+  } catch (error) {
+    outcomeActionErrors.value[input.recommendationId] = messageFrom(
+      error,
+      'This outcome could not be recorded. Check the date and try again.'
+    )
+  } finally {
+    followingId.value = null
+  }
+
+  if (saved) {
+    await refreshOutcomes()
+  }
 }
 
 async function publish(input: PublishedInsightCreate) {
@@ -138,8 +246,33 @@ async function unpublish(recommendationId: string) {
       </template>
     </UAlert>
 
+    <UAlert
+      v-if="outcomeLoadFailed"
+      color="error"
+      variant="subtle"
+      icon="i-lucide-circle-alert"
+      title="Outcome status could not be checked"
+      description="Refresh the outcome status before recording or reviewing results."
+    >
+      <template #actions>
+        <UButton
+          color="neutral"
+          variant="subtle"
+          icon="i-lucide-rotate-ccw"
+          @click="() => refreshOutcomes()"
+        >
+          Try again
+        </UButton>
+      </template>
+    </UAlert>
+
+    <RecommendationsOutcomeScoreboard
+      v-if="outcomeStatus !== 'pending' && !outcomesDisabled && !outcomeLoadFailed"
+      :scoreboard="outcomeResponse.scoreboard"
+    />
+
     <div
-      v-if="status === 'pending' || publishStatus === 'pending'"
+      v-if="status === 'pending' || publishStatus === 'pending' || outcomeStatus === 'pending'"
       class="space-y-4"
     >
       <USkeleton
@@ -202,8 +335,14 @@ async function unpublish(recommendationId: string) {
           :publishing="publishingId === recommendation.id"
           :unpublishing="unpublishingId === recommendation.id"
           :server-error="actionErrors[recommendation.id]"
+          :outcome="outcomesByRecommendation.get(recommendation.id) ?? null"
+          :outcome-loading="followingId === recommendation.id"
+          :outcomes-disabled="outcomesDisabled"
+          :outcome-load-error="outcomeLoadFailed"
+          :outcome-server-error="outcomeActionErrors[recommendation.id]"
           @publish="publish"
           @unpublish="unpublish"
+          @follow="follow"
         />
       </div>
     </section>

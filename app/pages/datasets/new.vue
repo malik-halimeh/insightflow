@@ -9,8 +9,8 @@
   is importing silently and losing them. So the screen leads with what worked,
   offers to import it, then lists each failure with the line number to open.
 
-  The check is stateless on purpose. Nothing is created until the owner presses
-  import, so a file that turns out to be unusable leaves nothing behind.
+  The check is stateless on purpose — nothing is created until the owner presses
+  import — so a file that turns out to be unusable leaves nothing behind.
 -->
 
 <script setup lang="ts">
@@ -19,7 +19,7 @@ import type { UploadReport } from '#shared/types/upload'
 import { formatCount } from '#shared/format'
 
 definePageMeta({ middleware: 'auth', layout: 'app' })
-useSeoMeta({ title: 'Add a data set - InsightFlow' })
+useSeoMeta({ title: 'Add a data set | InsightFlow' })
 
 const BUSINESS_TYPES = [
   { label: 'Restaurant', value: 'restaurant' },

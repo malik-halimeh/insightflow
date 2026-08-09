@@ -5,6 +5,7 @@ import { COLLECTIONS, ensureIndexes } from './indexes'
 import type {
   Dataset,
   DatasetVersion,
+  Outcome,
   PublishedInsight,
   Recommendation,
   Rule,
@@ -45,6 +46,14 @@ export type PublishedInsightDoc = DocOf<PublishedInsight> & {
   contributorId?: string
 }
 export type DatasetVersionDoc = DocOf<DatasetVersion>
+
+/**
+ * Carries no `ownerId` of its own, deliberately. An outcome hangs off a data set
+ * through `datasetId`, and the data set carries the owner, so every outcome route
+ * scopes itself with `requireOwnedDataset` from ./ownership.ts rather than by
+ * filtering on a field here. One place decides who may see what.
+ */
+export type OutcomeDoc = DocOf<Outcome>
 
 /**
  * An archived sales row: the same shape as a live one, plus the version it belongs to.
@@ -157,6 +166,7 @@ export const rulesCollection = () => collection<RuleDoc>(COLLECTIONS.rules)
 export const publishedInsightsCollection = () => collection<PublishedInsightDoc>(COLLECTIONS.publishedInsights)
 export const datasetVersionsCollection = () => collection<DatasetVersionDoc>(COLLECTIONS.datasetVersions)
 export const datasetVersionRowsCollection = () => collection<DatasetVersionRowDoc>(COLLECTIONS.datasetVersionRows)
+export const outcomesCollection = () => collection<OutcomeDoc>(COLLECTIONS.outcomes)
 
 export async function closeMongoClient(): Promise<void> {
   const state = cache()

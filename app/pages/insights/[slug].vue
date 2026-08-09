@@ -1,18 +1,6 @@
 <script setup lang="ts">
-import { changeDirection, formatPercentChange } from '#shared/format'
+import { formatPercentChange } from '#shared/format'
 import type { PublishedInsight } from '#shared/schemas'
-
-const TONE = {
-  up: 'text-success',
-  down: 'text-error',
-  flat: 'text-muted'
-} as const
-
-const ICON = {
-  up: 'i-lucide-arrow-up-right',
-  down: 'i-lucide-arrow-down-right',
-  flat: 'i-lucide-minus'
-} as const
 
 const route = useRoute()
 const config = useRuntimeConfig()
@@ -34,9 +22,8 @@ if (error.value || !insight.value) {
 }
 
 const publishedInsight = insight.value
-const direction = changeDirection(publishedInsight.metricValue)
 const pageTitle = computed(() =>
-  `${publishedInsight.displayName}: ${publishedInsight.metricLabel} - InsightFlow`
+  `${publishedInsight.displayName}: ${publishedInsight.metricLabel} | InsightFlow`
 )
 const canonicalUrl = computed(() =>
   `${siteOrigin.value}/insights/${publishedInsight.slug}`
@@ -64,7 +51,7 @@ useSeoMeta({
 
 <template>
   <article class="max-w-2xl">
-    <NuxtLink to="/insights" class="inline-flex items-center gap-2 text-sm font-medium ink-accent hover:underline">
+    <NuxtLink to="/insights" class="inline-flex items-center gap-2 text-sm ink-accent">
       <UIcon name="i-lucide-arrow-left" class="size-4" />
       Insight feed
     </NuxtLink>
@@ -76,56 +63,47 @@ useSeoMeta({
         :published-at="publishedInsight.publishedAt"
       />
 
-      <!--
-        The change is the finding. It is printed at display size and tinted by
-        direction, with the arrow carrying the same meaning as the colour, so it
-        reads the same way here as it does on the card that led here.
-      -->
-      <p class="figure mt-8 flex items-center gap-3 text-6xl sm:text-7xl" :class="TONE[direction]">
-        <UIcon :name="ICON[direction]" class="size-10 shrink-0 sm:size-12" />
-        {{ formatPercentChange(publishedInsight.metricValue) }}
-      </p>
-
-      <h1 class="mt-6 text-2xl font-semibold leading-snug tracking-tight sm:text-3xl">
+      <h1 class="mt-4 text-2xl font-semibold tracking-tight">
         {{ publishedInsight.metricLabel }}
       </h1>
 
-      <p class="mt-4 text-lg leading-relaxed text-muted">
-        {{ publishedInsight.caption }}
+      <p class="mt-4 text-2xl font-semibold tracking-tight">
+        {{ formatPercentChange(publishedInsight.metricValue) }}
       </p>
 
-      <p class="mt-6 inline-flex items-center gap-2 rounded-full bg-elevated px-3 py-1.5 text-xs text-muted">
-        <UIcon name="i-lucide-lock" class="size-3.5" />
-        {{ publishedInsight.hideAbsoluteNumbers
-          ? 'This business chose to hide its takings. Only the change is shared.'
-          : 'A percentage change only. No takings are shared.' }}
+      <p v-if="publishedInsight.hideAbsoluteNumbers" class="mt-2 text-sm text-muted">
+        Actual figures are hidden. Only the percentage change is shared.
+      </p>
+
+      <p v-else class="mt-2 text-sm text-muted">
+        This published insight includes a percentage change only.
+      </p>
+
+      <p class="mt-4 text-lg text-muted">
+        {{ publishedInsight.caption }}
       </p>
     </header>
 
     <!--
-      The honest answer to "what next". This is one business sharing something they
-      noticed, and the useful thing to say to a stranger reading it is that the same
-      pattern is probably sitting in their own records, and that they can look.
+      The honest answer to "what next". There is no sign-up in this product, so
+      inviting a stranger to create an account would be selling something that does
+      not exist. What is true is that they can read more, and that the same pattern
+      is probably sitting in their own records.
     -->
     <footer class="mt-12 border-t border-default pt-8">
-      <h2 class="text-lg font-semibold">
+      <h2 class="text-base font-semibold">
         What now?
       </h2>
 
-      <p class="mt-2 text-muted">
-        If you keep a record of your own sales, the same kind of pattern is
-        probably already sitting in it. Upload a spreadsheet and find out, or
-        read what other businesses have published.
+      <p class="mt-2 max-w-xl text-sm text-muted">
+        There is nothing to sign up for here. This is one business sharing something
+        they noticed in their own sales. If you keep a record of yours, the same kind
+        of pattern is probably already sitting in it.
       </p>
 
-      <div class="mt-6 flex flex-wrap gap-3">
-        <UButton to="/login?mode=signup" trailing-icon="i-lucide-arrow-right">
-          Get started
-        </UButton>
-        <UButton to="/insights" color="neutral" variant="subtle">
-          Read the insight feed
-        </UButton>
-      </div>
+      <UButton to="/insights" color="neutral" variant="subtle" class="mt-6">
+        Read other insights
+      </UButton>
     </footer>
   </article>
 </template>
