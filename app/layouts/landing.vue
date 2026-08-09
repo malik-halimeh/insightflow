@@ -1,12 +1,20 @@
 <script setup lang="ts">
-const { data: session } = await useFetch('/api/auth/session', { server: false })
+const { data: session, status: sessionStatus } = await useFetch('/api/auth/session', { server: false })
+
+const sessionReady = computed(() => !['idle', 'pending'].includes(sessionStatus.value))
+const isAuthenticated = computed(() => session.value?.authenticated === true)
 
 const workspaceLink = computed(() =>
-  session.value?.authenticated && session.value.role === 'admin' ? '/admin' : '/dashboard'
+  session.value?.authenticated === true && session.value.role === 'admin' ? '/admin' : '/dashboard'
 )
 const workspaceLabel = computed(() =>
-  session.value?.authenticated && session.value.role === 'admin' ? 'Admin dashboard' : 'Dashboard'
+  session.value?.authenticated === true && session.value.role === 'admin' ? 'Admin dashboard' : 'Dashboard'
 )
+
+async function logout() {
+  await $fetch('/api/auth/logout', { method: 'POST' })
+  await navigateTo('/login', { external: true })
+}
 </script>
 
 <template>
@@ -22,10 +30,10 @@ const workspaceLabel = computed(() =>
             Insight feed
           </NuxtLink>
 
-          <NuxtLink v-if="session?.authenticated" :to="workspaceLink" class="text-muted transition hover:text-default">
+          <UButton v-if="isAuthenticated" :to="workspaceLink" icon="i-lucide-layout-dashboard" class="text-primary-950">
             {{ workspaceLabel }}
-          </NuxtLink>
-          <template v-else>
+          </UButton>
+          <template v-else-if="sessionReady">
             <NuxtLink to="/login" class="text-muted transition hover:text-default">
               Sign in
             </NuxtLink>
@@ -33,6 +41,7 @@ const workspaceLabel = computed(() =>
               Get started
             </UButton>
           </template>
+          <USkeleton v-else class="h-9 w-24" />
         </nav>
       </div>
     </header>
@@ -58,8 +67,14 @@ const workspaceLabel = computed(() =>
             </p>
             <ul class="mt-4 space-y-3">
               <li><NuxtLink to="/insights" class="hover:text-primary">Insight feed</NuxtLink></li>
-              <li><NuxtLink to="/login" class="hover:text-primary">Sign in</NuxtLink></li>
-              <li><NuxtLink to="/login?mode=signup" class="hover:text-primary">Create an account</NuxtLink></li>
+              <template v-if="isAuthenticated">
+                <li><NuxtLink :to="workspaceLink" class="hover:text-primary">{{ workspaceLabel }}</NuxtLink></li>
+                <li><button class="hover:text-primary" @click="logout">Log out</button></li>
+              </template>
+              <template v-else-if="sessionReady">
+                <li><NuxtLink to="/login" class="hover:text-primary">Sign in</NuxtLink></li>
+                <li><NuxtLink to="/login?mode=signup" class="hover:text-primary">Create an account</NuxtLink></li>
+              </template>
             </ul>
           </div>
         </div>

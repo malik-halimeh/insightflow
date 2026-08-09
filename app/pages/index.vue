@@ -7,6 +7,19 @@ const { data: homeStats } = await useFetch<HomeStats>('/api/home-stats', {
   server: false,
   default: (): HomeStats => ({ insightCount: 0, businessCount: 0, latestInsight: null })
 })
+const { data: session, status: sessionStatus } = await useFetch('/api/auth/session', { server: false })
+
+const sessionReady = computed(() => !['idle', 'pending'].includes(sessionStatus.value))
+const isAuthenticated = computed(() => session.value?.authenticated === true)
+const displayName = computed(() =>
+  session.value?.authenticated === true ? session.value.displayName : ''
+)
+const workspaceLink = computed(() =>
+  session.value?.authenticated === true && session.value.role === 'admin' ? '/admin' : '/dashboard'
+)
+const workspaceLabel = computed(() =>
+  session.value?.authenticated === true && session.value.role === 'admin' ? 'Open admin dashboard' : 'Open dashboard'
+)
 
 useSeoMeta({
   title: 'InsightFlow | Plain-language sales insights for small businesses',
@@ -39,11 +52,19 @@ const features = [
   }
 ]
 
-const steps = [
+const guestSteps = [
   { title: 'Create your account', description: 'Tell us a little about your business.' },
   { title: 'Get approved', description: 'A short review keeps the workspace trustworthy.' },
   { title: 'Upload and act', description: 'Add sales data and receive findings you can use today.' }
 ]
+
+const ownerSteps = [
+  { title: 'Review your dashboard', description: 'See revenue, top sellers, and weekday patterns in one place.' },
+  { title: 'Choose your next action', description: 'Open recommendations written for the data you uploaded.' },
+  { title: 'Share selectively', description: 'Publish a useful finding without exposing private sales totals.' }
+]
+
+const steps = computed(() => isAuthenticated.value ? ownerSteps : guestSteps)
 
 const faqs = [
   {
@@ -71,23 +92,31 @@ const faqs = [
       <div class="absolute inset-y-0 right-0 hidden w-2/5 bg-primary/8 lg:block" />
       <div class="relative mx-auto grid min-h-[calc(100dvh-4.5rem)] w-full max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:py-20">
         <div class="max-w-xl">
-          <p class="text-sm font-semibold text-primary-700 dark:text-primary-300">
-            Built for small business owners
-          </p>
-          <h1 class="mt-5 text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-            Know what is happening in your business.
-          </h1>
-          <p class="mt-6 max-w-lg text-lg leading-8 text-muted">
-            Upload sales data and get clear findings you can act on today.
-          </p>
-          <div class="mt-8 flex flex-wrap gap-3">
-            <UButton to="/login?mode=signup" size="lg" class="text-primary-950" trailing-icon="i-lucide-arrow-right">
-              Get started free
-            </UButton>
-            <UButton to="/insights" size="lg" color="neutral" variant="outline">
-              Read the insight feed
-            </UButton>
-          </div>
+          <template v-if="sessionReady">
+            <p class="text-sm font-semibold text-primary-700 dark:text-primary-300">
+              {{ isAuthenticated ? `Welcome back, ${displayName}` : 'Built for small business owners' }}
+            </p>
+            <h1 class="mt-5 text-3xl font-semibold tracking-tight">
+              {{ isAuthenticated ? 'Pick up where your business left off.' : 'Know what is happening in your business.' }}
+            </h1>
+            <p class="mt-6 max-w-lg text-lg leading-8 text-muted">
+              {{ isAuthenticated ? 'Open your dashboard for current patterns, or see what other businesses are learning.' : 'Upload sales data and get clear findings you can act on today.' }}
+            </p>
+            <div class="mt-8">
+              <UButton v-if="isAuthenticated" :to="workspaceLink" size="lg" class="text-primary-950" trailing-icon="i-lucide-arrow-right">
+                {{ workspaceLabel }}
+              </UButton>
+              <UButton v-else to="/login?mode=signup" size="lg" class="text-primary-950" trailing-icon="i-lucide-arrow-right">
+                Get started free
+              </UButton>
+            </div>
+          </template>
+          <template v-else>
+            <USkeleton class="h-5 w-48" />
+            <USkeleton class="mt-5 h-10 w-3/4" />
+            <USkeleton class="mt-6 h-6 w-full" />
+            <USkeleton class="mt-8 h-11 w-36" />
+          </template>
         </div>
 
         <div class="relative lg:pl-6">
@@ -159,10 +188,16 @@ const faqs = [
     <section class="border-y border-default bg-neutral-950 text-white">
       <div class="mx-auto grid w-full max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[0.75fr_1.25fr] lg:px-8">
         <div>
-          <h2 class="text-3xl font-semibold tracking-tight sm:text-4xl">From account to action</h2>
-          <p class="mt-4 max-w-md text-neutral-400">Three focused steps. Account review is the only wait.</p>
+          <template v-if="sessionReady">
+            <h2 class="text-3xl font-semibold tracking-tight sm:text-4xl">{{ isAuthenticated ? 'From data to action' : 'From account to action' }}</h2>
+            <p class="mt-4 max-w-md text-neutral-400">{{ isAuthenticated ? 'Your workspace keeps the path from evidence to decision short.' : 'Three focused steps. Account review is the only wait.' }}</p>
+          </template>
+          <template v-else>
+            <USkeleton class="h-10 w-3/4" />
+            <USkeleton class="mt-4 h-5 w-full" />
+          </template>
         </div>
-        <ol class="divide-y divide-white/10 border-y border-white/10">
+        <ol v-if="sessionReady" class="divide-y divide-white/10 border-y border-white/10">
           <li v-for="(step, index) in steps" :key="step.title" class="grid grid-cols-[48px_1fr] gap-4 py-6">
             <span class="text-sm font-semibold text-primary">0{{ index + 1 }}</span>
             <div>
@@ -171,6 +206,9 @@ const faqs = [
             </div>
           </li>
         </ol>
+        <div v-else class="space-y-4">
+          <USkeleton v-for="index in 3" :key="index" class="h-20 w-full" />
+        </div>
       </div>
     </section>
 
@@ -203,16 +241,5 @@ const faqs = [
       </div>
     </section>
 
-    <section class="border-t border-default">
-      <div class="mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-8 px-4 py-16 sm:px-6 md:flex-row md:items-center lg:px-8">
-        <div>
-          <h2 class="text-3xl font-semibold tracking-tight">See your business in plain language.</h2>
-          <p class="mt-3 text-muted">Your first findings arrive minutes after your data is ready.</p>
-        </div>
-        <UButton to="/login?mode=signup" size="lg" class="text-primary-950" trailing-icon="i-lucide-arrow-right">
-          Create your account
-        </UButton>
-      </div>
-    </section>
   </div>
 </template>

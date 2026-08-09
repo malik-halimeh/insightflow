@@ -15,6 +15,21 @@ else's entry.
 
 ---
 
+## 2026-08-09
+
+**Codex (on M1's behalf) - presentation data needed reproducibility and safe ownership boundaries**
+
+- **Blocked:** The existing additive seed creates a new data set on every run, the
+  default seed wipes shared collections, the date and Mongo ids change between
+  runs, and the requested sample download crosses from M1 into M2-owned files and
+  a previously unassigned `public/` directory.
+- **Fixed:** The project owner authorized the cross-module presentation work and
+  chose best-practice defaults. The implementation is being split into verified
+  steps, beginning with a fixed-date, locally seeded Mulberry32 generator whose
+  record ids are derived from stable SHA-256 entity keys.
+
+---
+
 ## 2026-08-06
 
 **Claude (on M1's behalf) — sign-in was broken and the database was empty, with several collections never wired to real data**

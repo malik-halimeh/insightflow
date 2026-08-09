@@ -15,6 +15,7 @@ dist
 # Logs and OS noise
 *.log
 .DS_Store
+~$*
 
 # Private planning notes — kept local, never pushed
 PLANNING-PHASE-SUMMARY.md
