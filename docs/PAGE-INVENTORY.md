@@ -190,7 +190,7 @@ Every page below is **new**. Nothing in the Phase 1 tables above is rewritten.
 | --- | --- | --- | --- | --- |
 | `/forecast` | `app/pages/forecast/index.vue` | **M3** | `GET /api/forecast/:datasetId` | ✅ **live** |
 | `/datasets/:id/history` | `app/pages/datasets/[id]/history.vue` | **M2** | `GET /api/datasets/:id/versions`<br>`POST …/versions/:vid/restore` | ✅ **live** |
-| `/recommendations/:id/outcome` | `app/pages/recommendations/[id]/outcome.vue` | **M4** | `GET /api/outcomes/:id` | M4 builds it |
+| `/recommendations/:id/outcome` | `app/pages/recommendations/[id]/outcome.vue` | **M4** | `GET /api/outcomes/:id` | ✅ **live** |
 | `/insights/benchmarks` | `app/pages/insights/benchmarks.vue` | **M5** | `GET /api/benchmarks` — **public** | ✅ **live** |
 | — | `app/components/ui/ForecastBandChart.vue` | **M1** | shared component | ✅ **built** |
 
