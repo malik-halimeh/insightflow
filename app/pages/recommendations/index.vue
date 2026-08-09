@@ -343,7 +343,11 @@ async function unpublish(recommendationId: string) {
           @publish="publish"
           @unpublish="unpublish"
           @follow="follow"
-        />
+        >
+          <template #benchmarkComparison="{ recommendation }">
+            <InsightsBenchmarkComparison :recommendation="recommendation" />
+          </template>
+        </RecommendationsRecommendationCard>
       </div>
     </section>
   </div>

@@ -27,6 +27,9 @@ const emit = defineEmits<{
   unpublish: [recommendationId: string]
   follow: [OutcomeCreate]
 }>()
+defineSlots<{
+  benchmarkComparison(props: { recommendation: Recommendation }): unknown
+}>()
 
 const unpublishOpen = ref(false)
 
@@ -123,6 +126,11 @@ function outcomeLabel(status: OutcomeStatus): string {
           against the average
         </span>
       </div>
+
+      <slot
+        name="benchmarkComparison"
+        :recommendation="recommendation"
+      />
 
       <!-- The action is the point of the product, so it gets its own block. -->
       <div class="flex gap-4 bg-elevated p-4">
