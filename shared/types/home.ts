@@ -1,4 +1,22 @@
-import type { PublishedInsight } from '../schemas'
+import type { OutcomeStatus, PublishedInsight } from '../schemas'
+
+export type HomeInsight = Pick<PublishedInsight,
+  | 'slug'
+  | 'displayName'
+  | 'caption'
+  | 'metricLabel'
+  | 'metricValue'
+  | 'businessType'
+  | 'publishedAt'
+>
+
+export interface HomeOutcomeStory {
+  caption: string
+  metricLabel: string
+  metricValue: number
+  outcomeStatus: Exclude<OutcomeStatus, 'pending'>
+  observedChangePercent: number | null
+}
 
 /**
  * The shape returned by GET /api/home-stats — live counts read from MongoDB
@@ -8,5 +26,7 @@ import type { PublishedInsight } from '../schemas'
 export interface HomeStats {
   insightCount: number
   businessCount: number
-  latestInsight: PublishedInsight | null
+  latestInsight: HomeInsight | null
+  recentInsights: HomeInsight[]
+  outcomeStory: HomeOutcomeStory | null
 }
