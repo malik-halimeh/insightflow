@@ -290,24 +290,24 @@ const faqs = [
       </div>
     </section>
 
-    <section class="border-y border-default bg-neutral-950 text-white">
+    <section class="border-b border-default bg-default">
       <div class="mx-auto grid w-full max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[0.75fr_1.25fr] lg:px-8">
         <div>
           <template v-if="sessionReady">
             <h2 class="text-3xl font-semibold tracking-tight sm:text-4xl">{{ isAuthenticated ? 'From data to action' : 'From account to action' }}</h2>
-            <p class="mt-4 max-w-md text-neutral-400">{{ isAuthenticated ? 'Your workspace keeps the path from evidence to decision short.' : 'Three focused steps. Account review is the only wait.' }}</p>
+            <p class="mt-4 max-w-md text-muted">{{ isAuthenticated ? 'Your workspace keeps the path from evidence to decision short.' : 'Three focused steps. Account review is the only wait.' }}</p>
           </template>
           <template v-else>
             <USkeleton class="h-10 w-3/4" />
             <USkeleton class="mt-4 h-5 w-full" />
           </template>
         </div>
-        <ol v-if="sessionReady" class="divide-y divide-white/10 border-y border-white/10">
+        <ol v-if="sessionReady" class="divide-y divide-default border-y border-default">
           <li v-for="(step, index) in steps" :key="step.title" class="grid grid-cols-[48px_1fr] gap-4 py-6">
             <span class="text-sm font-semibold text-primary">0{{ index + 1 }}</span>
             <div>
               <h3 class="font-semibold">{{ step.title }}</h3>
-              <p class="mt-2 text-sm text-neutral-400">{{ step.description }}</p>
+              <p class="mt-2 text-sm text-muted">{{ step.description }}</p>
             </div>
           </li>
         </ol>
@@ -317,37 +317,39 @@ const faqs = [
       </div>
     </section>
 
-    <section class="mx-auto grid w-full max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[0.75fr_1.25fr] lg:items-center lg:px-8">
-      <div>
-        <p class="text-sm font-semibold text-primary-700 dark:text-primary-300">Close the loop</p>
-        <h2 class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">See what followed the action</h2>
-        <p class="mt-4 max-w-xl text-lg leading-8 text-muted">Outcome tracking compares the next sales period with the earlier one. It records an observed result, not proof that the recommendation caused it.</p>
-      </div>
+    <section class="bg-elevated/40">
+      <div class="mx-auto grid w-full max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[0.75fr_1.25fr] lg:items-center lg:px-8">
+        <div>
+          <p class="text-sm font-semibold text-primary-700 dark:text-primary-300">Close the loop</p>
+          <h2 class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">See what followed the action</h2>
+          <p class="mt-4 max-w-xl text-lg leading-8 text-muted">Outcome tracking compares the next sales period with the earlier one. It records an observed result, not proof that the recommendation caused it.</p>
+        </div>
 
-      <USkeleton v-if="homeStatsLoading" class="h-64 w-full rounded-2xl" />
-      <UCard v-else-if="homeStats.outcomeStory" class="border-l-4 border-l-primary">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <p class="text-xs font-semibold uppercase tracking-wide text-muted">Published outcome story</p>
-          <UBadge color="neutral" variant="subtle">{{ outcomeStatusLabels[homeStats.outcomeStory.outcomeStatus] }}</UBadge>
-        </div>
-        <p class="mt-5 text-2xl font-semibold tracking-tight">{{ homeStats.outcomeStory.caption }}</p>
-        <div class="mt-5 grid gap-5 sm:grid-cols-2">
-          <UiChangeIndicator :value="homeStats.outcomeStory.metricValue" :label="homeStats.outcomeStory.metricLabel" />
-          <UiChangeIndicator
-            v-if="homeStats.outcomeStory.observedChangePercent !== null"
-            :value="homeStats.outcomeStory.observedChangePercent"
-            label="Observed change after the action"
-          />
-          <p v-else class="text-sm leading-6 text-muted">The earlier value was zero, so an observed percentage change is not available.</p>
-        </div>
-      </UCard>
-      <UCard v-else>
-        <p class="font-semibold">No completed published outcome yet</p>
-        <p class="mt-2 text-sm leading-6 text-muted">A story will appear here after a published recommendation has a completed measurement.</p>
-      </UCard>
+        <USkeleton v-if="homeStatsLoading" class="h-64 w-full rounded-2xl" />
+        <UCard v-else-if="homeStats.outcomeStory" class="border-l-4 border-l-primary">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-muted">Published outcome story</p>
+            <UBadge color="neutral" variant="subtle">{{ outcomeStatusLabels[homeStats.outcomeStory.outcomeStatus] }}</UBadge>
+          </div>
+          <p class="mt-5 text-2xl font-semibold tracking-tight">{{ homeStats.outcomeStory.caption }}</p>
+          <div class="mt-5 grid gap-5 sm:grid-cols-2">
+            <UiChangeIndicator :value="homeStats.outcomeStory.metricValue" :label="homeStats.outcomeStory.metricLabel" />
+            <UiChangeIndicator
+              v-if="homeStats.outcomeStory.observedChangePercent !== null"
+              :value="homeStats.outcomeStory.observedChangePercent"
+              label="Observed change after the action"
+            />
+            <p v-else class="text-sm leading-6 text-muted">The earlier value was zero, so an observed percentage change is not available.</p>
+          </div>
+        </UCard>
+        <UCard v-else>
+          <p class="font-semibold">No completed published outcome yet</p>
+          <p class="mt-2 text-sm leading-6 text-muted">A story will appear here after a published recommendation has a completed measurement.</p>
+        </UCard>
+      </div>
     </section>
 
-    <section class="border-t border-default bg-elevated/40">
+    <section class="border-t border-default bg-default">
       <div class="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div class="max-w-2xl">
@@ -379,7 +381,7 @@ const faqs = [
       </div>
     </section>
 
-    <section class="border-t border-default">
+    <section class="border-t border-default bg-elevated/40">
       <div class="mx-auto grid w-full max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[0.7fr_1.3fr] lg:px-8">
         <h2 class="text-3xl font-semibold tracking-tight">Common questions</h2>
         <UAccordion :items="faqs" />
